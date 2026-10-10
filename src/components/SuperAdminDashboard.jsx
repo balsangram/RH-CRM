@@ -248,6 +248,22 @@ export default function SuperAdminDashboard({ onLogout }) {
     department: 'Visa Operations',
     status: 'ACTIVE'
   });
+  const [visaList, setVisaList] = useState(mockVisaServices);
+  const [showAddVisaModal, setShowAddVisaModal] = useState(false);
+  const [newVisaForm, setNewVisaForm] = useState({
+    applicantName: '',
+    email: '',
+    phone: '',
+    passport: '',
+    country: 'Schengen (France)',
+    visaType: 'Tourist C',
+    caseOfficerName: 'Amit Verma',
+    caseOfficerId: 'CO-101',
+    applicationDate: '2026-10-10',
+    status: 'Under Review',
+    paymentType: 'Prepaid',
+    totalAmount: 18500
+  });
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
   const [showAddTravelerModal, setShowAddTravelerModal] = useState(false);
@@ -459,7 +475,10 @@ export default function SuperAdminDashboard({ onLogout }) {
                       <option value="Completed">Completed</option>
                     </select>
                   </div>
-                  <button className="btn btn-sm btn-primary" onClick={() => alert(`Status updated to "${viewingVisaDetails.status}"!`)}>
+                  <button className="btn btn-sm btn-primary" onClick={() => {
+                    setVisaList(visaList.map(v => v.id === viewingVisaDetails.id ? { ...v, status: viewingVisaDetails.status } : v));
+                    alert(`Status updated to "${viewingVisaDetails.status}"!`);
+                  }}>
                     Save Status Update
                   </button>
                 </div>
@@ -1678,7 +1697,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                               </tr>
                             </thead>
                             <tbody>
-                              {mockVisaServices
+                              {visaList
                                 .filter(v => v.applicantName.toLowerCase() === viewingTraveler.applicantName.toLowerCase() || true)
                                 .slice(0, 3)
                                 .map(visa => (
@@ -1748,6 +1767,9 @@ export default function SuperAdminDashboard({ onLogout }) {
                 <div className="section-box">
                   <div className="section-header">
                     <div className="section-title">Visa Services & Applications Management</div>
+                    <button className="btn btn-primary" onClick={() => setShowAddVisaModal(true)}>
+                      + Add Visa Application
+                    </button>
                   </div>
                   <div className="table-container">
                     <table>
@@ -1765,7 +1787,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {mockVisaServices.map(visa => (
+                        {visaList.map(visa => (
                           <tr key={visa.id}>
                             <td className="font-mono"><strong>{visa.id}</strong></td>
                             <td>{visa.applicantName}</td>
@@ -2405,7 +2427,7 @@ export default function SuperAdminDashboard({ onLogout }) {
             <div className="form-group" style={{ marginBottom: '12px' }}>
               <label>1. Select Application:</label>
               <select value={assignForm.appId} onChange={e => setAssignForm({ ...assignForm, appId: e.target.value })}>
-                {mockVisaServices.map(v => <option key={v.id} value={v.id}>{v.id} - {v.applicantName} ({v.country} - {v.visaType})</option>)}
+                {visaList.map(v => <option key={v.id} value={v.id}>{v.id} - {v.applicantName} ({v.country} - {v.visaType})</option>)}
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -2670,6 +2692,221 @@ export default function SuperAdminDashboard({ onLogout }) {
             <div className="form-actions">
               <button className="btn" onClick={() => setShowAddTravelerModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => { alert('New Traveler Added Successfully!'); setShowAddTravelerModal(false); }}>Save Traveler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Visa Application Modal */}
+      {showAddVisaModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '650px' }}>
+            <div className="modal-header">
+              <div className="modal-title">+ Add New Visa Application</div>
+              <button className="close-btn" onClick={() => setShowAddVisaModal(false)}>X</button>
+            </div>
+
+            <div className="form-group">
+              <label>Applicant Full Name: *</label>
+              <input
+                type="text"
+                placeholder="e.g. Rahul Sharma"
+                value={newVisaForm.applicantName}
+                onChange={e => setNewVisaForm({ ...newVisaForm, applicantName: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Email ID:</label>
+                <input
+                  type="email"
+                  placeholder="e.g. rahul.sharma@example.com"
+                  value={newVisaForm.email}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Mobile Number:</label>
+                <input
+                  type="text"
+                  placeholder="+91 98765 43210"
+                  value={newVisaForm.phone}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Destination Country: *</label>
+                <select
+                  value={newVisaForm.country}
+                  onChange={e => {
+                    const country = e.target.value;
+                    const matchedCountry = countriesList.find(c => c.countryName === country || country.includes(c.countryName));
+                    const defaultVisaType = matchedCountry && matchedCountry.visaTypes && matchedCountry.visaTypes[0] ? matchedCountry.visaTypes[0].name : 'Tourist C';
+                    const defaultFee = matchedCountry ? matchedCountry.startingPrice : 18500;
+                    setNewVisaForm({
+                      ...newVisaForm,
+                      country,
+                      visaType: defaultVisaType,
+                      totalAmount: defaultFee
+                    });
+                  }}
+                >
+                  <option value="Schengen (France)">Schengen (France)</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="United States">United States</option>
+                  <option value="Japan">Japan</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Canada">Canada</option>
+                  <option value="UAE (Dubai)">UAE (Dubai)</option>
+                  <option value="Singapore">Singapore</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Visa Category / Type: *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Tourist C, Standard Visitor, B1/B2"
+                  value={newVisaForm.visaType}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, visaType: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Passport Number & Expiry:</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Z9847291 (Exp: 2031-05-12)"
+                  value={newVisaForm.passport}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, passport: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Application Date:</label>
+                <input
+                  type="date"
+                  value={newVisaForm.applicationDate}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, applicationDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Assign Case Officer:</label>
+                <select
+                  value={newVisaForm.caseOfficerId}
+                  onChange={e => {
+                    const officer = staffList.find(s => s.employeeId === e.target.value);
+                    if (officer) {
+                      setNewVisaForm({
+                        ...newVisaForm,
+                        caseOfficerId: officer.employeeId,
+                        caseOfficerName: officer.name
+                      });
+                    }
+                  }}
+                >
+                  {staffList.map(staff => (
+                    <option key={staff.employeeId} value={staff.employeeId}>
+                      {staff.name} ({staff.employeeId} - {staff.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Application Status:</label>
+                <select
+                  value={newVisaForm.status}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, status: e.target.value })}
+                >
+                  <option value="Under Review">Under Review</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Proceed">Proceed</option>
+                  <option value="Approved">Approved</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Payment Method / Type:</label>
+                <select
+                  value={newVisaForm.paymentType}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, paymentType: e.target.value })}
+                >
+                  <option value="Prepaid">Prepaid (Paid upfront)</option>
+                  <option value="Postpaid">Postpaid (Pay later)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Total Processing Fee (₹):</label>
+                <input
+                  type="number"
+                  value={newVisaForm.totalAmount}
+                  onChange={e => setNewVisaForm({ ...newVisaForm, totalAmount: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddVisaModal(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!newVisaForm.applicantName.trim()) {
+                    alert('Please enter applicant name.');
+                    return;
+                  }
+                  const newId = `VISA-${301 + visaList.length}`;
+                  const createdVisa = {
+                    id: newId,
+                    applicantName: newVisaForm.applicantName.trim(),
+                    country: newVisaForm.country,
+                    visaType: newVisaForm.visaType,
+                    caseOfficerName: newVisaForm.caseOfficerName,
+                    caseOfficerId: newVisaForm.caseOfficerId,
+                    applicationDate: newVisaForm.applicationDate || '2026-10-10',
+                    status: newVisaForm.status,
+                    paymentType: newVisaForm.paymentType,
+                    totalAmount: Number(newVisaForm.totalAmount) || 18500,
+                    paidAmount: newVisaForm.paymentType === 'Prepaid' ? Number(newVisaForm.totalAmount) || 18500 : 0,
+                    pendingAmount: newVisaForm.paymentType === 'Prepaid' ? 0 : Number(newVisaForm.totalAmount) || 18500,
+                    paymentStatus: newVisaForm.paymentType === 'Prepaid' ? 'Completed' : 'Pending',
+                    paymentDate: newVisaForm.applicationDate || '2026-10-10',
+                    paymentRef: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                    documentStatus: 'Pending Verification'
+                  };
+                  setVisaList([createdVisa, ...visaList]);
+                  setShowAddVisaModal(false);
+                  setNewVisaForm({
+                    applicantName: '',
+                    email: '',
+                    phone: '',
+                    passport: '',
+                    country: 'Schengen (France)',
+                    visaType: 'Tourist C',
+                    caseOfficerName: staffList[0]?.name || 'Amit Verma',
+                    caseOfficerId: staffList[0]?.employeeId || 'CO-101',
+                    applicationDate: '2026-10-10',
+                    status: 'Under Review',
+                    paymentType: 'Prepaid',
+                    totalAmount: 18500
+                  });
+                  alert(`Visa Application "${newId}" created successfully for ${createdVisa.applicantName}!`);
+                }}
+              >
+                Create Application
+              </button>
             </div>
           </div>
         </div>

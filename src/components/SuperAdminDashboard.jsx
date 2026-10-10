@@ -1,0 +1,3801 @@
+import React, { useState } from 'react';
+import {
+  mockSummaryCards,
+  mockRecentLeads,
+  mockRejectedApplications,
+  mockLeadsFull,
+  mockCompanies,
+  mockCompanyApplications,
+  mockCompanyEmployees,
+  mockTravelers,
+  mockVisaServices,
+  mockBookingServices,
+  mockTransactions,
+  mockReportsMetrics,
+  mockStaffMembers,
+  mockReviews,
+  mockCountries,
+  mockVisaDocumentsMatrix,
+  mockHolidayPackages
+} from '../mockData';
+
+export default function SuperAdminDashboard({ onLogout }) {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [editingCompany, setEditingCompany] = useState(null);
+  const [companySubTab, setCompanySubTab] = useState('applications');
+  const [companyAppFilterType, setCompanyAppFilterType] = useState('All');
+  const [companyAppFilterStatus, setCompanyAppFilterStatus] = useState('All');
+  const [companyAppSearch, setCompanyAppSearch] = useState('');
+  const [companyEmpFilterStatus, setCompanyEmpFilterStatus] = useState('All');
+  const [companyEmpSearch, setCompanyEmpSearch] = useState('');
+  const [viewingTraveler, setViewingTraveler] = useState(null);
+  const [editingTraveler, setEditingTraveler] = useState(null);
+  const [selectedVisaApp, setSelectedVisaApp] = useState(null);
+  const [viewingVisaDetails, setViewingVisaDetails] = useState(null);
+  const [viewingBookingDetails, setViewingBookingDetails] = useState(null);
+  const [packagesSubTab, setPackagesSubTab] = useState('visa');
+  const [viewingCountryVisaDetails, setViewingCountryVisaDetails] = useState(null);
+  const [viewingHolidayPackageDetails, setViewingHolidayPackageDetails] = useState(null);
+  const [editingCountryVisa, setEditingCountryVisa] = useState(null);
+  const [showAddCountryVisaModal, setShowAddCountryVisaModal] = useState(false);
+  const [editingHolidayPackage, setEditingHolidayPackage] = useState(null);
+  const [showAddHolidayPackageModal, setShowAddHolidayPackageModal] = useState(false);
+
+  // Sub-section edit states for Country Visa Details
+  const [editingVisaType, setEditingVisaType] = useState(null);
+  const [showAddVisaTypeModal, setShowAddVisaTypeModal] = useState(false);
+  const [newVisaTypeForm, setNewVisaTypeForm] = useState({ name: '', validity: '', stayDuration: '', processingFee: 15000 });
+
+  const [editingCountryDoc, setEditingCountryDoc] = useState(null);
+  const [showAddCountryDocModal, setShowAddCountryDocModal] = useState(false);
+  const [newCountryDocForm, setNewCountryDocForm] = useState({ name: '', type: 'Mandatory', guidance: '' });
+
+  const [editingGuidanceText, setEditingGuidanceText] = useState(null);
+
+  // Sub-section edit states for Holiday Package Details
+  const [editingItineraryDay, setEditingItineraryDay] = useState(null);
+  const [showAddItineraryDayModal, setShowAddItineraryDayModal] = useState(false);
+  const [newItineraryDayForm, setNewItineraryDayForm] = useState({ day: '', title: '', detail: '' });
+
+  const [countriesList, setCountriesList] = useState([
+    {
+      id: 'CNTY-US',
+      countryName: 'United States',
+      countryCode: 'US',
+      flag: '🇺🇸',
+      imageUrl: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=600&auto=format&fit=crop&q=60',
+      visaTypesCount: 3,
+      processingTime: '15-20 Days',
+      startingPrice: 21000,
+      status: 'Active',
+      visaTypes: [
+        { name: 'B1/B2 Tourist & Business Visa', validity: '10 Years Multiple Entry', processingFee: 21000, stayDuration: 'up to 180 Days' },
+        { name: 'F1 Student Visa', validity: 'Duration of Study Course', processingFee: 28000, stayDuration: 'Course Duration + OPT' },
+        { name: 'H1B / L1 Work Permit', validity: '3 Years Extendable', processingFee: 45000, stayDuration: 'Authorized Stay Period' }
+      ],
+      requiredDocs: [
+        { name: 'DS-160 Confirmation Page', type: 'Mandatory', guidance: 'Must have barcoded confirmation printed in high resolution.' },
+        { name: 'Passport (Valid 6+ Months)', type: 'Mandatory', guidance: 'Passport must have at least 2 blank pages remaining.' },
+        { name: 'Bank Statement (6 Months)', type: 'Mandatory', guidance: 'Minimum closing balance ₹500,000 required with bank seal.' }
+      ],
+      guidance: 'Ensure DS-160 application details match passport exactly. Book interview slot at US Embassy/VAC after fee payment. Bring original financial proofs to interview.'
+    },
+    {
+      id: 'CNTY-UK',
+      countryName: 'United Kingdom',
+      countryCode: 'GB',
+      flag: '🇬🇧',
+      imageUrl: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&auto=format&fit=crop&q=60',
+      visaTypesCount: 2,
+      processingTime: '10-15 Days',
+      startingPrice: 24000,
+      status: 'Active',
+      visaTypes: [
+        { name: 'Standard Visitor Visa (6 Months)', validity: '6 Months Multiple Entry', processingFee: 24000, stayDuration: 'up to 180 Days' },
+        { name: 'Long Term Visitor Visa (2/5 Years)', validity: '2 to 5 Years Multiple Entry', processingFee: 55000, stayDuration: '180 Days per Visit' }
+      ],
+      requiredDocs: [
+        { name: 'Valid Passport & Old Passports', type: 'Mandatory', guidance: 'Include all previous travel history passports.' },
+        { name: 'Employment NOC Letter', type: 'Mandatory', guidance: 'Must state approved leave dates and monthly salary.' },
+        { name: 'Income Tax Returns (3 Years)', type: 'Mandatory', guidance: 'ITR-V acknowledgments or Form 16.' }
+      ],
+      guidance: 'Biometric submission required at VFS Global center. UKVI online application must be submitted 3 months prior to travel.'
+    },
+    {
+      id: 'CNTY-FR',
+      countryName: 'Schengen (France / Europe)',
+      countryCode: 'EU',
+      flag: '🇪🇺',
+      imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=60',
+      visaTypesCount: 2,
+      processingTime: '7-10 Days',
+      startingPrice: 18500,
+      status: 'Active',
+      visaTypes: [
+        { name: 'Tourist Visa C (Short Stay)', validity: 'up to 90 Days Schengen Zone', processingFee: 18500, stayDuration: '90 Days in 180 Days' },
+        { name: 'Business Visa C', validity: 'up to 90 Days Multiple', processingFee: 22000, stayDuration: '90 Days' }
+      ],
+      requiredDocs: [
+        { name: 'Flight & Hotel Cover Booking', type: 'Mandatory', guidance: 'Confirmed return flight itinerary and hotel vouchers.' },
+        { name: 'Travel Medical Insurance (€30,000 Cover)', type: 'Mandatory', guidance: 'Must cover all Schengen states.' },
+        { name: '6 Month Bank Statement', type: 'Mandatory', guidance: 'Recent bank statement stamped by bank.' }
+      ],
+      guidance: 'Apply at the Schengen embassy of country where main stay is scheduled. Minimum 3 weeks processing buffer required.'
+    },
+    {
+      id: 'CNTY-JP',
+      countryName: 'Japan',
+      countryCode: 'JP',
+      flag: '🇯🇵',
+      imageUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&auto=format&fit=crop&q=60',
+      visaTypesCount: 1,
+      processingTime: '5-7 Days',
+      startingPrice: 12500,
+      status: 'Active',
+      visaTypes: [
+        { name: 'Temporary Visitor Visa (Tourist)', validity: '90 Days Single/Double Entry', processingFee: 12500, stayDuration: 'up to 30 Days' }
+      ],
+      requiredDocs: [
+        { name: 'Visa Application Form with Photo', type: 'Mandatory', guidance: '2x2 inch photo with white background.' },
+        { name: 'Daily Schedule / Itinerary (Form 2)', type: 'Mandatory', guidance: 'Detailed day-to-day plan with hotel contact.' }
+      ],
+      guidance: 'Applications submitted via VFS Japan center. Fast processing duration of 5 working days.'
+    }
+  ]);
+
+  const [holidayPackagesList, setHolidayPackagesList] = useState([
+    {
+      packageId: 'PKG-701',
+      packageName: 'Bali Island Beach Getaway',
+      country: 'Indonesia',
+      destination: 'Bali, Indonesia',
+      duration: '6 Days / 5 Nights',
+      days: 6,
+      nights: 5,
+      price: 85000,
+      status: 'Active',
+      imageUrl: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=60',
+      description: 'Experience pristine tropical beaches, luxury private pool villa stay, Kintamani volcano tour, and Nusa Penida island cruise.',
+      inclusions: '5-Star Beach Resort, Daily Breakfast, Private Airport Transfers, Water Sports, Kintamani Sightseeing Tour, English Tour Guide',
+      exclusions: 'International Flights, Personal Expenses, Lunch/Dinner, Visa on Arrival Fee ($35)',
+      itinerary: [
+        { day: 'Day 1', title: 'Arrival in Bali & Villa Check-in', detail: 'Welcome at Denpasar Airport, transfer to Seminyak luxury beach villa. Leisure evening.' },
+        { day: 'Day 2', title: 'Kintamani Volcano & Ubud Cultural Tour', detail: 'Visit Tegenungan Waterfall, Sacred Monkey Forest, and scenic Mount Batur volcano view.' },
+        { day: 'Day 3', title: 'Nusa Penida Island Speedboat Day Trip', detail: 'Explore Kelingking T-Rex Beach, Broken Beach, and Angel Billabong with snorkeling.' },
+        { day: 'Day 4', title: 'Water Sports at Tanjung Benoa & Uluwatu Sunset', detail: 'Banana boat, Parasailing + Sunset kecak dance performance at Uluwatu Cliff Temple.' },
+        { day: 'Day 5', title: 'Tanah Lot Temple & Balinese Spa Session', detail: 'Relaxing 2-hour traditional Balinese massage and Tanah Lot ocean temple sunset.' },
+        { day: 'Day 6', title: 'Souvenir Shopping & Departure Transfer', detail: 'Breakfast, Krisna Balinese souvenir market visit, airport drop-off for flight home.' }
+      ]
+    },
+    {
+      packageId: 'PKG-702',
+      packageName: 'Swiss Alps & Paris Highlights',
+      country: 'France & Switzerland',
+      destination: 'Paris & Zurich',
+      duration: '8 Days / 7 Nights',
+      days: 8,
+      nights: 7,
+      price: 210000,
+      status: 'Active',
+      imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=60',
+      description: 'Romantic Paris Eiffel Tower priority tour, TGV Bullet Train to Zurich, Lake Lucerne cruise, and Mount Titlis snow cable car adventure.',
+      inclusions: '4-Star Central Hotels, Swiss Pass 4 Days, TGV High-Speed Rail, Eiffel Tower 2nd Floor Ticket, Mount Titlis Excursion, Daily Breakfast',
+      exclusions: 'Airfare, Schengen Visa Fees, Personal Shopping, City Tourist Taxes',
+      itinerary: [
+        { day: 'Day 1', title: 'Arrival in Paris & Seine River Dinner Cruise', detail: 'Airport transfer to Paris hotel. Evening illuminated Eiffel Tower & Seine Cruise.' },
+        { day: 'Day 2', title: 'Paris Guided City Tour & Louvre Museum', detail: 'Visit Arc de Triomphe, Champs-Élysées, Notre-Dame, and Louvre Museum photo stop.' },
+        { day: 'Day 3', title: 'TGV Bullet Train to Zurich & Lake Promenade', detail: 'High-speed rail to Zurich. Evening stroll along Bahnhofstrasse and Lake Zurich.' },
+        { day: 'Day 4', title: 'Lucerne & Mount Titlis Snow Adventure', detail: 'Rotair revolving cable car ride to Mount Titlis, Ice Flyer & Chapel Bridge Lucerne.' },
+        { day: 'Day 5', title: 'Interlaken & Jungfraujoch Top of Europe', detail: 'Scenic train ride to Jungfraujoch snow peak elevation 3,454m.' },
+        { day: 'Day 6', title: 'Rhine Falls Excursion & Swiss Chocolate Tasting', detail: 'Visit Europe largest waterfall at Rhine Falls Schaffhausen & Lindt Chocolate Home.' },
+        { day: 'Day 7', title: 'Free Day in Zurich for Swiss Watch Shopping', detail: 'Leisure day to explore Old Town Zurich, cafes, and luxury Swiss watch shopping.' },
+        { day: 'Day 8', title: 'Zurich Departure Transfer', detail: 'Check out and private transfer to Zurich Airport for return flight.' }
+      ]
+    },
+    {
+      packageId: 'PKG-703',
+      packageName: 'Dubai Luxury Desert & Skyscraper Safari',
+      country: 'UAE (Dubai)',
+      destination: 'Dubai & Abu Dhabi',
+      duration: '5 Days / 4 Nights',
+      days: 5,
+      nights: 4,
+      price: 65000,
+      status: 'Active',
+      imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&auto=format&fit=crop&q=60',
+      description: 'Burj Khalifa 124th floor observation deck, 4x4 Dune Bashing Desert Safari with BBQ dinner, Marina Dhow Cruise, and Abu Dhabi Sheikh Zayed Mosque.',
+      inclusions: '4-Star Dubai Marina Hotel, 4x4 Desert Safari, Burj Khalifa At The Top Ticket, Abu Dhabi Day Tour, Dhow Cruise Dinner, Airport Transfers',
+      exclusions: 'Flight Tickets, Tourism Dirham Fee ($5/night), UAE Visa Fee',
+      itinerary: [
+        { day: 'Day 1', title: 'Arrival in Dubai & Marina Dhow Cruise', detail: 'Airport transfer to hotel. Evening 2-hour Marina Dhow Cruise with buffet dinner & live Tanoura dance.' },
+        { day: 'Day 2', title: 'Dubai City Tour & Burj Khalifa 124th Floor', detail: 'Visit Dubai Frame, Jumeirah Beach, Atlantis Palm, and evening Dubai Fountain show at Burj Khalifa.' },
+        { day: 'Day 3', title: 'Desert Safari with 4x4 Dune Bashing & BBQ', detail: 'Afternoon 4x4 Land Cruiser dune bashing, camel riding, henna painting, belly dance & BBQ buffet.' },
+        { day: 'Day 4', title: 'Abu Dhabi Grand Mosque & Ferrari World Visit', detail: 'Full day excursion to Abu Dhabi Sheikh Zayed Grand Mosque and Louvre Museum Abu Dhabi.' },
+        { day: 'Day 5', title: 'Gold Souk Shopping & Airport Drop-off', detail: 'Visit Deira Gold & Spice Souk markets. Transfer to Dubai International Airport for departure.' }
+      ]
+    }
+  ]);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [newPaymentForm, setNewPaymentForm] = useState({ amount: 5000, type: 'Prepaid', mode: 'Bank Transfer', date: '2026-10-09', ref: 'TXN-998900', status: 'Completed' });
+  const [visaPaymentsList, setVisaPaymentsList] = useState([
+    { id: 'PAY-101', type: 'Prepaid', mode: 'UPI / NetBanking', amount: 10000, date: '2026-10-02', ref: 'TXN-998120', status: 'Completed' },
+    { id: 'PAY-102', type: 'Postpaid', mode: 'Bank Transfer', amount: 8500, date: '2026-10-06', ref: 'TXN-998144', status: 'Completed' }
+  ]);
+  const [bookingPaymentsList, setBookingPaymentsList] = useState([
+    { id: 'PAY-701', type: 'Prepaid', mode: 'Bank Transfer', amount: 35000, date: '2026-10-01', ref: 'TXN-998200', status: 'Completed' },
+    { id: 'PAY-702', type: 'Installment', mode: 'UPI / NetBanking', amount: 50000, date: '2026-10-05', ref: 'TXN-998205', status: 'Completed' }
+  ]);
+  const [visaDocsList, setVisaDocsList] = useState([
+    { id: 1, name: 'Passport Front Page', mandatory: 'Mandatory', status: 'Verified' },
+    { id: 2, name: 'Bank Statement (6 Months)', mandatory: 'Mandatory', status: 'Pending Verification' },
+    { id: 3, name: 'Employment NOC Letter', mandatory: 'Optional', status: 'Verified' }
+  ]);
+  const [showAddDocModal, setShowAddDocModal] = useState(false);
+  const [newDocName, setNewDocName] = useState('');
+  const [newDocRequirement, setNewDocRequirement] = useState('Mandatory');
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [editingMember, setEditingMember] = useState(null);
+  const [staffList, setStaffList] = useState(mockStaffMembers);
+  const [newMemberForm, setNewMemberForm] = useState({
+    name: '',
+    email: '',
+    role: 'Visa Specialist',
+    department: 'Visa Operations',
+    status: 'ACTIVE'
+  });
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
+  const [showAddTravelerModal, setShowAddTravelerModal] = useState(false);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showExtendBookingModal, setShowExtendBookingModal] = useState(false);
+  const [graphFilter, setGraphFilter] = useState('This Month');
+  const [leadFilterType, setLeadFilterType] = useState('All');
+  const [leadFilterStatus, setLeadFilterStatus] = useState('All');
+
+  // Form states
+  const [extendForm, setExtendForm] = useState({ days: 2, nights: 1, charges: 15000, remarks: 'Client requested extra stay in Zurich' });
+  const [assignForm, setAssignForm] = useState({
+    appId: 'VISA-302',
+    staffId: 'CO-101',
+    // task: 'Document Verification & Case Review',
+    taskNotes: ''
+  });
+
+  // Delete helpers for Country Visa Details
+  const handleDeleteVisaType = (index) => {
+    if (!viewingCountryVisaDetails) return;
+    const currentTypes = viewingCountryVisaDetails.visaTypes || [];
+    const updatedTypes = currentTypes.filter((_, i) => i !== index);
+    const updatedCountry = {
+      ...viewingCountryVisaDetails,
+      visaTypes: updatedTypes,
+      visaTypesCount: updatedTypes.length
+    };
+    setViewingCountryVisaDetails(updatedCountry);
+    setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+  };
+
+  const handleDeleteCountryDoc = (index) => {
+    if (!viewingCountryVisaDetails) return;
+    const currentDocs = viewingCountryVisaDetails.requiredDocs || [];
+    const updatedDocs = currentDocs.filter((_, i) => i !== index);
+    const updatedCountry = {
+      ...viewingCountryVisaDetails,
+      requiredDocs: updatedDocs
+    };
+    setViewingCountryVisaDetails(updatedCountry);
+    setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+  };
+
+  const handleDeleteItineraryDay = (index) => {
+    if (!viewingHolidayPackageDetails) return;
+    const currentItin = viewingHolidayPackageDetails.itinerary || [];
+    const updatedItin = currentItin.filter((_, i) => i !== index);
+    const updatedPkg = {
+      ...viewingHolidayPackageDetails,
+      itinerary: updatedItin,
+      days: updatedItin.length
+    };
+    setViewingHolidayPackageDetails(updatedPkg);
+    setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === updatedPkg.packageId ? updatedPkg : p));
+  };
+
+  // Filtered Leads
+  const filteredLeads = mockLeadsFull.filter(lead => {
+    if (leadFilterType !== 'All' && lead.leadType !== leadFilterType) return false;
+    if (leadFilterStatus !== 'All' && lead.status !== leadFilterStatus) return false;
+    return true;
+  });
+
+  return (
+    <div className="app-container">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-title">RH Global CRM</div>
+          <div className="sidebar-subtitle">Role: Super Admin</div>
+        </div>
+        <ul className="sidebar-nav">
+          <li>
+            <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
+              <span>1. Dashboard Overview</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>
+              <span>2. Leads Management</span>
+              <span className="nav-badge">{mockLeadsFull.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'companies' ? 'active' : ''} onClick={() => setActiveTab('companies')}>
+              <span>3. Companies / Clients</span>
+              <span className="nav-badge">{mockCompanies.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'travelers' ? 'active' : ''} onClick={() => setActiveTab('travelers')}>
+              <span>4. Travelers / Customers</span>
+              <span className="nav-badge">{mockTravelers.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'visa' ? 'active' : ''} onClick={() => setActiveTab('visa')}>
+              <span>5. Visa Applications</span>
+              <span className="nav-badge">{mockVisaServices.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
+              <span>6. Booking Applications</span>
+              <span className="nav-badge">{mockBookingServices.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'revenue' ? 'active' : ''} onClick={() => setActiveTab('revenue')}>
+              <span>7. Transactions</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => setActiveTab('reports')}>
+              <span>8. Reports & Analytics</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'roles' ? 'active' : ''} onClick={() => setActiveTab('roles')}>
+              <span>9. Roles & Permissions</span>
+              <span className="nav-badge">{mockStaffMembers.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+              <span>10. Reviews & Ratings</span>
+              <span className="nav-badge">{mockReviews.length}</span>
+            </button>
+          </li>
+          <li>
+            <button className={activeTab === 'packages' ? 'active' : ''} onClick={() => setActiveTab('packages')}>
+              <span>11. Packages</span>
+            </button>
+          </li>
+        </ul>
+        <div className="sidebar-footer">
+          <div>Logged in: <strong>admin@rhglobal.com</strong></div>
+          <button className="btn btn-sm mt-4" style={{ width: '100%' }} onClick={onLogout}>Logout</button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="main-layout">
+        <header className="top-header">
+          <div className="top-header-left">
+            <h1>Super Admin Dashboard</h1>
+            <p>RH Global CRM System &bull; Full Administrative Privileges</p>
+          </div>
+          <div className="user-profile-badge">
+            <span>Role: <strong>Super Admin</strong></span>
+            <button className="btn btn-sm" onClick={onLogout}>Logout</button>
+          </div>
+        </header>
+
+        <main className="content-body">
+          {viewingVisaDetails ? (
+            /* DEDICATED FULL-PAGE VISA APPLICATION DETAILS VIEW */
+            <div>
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setViewingVisaDetails(null)}>
+                  &larr; Back to Applications / Profile
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+              </div>
+
+              {/* Header Box: Applicant Information */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+                  <div className="section-title">Visa Application Details: {viewingVisaDetails.id}</div>
+                  <span className="status-badge">{viewingVisaDetails.status}</span>
+                </div>
+                <div className="form-grid" style={{ fontSize: '13px' }}>
+                  <div><strong>Applicant Name:</strong> {viewingVisaDetails.applicantName}</div>
+                  <div><strong>Email ID:</strong> vikram.roy@gmail.com</div>
+                  <div><strong>Mobile Number:</strong> +91 99112 23344</div>
+                  <div><strong>Target Country:</strong> {viewingVisaDetails.country}</div>
+                  <div><strong>Visa Type:</strong> {viewingVisaDetails.visaType}</div>
+                  <div><strong>Passport Details:</strong> Z9847291 (Exp: 2031-05-12)</div>
+                  <div><strong>Case Officer:</strong> {viewingVisaDetails.caseOfficerName} ({viewingVisaDetails.caseOfficerId})</div>
+                  <div><strong>Application Date:</strong> {viewingVisaDetails.applicationDate}</div>
+                </div>
+              </div>
+
+              {/* Application Status Lifecycle & Update */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Application Status Progression & Update</div>
+                </div>
+
+
+                <div className="toolbar mt-4" style={{ backgroundColor: '#f9f9f9', padding: '12px', border: '1px solid #ccc' }}>
+                  <div className="filter-group">
+                    <label>Change Application Status to:</label>
+                    <select
+                      value={viewingVisaDetails.status}
+                      onChange={e => setViewingVisaDetails({ ...viewingVisaDetails, status: e.target.value })}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Proceed">Proceed</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Rejected">Rejected</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <button className="btn btn-sm btn-primary" onClick={() => alert(`Status updated to "${viewingVisaDetails.status}"!`)}>
+                    Save Status Update
+                  </button>
+                </div>
+              </div>
+
+              {/* Document Management & Verification Status */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Document Management & Verification Status</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddDocModal(true)}>
+                    + Add Document Name
+                  </button>
+                </div>
+                <div className="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Document Name</th>
+                        <th>Document Requirement</th>
+                        <th>Verification Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visaDocsList.map(doc => (
+                        <tr key={doc.id}>
+                          <td><strong>{doc.name}</strong></td>
+                          <td><span className="status-badge">{doc.mandatory}</span></td>
+                          <td>
+                            <span className="status-badge" style={{
+                              backgroundColor: doc.status === 'Verified' ? '#e6ffe6' : doc.status === 'Rejected' ? '#ffe6e6' : '#fff'
+                            }}>
+                              {doc.status}
+                            </span>
+                          </td>
+                          <td className="action-cell">
+                            <button className="btn btn-sm" onClick={() => {
+                              setVisaDocsList(visaDocsList.map(d => d.id === doc.id ? { ...d, status: 'Verified' } : d));
+                            }}>Verify</button>
+                            <button className="btn btn-sm" onClick={() => {
+                              setVisaDocsList(visaDocsList.map(d => d.id === doc.id ? { ...d, status: 'Rejected' } : d));
+                            }}>Reject</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => {
+                              setVisaDocsList(visaDocsList.filter(d => d.id !== doc.id));
+                            }}>Remove</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Multiple Payment Management (PDF Spec Section 7.1 & 8) */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+
+                {/* Financial Summary Cards */}
+                <div className="grid-cards">
+                  <div className="card">
+                    <div className="card-title">Total Visa Fee</div>
+                    <div className="card-value">₹{(viewingVisaDetails.totalAmount || 24000).toLocaleString()}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Total Paid Amount</div>
+                    <div className="card-value">₹{visaPaymentsList.reduce((acc, p) => acc + p.amount, 0).toLocaleString()}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Pending Balance</div>
+                    <div className="card-value">₹{Math.max(0, (viewingVisaDetails.totalAmount || 24000) - visaPaymentsList.reduce((acc, p) => acc + p.amount, 0)).toLocaleString()}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Payment Status</div>
+                    <div className="card-value" style={{ fontSize: '18px' }}>
+                      {visaPaymentsList.reduce((acc, p) => acc + p.amount, 0) >= (viewingVisaDetails.totalAmount || 24000) ? 'PAID IN FULL' : 'PARTIALLY PAID'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multiple Payments Table */}
+                <div className="table-container mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Payment Type</th>
+                        <th>Payment Mode</th>
+                        <th>Amount (₹)</th>
+                        <th>Payment Date</th>
+                        <th>Reference / TXN ID</th>
+
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visaPaymentsList.map(pay => (
+                        <tr key={pay.id}>
+                          <td className="font-mono"><strong>{pay.id}</strong></td>
+                          <td><span className="status-badge">{pay.type}</span></td>
+                          <td>{pay.mode}</td>
+                          <td className="font-mono">₹{pay.amount.toLocaleString()}</td>
+                          <td>{pay.date}</td>
+                          <td className="font-mono">{pay.ref}</td>
+
+                          <td className="action-cell">
+                            <button className="btn btn-sm" onClick={() => alert(`Downloading receipt for ${pay.id}`)}>Download</button>
+                            <button className="btn btn-sm" onClick={() => setEditingPayment({ ...pay })}>Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => setVisaPaymentsList(visaPaymentsList.filter(p => p.id !== pay.id))}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Visa Document Upload & Download */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Visa File Upload & Download</div>
+                </div>
+                <div className="action-cell">
+                  <button className="btn btn-sm btn-primary" onClick={() => alert('Uploaded Final Approved Visa PDF')}>Upload Visa</button>
+                  <button className="btn btn-sm" onClick={() => alert('Viewing Final Visa Document')}>View Visa</button>
+                  <button className="btn btn-sm" onClick={() => alert('Downloading Final Visa Document')}>Download Visa</button>
+                </div>
+              </div>
+            </div>
+          ) : viewingBookingDetails ? (
+            /* DEDICATED FULL-PAGE HOLIDAY / TOUR BOOKING DETAILS VIEW */
+            <div>
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setViewingBookingDetails(null)}>
+                  &larr; Back to Bookings / Traveler Profile
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+              </div>
+
+              {/* Header Box: Booking Information */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+                  <div className="section-title">Holiday / Tour Booking Details: {viewingBookingDetails.packageId || 'PKG-701'}</div>
+                  <span className="status-badge">{viewingBookingDetails.status || 'ACTIVE'}</span>
+                </div>
+                <div className="form-grid" style={{ fontSize: '13px' }}>
+                  <div><strong>Package Name:</strong> {viewingBookingDetails.packageName || 'Bali Island Beach Getaway'}</div>
+                  <div><strong>Destination:</strong> {viewingBookingDetails.destination || 'Bali, Indonesia'}</div>
+                  <div><strong>Duration:</strong> {viewingBookingDetails.duration || '6 Days / 5 Nights'}</div>
+                  <div><strong>Booking Date:</strong> {viewingBookingDetails.bookingDate || '2026-10-01'}</div>
+                  <div><strong>Departure Date:</strong> {viewingBookingDetails.departureDate || '2026-11-15'}</div>
+                  <div><strong>Total Package Price:</strong> ₹{(viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000).toLocaleString()}</div>
+                  <div><strong>Customer Name:</strong> Vikram Roy</div>
+                  <div><strong>Contact Phone:</strong> +91 99112 23344</div>
+                </div>
+              </div>
+
+              {/* Booking Status Progression & Update */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Booking Application Status Progression & Update</div>
+                </div>
+                <div className="toolbar mt-4" style={{ backgroundColor: '#f9f9f9', padding: '12px', border: '1px solid #ccc' }}>
+                  <div className="filter-group">
+                    <label>Change Application / Booking Status to:</label>
+                    <select
+                      value={viewingBookingDetails.status || 'ACTIVE'}
+                      onChange={e => setViewingBookingDetails({ ...viewingBookingDetails, status: e.target.value })}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <button className="btn btn-sm btn-primary" onClick={() => alert(`Booking status updated to "${viewingBookingDetails.status}"!`)}>
+                    Save Status Update
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment Management (Multiple Payment Entries) */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+
+                {/* Summary Box */}
+                <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '16px' }}>
+                  <div className="card">
+                    <div className="card-title">Total Package Price</div>
+                    <div className="card-value">₹{(viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000).toLocaleString()}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Total Paid Amount</div>
+                    <div className="card-value">
+                      ₹{bookingPaymentsList.reduce((acc, p) => acc + p.amount, 0).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Remaining Balance</div>
+                    <div className="card-value">
+                      ₹{Math.max(0, (viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000) - bookingPaymentsList.reduce((acc, p) => acc + p.amount, 0)).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">Payment Status</div>
+                    <div className="card-value" style={{ fontSize: '18px' }}>
+                      {bookingPaymentsList.reduce((acc, p) => acc + p.amount, 0) >= (viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000) ? 'PAID IN FULL' : 'PARTIALLY PAID'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multiple Payments Table */}
+                <div className="table-container mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Payment ID</th>
+                        <th>Payment Type</th>
+                        <th>Payment Mode</th>
+                        <th>Amount (₹)</th>
+                        <th>Payment Date</th>
+                        <th>Reference / TXN ID</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookingPaymentsList.map(pay => (
+                        <tr key={pay.id}>
+                          <td className="font-mono"><strong>{pay.id}</strong></td>
+                          <td><span className="status-badge">{pay.type}</span></td>
+                          <td>{pay.mode}</td>
+                          <td className="font-mono">₹{pay.amount.toLocaleString()}</td>
+                          <td>{pay.date}</td>
+                          <td className="font-mono">{pay.ref}</td>
+                          <td className="action-cell">
+                            <button className="btn btn-sm" onClick={() => alert(`Downloading receipt for ${pay.id}`)}>Download</button>
+                            <button className="btn btn-sm" onClick={() => setEditingPayment({ ...pay })}>Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => setBookingPaymentsList(bookingPaymentsList.filter(p => p.id !== pay.id))}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Extend Duration / Amendments */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Extend Duration / Booking Amendments</div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Additional Days:</label>
+                    <input
+                      type="number"
+                      value={extendForm.days}
+                      onChange={e => setExtendForm({ ...extendForm, days: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Additional Nights:</label>
+                    <input
+                      type="number"
+                      value={extendForm.nights}
+                      onChange={e => setExtendForm({ ...extendForm, nights: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Additional Charges (₹):</label>
+                    <input
+                      type="number"
+                      value={extendForm.charges}
+                      onChange={e => setExtendForm({ ...extendForm, charges: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Amendment Remarks:</label>
+                    <input
+                      type="text"
+                      value={extendForm.remarks}
+                      onChange={e => setExtendForm({ ...extendForm, remarks: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <button className="btn btn-primary mt-4" onClick={() => alert(`Extended booking by ${extendForm.days}D / ${extendForm.nights}N with charges ₹${extendForm.charges.toLocaleString()}!`)}>
+                  Save Booking Extension
+                </button>
+              </div>
+            </div>
+          ) : viewingCountryVisaDetails ? (
+            /* DEDICATED FULL-PAGE COUNTRY VISA DETAILS VIEW */
+            <div>
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setViewingCountryVisaDetails(null)}>
+                  &larr; Back to Packages & Catalog
+                </button>
+              </div>
+
+              {/* Country Header Box */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '28px' }}>{viewingCountryVisaDetails.flag || '🌐'}</span>
+                    <span>Visa Details: {viewingCountryVisaDetails.countryName} ({viewingCountryVisaDetails.countryCode})</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="status-badge">{viewingCountryVisaDetails.status || 'Active'}</span>
+                    <button className="btn btn-sm btn-primary" onClick={() => setEditingCountryVisa({ ...viewingCountryVisaDetails })}>
+                      Edit Details
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '20px', marginTop: '12px' }}>
+                  <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
+                    <img
+                      src={viewingCountryVisaDetails.imageUrl}
+                      alt={viewingCountryVisaDetails.countryName}
+                      style={{ width: '100%', height: '140px', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
+                    <div><strong>Country Name:</strong> {viewingCountryVisaDetails.countryName}</div>
+                    <div><strong>Country Code:</strong> {viewingCountryVisaDetails.countryCode}</div>
+                    <div><strong>Visa Types Provided:</strong> {(viewingCountryVisaDetails.visaTypes ? viewingCountryVisaDetails.visaTypes.length : 0)} Visa Types</div>
+                    <div><strong>Standard Processing Time:</strong> {viewingCountryVisaDetails.processingTime || '10-15 Days'}</div>
+                    <div><strong>Starting Visa Fee:</strong> ₹{(viewingCountryVisaDetails.startingPrice || 18500).toLocaleString()}</div>
+                    <div><strong>Embassy Status:</strong> Active Visa Issuance</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visa Types Provided */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">1. Visa Types Provided for {viewingCountryVisaDetails.countryName}</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddVisaTypeModal(true)}>
+                    + Add Visa Type
+                  </button>
+                </div>
+                <div className="table-container mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Visa Type Name</th>
+                        <th>Validity Period</th>
+                        <th>Permitted Stay Duration</th>
+                        <th>Processing Fee (₹)</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(viewingCountryVisaDetails.visaTypes && viewingCountryVisaDetails.visaTypes.length > 0) ? (
+                        viewingCountryVisaDetails.visaTypes.map((vt, i) => (
+                          <tr key={i}>
+                            <td><strong>{vt.name}</strong></td>
+                            <td>{vt.validity}</td>
+                            <td>{vt.stayDuration}</td>
+                            <td className="font-mono">₹{(vt.processingFee || 0).toLocaleString()}</td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm" onClick={() => setEditingVisaType({ index: i, ...vt })}>Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDeleteVisaType(i)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+                            No visa types added yet. Click "+ Add Visa Type" to add one.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Document Requirements Matrix */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">2. Document Requirements & Matrix</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddCountryDocModal(true)}>
+                    + Add Document Requirement
+                  </button>
+                </div>
+                <div className="table-container mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Document Name</th>
+                        <th>Requirement Type</th>
+                        <th>Guidelines & Format Instructions</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(viewingCountryVisaDetails.requiredDocs && viewingCountryVisaDetails.requiredDocs.length > 0) ? (
+                        viewingCountryVisaDetails.requiredDocs.map((doc, i) => (
+                          <tr key={i}>
+                            <td><strong>{doc.name}</strong></td>
+                            <td><span className="status-badge">{doc.type}</span></td>
+                            <td>{doc.guidance}</td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm" onClick={() => setEditingCountryDoc({ index: i, ...doc })}>Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDeleteCountryDoc(i)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+                            No document requirements added yet. Click "+ Add Document Requirement" to add one.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Embassy Step-by-Step Guidance */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">3. Official Embassy Guidance & Application Instructions</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setEditingGuidanceText(viewingCountryVisaDetails.guidance || '')}>
+                    {viewingCountryVisaDetails.guidance && viewingCountryVisaDetails.guidance.trim() !== '' ? 'Edit Guidance' : '+ Add Guidance'}
+                  </button>
+                </div>
+                {viewingCountryVisaDetails.guidance && viewingCountryVisaDetails.guidance.trim() !== '' ? (
+                  <div style={{ fontSize: '13px', lineHeight: '1.6', background: '#f9f9f9', padding: '16px', border: '1px solid #ccc', marginTop: '12px' }}>
+                    <p><strong>Step-by-Step Guidance:</strong></p>
+                    <p>{viewingCountryVisaDetails.guidance}</p>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc', marginTop: '12px' }}>
+                    <p style={{ color: '#666', marginBottom: '8px' }}>No official embassy guidance added yet for {viewingCountryVisaDetails.countryName}.</p>
+                    <button className="btn btn-sm btn-primary" onClick={() => setEditingGuidanceText('')}>
+                      + Add Guidance Information
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : viewingHolidayPackageDetails ? (
+            /* DEDICATED FULL-PAGE HOLIDAY PACKAGE DETAILS VIEW */
+            <div>
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setViewingHolidayPackageDetails(null)}>
+                  &larr; Back to Packages & Catalog
+                </button>
+              </div>
+
+              {/* Header Banner */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Holiday Package: {viewingHolidayPackageDetails.packageName} ({viewingHolidayPackageDetails.packageId})</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="status-badge">{viewingHolidayPackageDetails.status || 'Active'}</span>
+                    <button className="btn btn-sm btn-primary" onClick={() => setEditingHolidayPackage({ ...viewingHolidayPackageDetails })}>
+                      Edit Details
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '20px', marginTop: '12px' }}>
+                  <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
+                    <img
+                      src={viewingHolidayPackageDetails.imageUrl}
+                      alt={viewingHolidayPackageDetails.packageName}
+                      style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
+                    <div><strong>Package ID:</strong> {viewingHolidayPackageDetails.packageId}</div>
+                    <div><strong>Package Name:</strong> {viewingHolidayPackageDetails.packageName}</div>
+                    <div><strong>Country / Region:</strong> {viewingHolidayPackageDetails.country}</div>
+                    <div><strong>Destination:</strong> {viewingHolidayPackageDetails.destination}</div>
+                    <div><strong>Duration:</strong> {viewingHolidayPackageDetails.duration}</div>
+                    <div><strong>Package Price:</strong> <span style={{ fontSize: '16px', fontWeight: 'bold' }}>₹{(viewingHolidayPackageDetails.price || 85000).toLocaleString()}</span> per person</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description & Overview */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Tour Overview & Description</div>
+                  {/* <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...viewingHolidayPackageDetails })}>Edit Overview</button> */}
+                </div>
+                <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.description}</p>
+              </div>
+
+              {/* Inclusions & Exclusions */}
+              <div className="form-grid">
+                <div className="section-box">
+                  <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="section-title">Package Inclusions</div>
+                    {/* <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...viewingHolidayPackageDetails })}>Edit Inclusions</button> */}
+                  </div>
+                  <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.inclusions}</p>
+                </div>
+                <div className="section-box">
+                  <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="section-title">Package Exclusions</div>
+                    {/* <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...viewingHolidayPackageDetails })}>Edit Exclusions</button> */}
+                  </div>
+                  <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.exclusions}</p>
+                </div>
+              </div>
+
+              {/* Day-by-Day Itinerary */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Day-by-Day Tour Itinerary</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => {
+                    const currentCount = viewingHolidayPackageDetails.itinerary ? viewingHolidayPackageDetails.itinerary.length : 0;
+                    setNewItineraryDayForm({ day: `Day ${currentCount + 1}`, title: '', detail: '' });
+                    setShowAddItineraryDayModal(true);
+                  }}>
+                    + Add Itinerary Day
+                  </button>
+                </div>
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {(viewingHolidayPackageDetails.itinerary && viewingHolidayPackageDetails.itinerary.length > 0) ? (
+                    viewingHolidayPackageDetails.itinerary.map((itin, idx) => (
+                      <div key={idx} style={{ border: '1px solid #ccc', padding: '12px', background: '#fcfcfc' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '6px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>{itin.day}: {itin.title}</span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-sm" onClick={() => setEditingItineraryDay({ index: idx, ...itin })}>Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDeleteItineraryDay(idx)}>Delete</button>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: '12px', color: '#444', lineHeight: '1.5' }}>{itin.detail}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc' }}>
+                      <p style={{ color: '#666', marginBottom: '8px' }}>No itinerary days added yet for this package.</p>
+                      <button className="btn btn-sm btn-primary" onClick={() => {
+                        setNewItineraryDayForm({ day: 'Day 1', title: '', detail: '' });
+                        setShowAddItineraryDayModal(true);
+                      }}>
+                        + Add Itinerary Day
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* 1. DASHBOARD OVERVIEW */}
+              {activeTab === 'overview' && (
+                <div>
+                  <div className="grid-cards">
+                    <div className="card">
+                      <div className="card-title">Total Companies</div>
+                      <div className="card-value">{mockSummaryCards.totalCompanies}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Total registered companies</p>
+                      <button className="card-action" onClick={() => setActiveTab('companies')}>View All &rarr;</button>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Total Travelers</div>
+                      <div className="card-value">{mockSummaryCards.totalTravelers}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Total travelers/customers registered</p>
+                      <button className="card-action" onClick={() => setActiveTab('travelers')}>View All &rarr;</button>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Total Staffs</div>
+                      <div className="card-value">{mockSummaryCards.totalStaffs}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Total staff/admin members</p>
+                      <button className="card-action" onClick={() => setActiveTab('roles')}>View All &rarr;</button>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Total Leads</div>
+                      <div className="card-value">{mockSummaryCards.totalLeads}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Total leads received</p>
+                      <button className="card-action" onClick={() => setActiveTab('leads')}>View All &rarr;</button>
+                    </div>
+                  </div>
+
+                  {/* Lead Graphs Wireframe */}
+                  <div className="section-box">
+                    <div className="section-header">
+                      <div className="section-title">Lead Graphs (Holiday vs Visa Leads)</div>
+                      <div className="filter-group">
+                        <label>Filter:</label>
+                        <select value={graphFilter} onChange={e => setGraphFilter(e.target.value)}>
+                          <option>Today</option>
+                          <option>This Week</option>
+                          <option>This Month</option>
+                          <option>This Year</option>
+                          <option>Custom Date Range</option>
+                        </select>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '12px', marginBottom: '12px' }}>Overview of lead volume received over time ({graphFilter}):</p>
+                    <div className="graph-container">
+                      <div className="graph-bars">
+                        <div className="graph-bar-group">
+                          <div className="graph-bar-pair">
+                            <div className="bar-1" style={{ height: '60%' }}></div>
+                            <div className="bar-2" style={{ height: '40%' }}></div>
+                          </div>
+                          <span className="graph-label">Mon</span>
+                        </div>
+                        <div className="graph-bar-group">
+                          <div className="graph-bar-pair">
+                            <div className="bar-1" style={{ height: '80%' }}></div>
+                            <div className="bar-2" style={{ height: '50%' }}></div>
+                          </div>
+                          <span className="graph-label">Tue</span>
+                        </div>
+                        <div className="graph-bar-group">
+                          <div className="graph-bar-pair">
+                            <div className="bar-1" style={{ height: '45%' }}></div>
+                            <div className="bar-2" style={{ height: '70%' }}></div>
+                          </div>
+                          <span className="graph-label">Wed</span>
+                        </div>
+                        <div className="graph-bar-group">
+                          <div className="graph-bar-pair">
+                            <div className="bar-1" style={{ height: '90%' }}></div>
+                            <div className="bar-2" style={{ height: '65%' }}></div>
+                          </div>
+                          <span className="graph-label">Thu</span>
+                        </div>
+                        <div className="graph-bar-group">
+                          <div className="graph-bar-pair">
+                            <div className="bar-1" style={{ height: '75%' }}></div>
+                            <div className="bar-2" style={{ height: '55%' }}></div>
+                          </div>
+                          <span className="graph-label">Fri</span>
+                        </div>
+                      </div>
+                      <div className="graph-legend">
+                        <div className="legend-item"><div className="legend-box" style={{ background: '#000000' }}></div> Holiday Leads</div>
+                        <div className="legend-item"><div className="legend-box" style={{ background: '#888888' }}></div> Visa Leads</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Leads Table */}
+                  <div className="section-box">
+                    <div className="section-header">
+                      <div className="section-title">Recent Leads (Top 5 Most Recent)</div>
+                      <button className="btn btn-sm" onClick={() => setActiveTab('leads')}>View All Leads</button>
+                    </div>
+                    <div className="table-container">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Lead Name</th>
+                            <th>Company Name</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>Lead Type</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mockRecentLeads.map(lead => (
+                            <tr key={lead.id}>
+                              <td><strong>{lead.leadName}</strong></td>
+                              <td>{lead.companyName}</td>
+                              <td>{lead.email}</td>
+                              <td>{lead.phone}</td>
+                              <td><span className="status-badge">{lead.leadType}</span></td>
+                              <td>{lead.source}</td>
+                              <td><span className="status-badge">{lead.status}</span></td>
+                              <td className="action-cell">
+                                <button className="btn btn-sm" onClick={() => setSelectedLead(lead)}>View</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Recent Rejected Applications */}
+                  <div className="section-box">
+                    <div className="section-header">
+                      <div className="section-title">Recent Rejected Applications</div>
+                    </div>
+                    <div className="table-container">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Application ID</th>
+                            <th>Applicant Name</th>
+                            <th>Application Type</th>
+                            <th>Country</th>
+                            <th>Rejection Date</th>
+                            <th>Rejection Reason</th>
+                            <th>Status</th>
+                            <th>View</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {mockRejectedApplications.map(app => (
+                            <tr key={app.id}>
+                              <td className="font-mono"><strong>{app.id}</strong></td>
+                              <td>{app.applicantName}</td>
+                              <td>{app.applicationType}</td>
+                              <td>{app.country}</td>
+                              <td>{app.rejectionDate}</td>
+                              <td><em>{app.rejectionReason}</em></td>
+                              <td><span className="status-badge">{app.status}</span></td>
+                              <td><button className="btn btn-sm" onClick={() => alert(`Viewing rejected app ${app.id}`)}>View</button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. LEADS MANAGEMENT */}
+              {activeTab === 'leads' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Leads Management</div>
+                    <button className="btn btn-primary" onClick={() => setShowAddLeadModal(true)}>+ Add Lead</button>
+                  </div>
+                  <div className="toolbar">
+                    <div className="filter-group">
+                      <label>Lead Type:</label>
+                      <select value={leadFilterType} onChange={e => setLeadFilterType(e.target.value)}>
+                        <option value="All">All Types</option>
+                        <option value="Visa">Visa</option>
+                        <option value="Holiday">Holiday</option>
+                      </select>
+                    </div>
+                    <div className="filter-group">
+                      <label>Status:</label>
+                      <select value={leadFilterStatus} onChange={e => setLeadFilterStatus(e.target.value)}>
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="No Response">No Response</option>
+                        <option value="Converted">Converted</option>
+                        <option value="Rejected/Closed">Rejected/Closed</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Lead Name</th>
+                          <th>Company Name</th>
+                          <th>Email ID</th>
+                          <th>Phone Number</th>
+                          <th>Target Country</th>
+                          <th>Lead Type</th>
+                          <th>Source</th>
+                          <th>Status</th>
+                          <th>Created Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredLeads.map(lead => (
+                          <tr key={lead.id}>
+                            <td><strong>{lead.leadName}</strong></td>
+                            <td>{lead.companyName}</td>
+                            <td>{lead.email}</td>
+                            <td>{lead.phone}</td>
+                            <td>{lead.targetCountry || 'N/A'}</td>
+                            <td><span className="status-badge">{lead.leadType}</span></td>
+                            <td>{lead.source}</td>
+                            <td><span className="status-badge">{lead.status}</span></td>
+                            <td>{lead.createdDate}</td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm" onClick={() => setSelectedLead(lead)}>View</button>
+                              <button className="btn btn-sm" onClick={() => setSelectedLead(lead)}>Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting Lead ${lead.id}`)}>Delete</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. COMPANIES / CLIENTS */}
+              {activeTab === 'companies' && (
+                <div>
+                  {!selectedCompany ? (
+                    <div>
+                      <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+                        <h2>Companies / Clients Management</h2>
+                        <button className="btn btn-primary" onClick={() => setShowAddCompanyModal(true)}>+ Add Company</button>
+                      </div>
+
+                      {/* Company Listing Table */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Company Listing</div>
+                        </div>
+                        <div className="table-container">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Company Name</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Total Travelers</th>
+                                <th>Total Applications</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {mockCompanies.map(comp => (
+                                <tr key={comp.id}>
+                                  <td><strong>{comp.companyName}</strong></td>
+                                  <td>{comp.contactPerson}</td>
+                                  <td>{comp.email}</td>
+                                  <td>{comp.phone}</td>
+                                  <td className="text-center font-mono">{comp.totalCustomers}</td>
+                                  <td className="text-center font-mono">{comp.totalApplications}</td>
+                                  <td><span className="status-badge">{comp.status}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm btn-primary" onClick={() => { setSelectedCompany(comp); setCompanySubTab('applications'); }}>View</button>
+                                    <button className="btn btn-sm" onClick={() => setEditingCompany({ ...comp })}>Edit</button>
+                                    <button className="btn btn-sm" onClick={() => alert(`Toggled activation status for ${comp.companyName}`)}>Activate/Deactivate</button>
+                                    <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting company ${comp.companyName}`)}>Delete</button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* DEDICATED COMPANY DETAILS PAGE VIEW */
+                    <div>
+                      <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <button className="btn" onClick={() => setSelectedCompany(null)}>
+                          &larr; Back to Company Listing
+                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-sm" onClick={() => setEditingCompany({ ...selectedCompany })}>Edit Company Details</button>
+                        </div>
+                      </div>
+
+                      {/* Company Header Box */}
+                      <div className="section-box" style={{ background: '#fafafa' }}>
+                        <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px' }}>
+                          <div className="section-title">Company Details: {selectedCompany.companyName}</div>
+                          <span className="status-badge">{selectedCompany.status}</span>
+                        </div>
+                        <div className="form-grid" style={{ fontSize: '13px' }}>
+                          <div><strong>Registration Details:</strong> {selectedCompany.registrationDetails}</div>
+                          <div><strong>Contact Person:</strong> {selectedCompany.contactPerson}</div>
+                          <div><strong>Email ID:</strong> {selectedCompany.email}</div>
+                          <div><strong>Phone Number:</strong> {selectedCompany.phone}</div>
+                          <div><strong>Address:</strong> {selectedCompany.address}</div>
+                          <div><strong>Country:</strong> {selectedCompany.country}</div>
+                          <div><strong>Total Registered Travelers:</strong> {selectedCompany.totalCustomers}</div>
+                          <div><strong>Total Applications Submitted:</strong> {selectedCompany.totalApplications}</div>
+                        </div>
+                      </div>
+
+                      {/* 3 Major Tabs as per PDF Spec Section 5 */}
+                      <div className="tabs-header">
+                        <button
+                          className={`tab-btn ${companySubTab === 'applications' ? 'active' : ''}`}
+                          onClick={() => setCompanySubTab('applications')}
+                        >
+                          5.1 Applications ({mockCompanyApplications.length})
+                        </button>
+                        <button
+                          className={`tab-btn ${companySubTab === 'employees' ? 'active' : ''}`}
+                          onClick={() => setCompanySubTab('employees')}
+                        >
+                          5.2 Employees ({mockCompanyEmployees.length})
+                        </button>
+                        <button
+                          className={`tab-btn ${companySubTab === 'financial' ? 'active' : ''}`}
+                          onClick={() => setCompanySubTab('financial')}
+                        >
+                          5.3 Issuing / Booking / Financial Information
+                        </button>
+                      </div>
+
+                      {/* TAB 5.1 APPLICATIONS WITH FILTERS */}
+                      {companySubTab === 'applications' && (
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Company Applications</div>
+                          </div>
+
+                          {/* FILTER TOOLBAR */}
+                          <div className="toolbar" style={{ backgroundColor: '#f5f5f5', padding: '10px', border: '1px solid #ccc', marginBottom: '16px' }}>
+                            <div className="filter-group">
+                              <label>Search Applicant / ID:</label>
+                              <input
+                                type="text"
+                                placeholder="Type to filter..."
+                                value={companyAppSearch}
+                                onChange={e => setCompanyAppSearch(e.target.value)}
+                                style={{ width: '180px' }}
+                              />
+                            </div>
+                            <div className="filter-group">
+                              <label>Application Type:</label>
+                              <select value={companyAppFilterType} onChange={e => setCompanyAppFilterType(e.target.value)}>
+                                <option value="All">All Types</option>
+                                <option value="Visa">Visa</option>
+                                <option value="Holiday">Holiday</option>
+                              </select>
+                            </div>
+                            <div className="filter-group">
+                              <label>Status:</label>
+                              <select value={companyAppFilterStatus} onChange={e => setCompanyAppFilterStatus(e.target.value)}>
+                                <option value="All">All Statuses</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Under Review">Under Review</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                            </div>
+                            {(companyAppSearch || companyAppFilterType !== 'All' || companyAppFilterStatus !== 'All') && (
+                              <button
+                                className="btn btn-sm"
+                                onClick={() => { setCompanyAppSearch(''); setCompanyAppFilterType('All'); setCompanyAppFilterStatus('All'); }}
+                              >
+                                Reset Filters
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="table-container">
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Application ID</th>
+                                  <th>Applicant Name</th>
+                                  <th>Application Type</th>
+                                  <th>Country</th>
+                                  <th>Service Required</th>
+                                  <th>Assigned Employee / Case Officer</th>
+                                  <th>Status</th>
+                                  <th>Application Date</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mockCompanyApplications
+                                  .filter(app => {
+                                    if (companyAppFilterType !== 'All' && app.applicationType !== companyAppFilterType) return false;
+                                    if (companyAppFilterStatus !== 'All' && app.status !== companyAppFilterStatus) return false;
+                                    if (companyAppSearch && !app.applicantName.toLowerCase().includes(companyAppSearch.toLowerCase()) && !app.id.toLowerCase().includes(companyAppSearch.toLowerCase())) return false;
+                                    return true;
+                                  })
+                                  .map(app => (
+                                    <tr key={app.id}>
+                                      <td className="font-mono"><strong>{app.id}</strong></td>
+                                      <td>{app.applicantName}</td>
+                                      <td><span className="status-badge">{app.applicationType}</span></td>
+                                      <td>{app.country}</td>
+                                      <td>{app.service}</td>
+                                      <td>{app.assignedEmployee}</td>
+                                      <td><span className="status-badge">{app.status}</span></td>
+                                      <td>{app.applicationDate}</td>
+                                      <td className="action-cell">
+                                        <button className="btn btn-sm" onClick={() => {
+                                          if (app.applicationType === 'HOLIDAY' || (app.service && (app.service.includes('Europe') || app.service.includes('Bali')))) {
+                                            setViewingBookingDetails({
+                                              packageId: app.id || 'PKG-701',
+                                              packageName: app.service || 'Grand Europe 10D',
+                                              destination: app.country || 'France & Switzerland',
+                                              duration: '8 Days / 7 Nights',
+                                              bookingDate: app.applicationDate || '2026-09-25',
+                                              departureDate: '2026-11-15',
+                                              totalPrice: 210000,
+                                              price: 210000,
+                                              status: app.status || 'APPROVED',
+                                              customerName: app.applicantName || 'Deepak Chopra'
+                                            });
+                                            setViewingVisaDetails(null);
+                                            setSelectedCompany(null);
+                                          } else {
+                                            setViewingVisaDetails({
+                                              id: app.id || 'VISA-301',
+                                              applicantName: app.applicantName || 'Rohan Joshi',
+                                              email: 'contact@rhglobal.com',
+                                              phone: '+91 98200 11111',
+                                              country: app.country || 'United States',
+                                              service: app.service || 'Business Visa (B1)',
+                                              passport: 'P1092834 (Exp: 2031-05-12)',
+                                              assignedEmployee: app.assignedEmployee || 'Amit Verma (CO-101)',
+                                              applicationDate: app.applicationDate || '2026-10-01',
+                                              status: app.status || 'IN PROGRESS'
+                                            });
+                                            setViewingBookingDetails(null);
+                                            setSelectedCompany(null);
+                                          }
+                                        }}>View</button>
+                                        <button className="btn btn-sm" onClick={() => alert(`Editing application ${app.id}`)}>Edit</button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 5.2 EMPLOYEES WITH FILTERS */}
+                      {companySubTab === 'employees' && (
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Company Employees / Staff Members</div>
+                            <button className="btn btn-sm btn-primary" onClick={() => alert('Add Employee modal triggered')}>+ Add Employee</button>
+                          </div>
+
+                          {/* FILTER TOOLBAR */}
+                          <div className="toolbar" style={{ backgroundColor: '#f5f5f5', padding: '10px', border: '1px solid #ccc', marginBottom: '16px' }}>
+                            <div className="filter-group">
+                              <label>Search Employee Name / ID:</label>
+                              <input
+                                type="text"
+                                placeholder="Type to filter..."
+                                value={companyEmpSearch}
+                                onChange={e => setCompanyEmpSearch(e.target.value)}
+                                style={{ width: '200px' }}
+                              />
+                            </div>
+                            <div className="filter-group">
+                              <label>Status:</label>
+                              <select value={companyEmpFilterStatus} onChange={e => setCompanyEmpFilterStatus(e.target.value)}>
+                                <option value="All">All Statuses</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                              </select>
+                            </div>
+                            {(companyEmpSearch || companyEmpFilterStatus !== 'All') && (
+                              <button
+                                className="btn btn-sm"
+                                onClick={() => { setCompanyEmpSearch(''); setCompanyEmpFilterStatus('All'); }}
+                              >
+                                Reset Filters
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="table-container">
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Employee ID</th>
+                                  <th>Name</th>
+                                  <th>Email</th>
+                                  <th>Phone Number</th>
+                                  <th>Department</th>
+                                  <th>Designation</th>
+                                  <th>Status</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mockCompanyEmployees
+                                  .filter(emp => {
+                                    if (companyEmpFilterStatus !== 'All' && emp.status !== companyEmpFilterStatus) return false;
+                                    if (companyEmpSearch && !emp.name.toLowerCase().includes(companyEmpSearch.toLowerCase()) && !emp.employeeId.toLowerCase().includes(companyEmpSearch.toLowerCase())) return false;
+                                    return true;
+                                  })
+                                  .map(emp => (
+                                    <tr key={emp.employeeId}>
+                                      <td className="font-mono"><strong>{emp.employeeId}</strong></td>
+                                      <td>{emp.name}</td>
+                                      <td>{emp.email}</td>
+                                      <td>{emp.phone}</td>
+                                      <td>{emp.department}</td>
+                                      <td>{emp.designation}</td>
+                                      <td><span className="status-badge">{emp.status}</span></td>
+                                      <td className="action-cell">
+                                        <button className="btn btn-sm" onClick={() => alert(`Editing employee ${emp.employeeId}`)}>Edit</button>
+                                        <button className="btn btn-sm" onClick={() => alert(`Toggled activation for ${emp.name}`)}>Activate/Deactivate</button>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TAB 5.3 ISSUING / BOOKING / FINANCIAL INFORMATION */}
+                      {companySubTab === 'financial' && (
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Issuing, Booking & Financial Information</div>
+                          </div>
+
+                          <div className="grid-cards">
+                            <div className="card">
+                              <div className="card-title">Total Company Applications</div>
+                              <div className="card-value">{selectedCompany.totalApplications}</div>
+                            </div>
+                            <div className="card">
+                              <div className="card-title">Total Invoiced Amount</div>
+                              <div className="card-value">₹8,40,000</div>
+                            </div>
+                            <div className="card">
+                              <div className="card-title">Paid Amount</div>
+                              <div className="card-value">₹8,40,000</div>
+                            </div>
+                            <div className="card">
+                              <div className="card-title">Payment Status</div>
+                              <div className="card-value" style={{ fontSize: '18px' }}>SETTLED</div>
+                            </div>
+                          </div>
+
+                          <div className="table-container mt-4">
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Application ID</th>
+                                  <th>Service Type</th>
+                                  <th>Booking Status</th>
+                                  <th>Payment Status</th>
+                                  <th>Invoice Information</th>
+                                  <th>Download</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td className="font-mono">APP-5001</td>
+                                  <td>Business Visa (B1)</td>
+                                  <td><span className="status-badge">Confirmed</span></td>
+                                  <td><span className="status-badge">Paid</span></td>
+                                  <td>INV-2026-0911 (₹21,000)</td>
+                                  <td><button className="btn btn-sm" onClick={() => alert('Downloading Invoice PDF')}>Invoice Download</button></td>
+                                </tr>
+                                <tr>
+                                  <td className="font-mono">APP-5002</td>
+                                  <td>Grand Europe 10D Package</td>
+                                  <td><span className="status-badge">Confirmed</span></td>
+                                  <td><span className="status-badge">Paid</span></td>
+                                  <td>INV-2026-0865 (₹2,10,000)</td>
+                                  <td><button className="btn btn-sm" onClick={() => alert('Downloading Invoice PDF')}>Invoice Download</button></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. TRAVELERS / CUSTOMERS */}
+              {activeTab === 'travelers' && (
+                <div>
+                  {!viewingTraveler ? (
+                    <div className="section-box">
+                      <div className="section-header">
+                        <div className="section-title">Travelers / Customers Listing</div>
+                        <button className="btn btn-primary" onClick={() => setShowAddTravelerModal(true)}>+ Add Traveler</button>
+                      </div>
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Unique Traveler ID</th>
+                              <th>Applicant Name</th>
+                              <th>Mobile Number</th>
+                              <th>Email</th>
+                              <th>Country</th>
+                              <th>Registration Date</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mockTravelers.map(trv => (
+                              <tr key={trv.travelerId}>
+                                <td className="font-mono"><strong>{trv.travelerId}</strong></td>
+                                <td>{trv.applicantName}</td>
+                                <td>{trv.mobileNumber}</td>
+                                <td>{trv.email}</td>
+                                <td>{trv.country}</td>
+                                <td>{trv.registrationDate}</td>
+                                <td><span className="status-badge">{trv.status}</span></td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingTraveler(trv)}>View</button>
+                                  <button className="btn btn-sm" onClick={() => setEditingTraveler({ ...trv })}>Edit</button>
+                                  <button className="btn btn-sm" onClick={() => alert(`Toggled Block/Unblock for ${trv.applicantName}`)}>Block/Unblock</button>
+                                  <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting traveler ${trv.travelerId}`)}>Delete</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    /* DEDICATED FULL-PAGE TRAVELER DETAILS VIEW */
+                    <div>
+                      <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <button className="btn" onClick={() => setViewingTraveler(null)}>
+                          &larr; Back to Traveler Listing
+                        </button>
+                        <button className="btn btn-sm btn-primary" onClick={() => setEditingTraveler({ ...viewingTraveler })}>
+                          Edit Traveler Details
+                        </button>
+                      </div>
+
+                      {/* Section 6 PDF Requirements: Personal Details, Contact Details, Passport/Travel Info */}
+                      <div className="section-box" style={{ background: '#fafafa' }}>
+                        <div className="section-header">
+                          <div className="section-title">Traveler Full Profile: {viewingTraveler.applicantName} ({viewingTraveler.travelerId})</div>
+                          <span className="status-badge">{viewingTraveler.status}</span>
+                        </div>
+                        <div className="form-grid" style={{ fontSize: '13px' }}>
+                          <div><strong>Unique Traveler ID:</strong> <span className="font-mono">{viewingTraveler.travelerId}</span></div>
+                          <div><strong>Applicant Name:</strong> {viewingTraveler.applicantName}</div>
+                          <div><strong>Mobile Number:</strong> {viewingTraveler.mobileNumber}</div>
+                          <div><strong>Email ID:</strong> {viewingTraveler.email}</div>
+                          <div><strong>Country:</strong> {viewingTraveler.country}</div>
+                          <div><strong>Passport Information:</strong> {viewingTraveler.passport || 'Z9847291 (Exp: 2031-05-12)'}</div>
+                          <div><strong>Registration Date:</strong> {viewingTraveler.registrationDate}</div>
+                          <div><strong>Account Status:</strong> {viewingTraveler.status}</div>
+                        </div>
+                      </div>
+
+                      {/* PDF Section 6: Visa Applications History */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Visa Applications History ({viewingTraveler.visaApplications || 4} Total)</div>
+                        </div>
+                        <div className="table-container">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Application ID</th>
+                                <th>Target Country</th>
+                                <th>Visa Type</th>
+                                <th>Application Date</th>
+                                <th>Case Officer</th>
+                                <th>Payment Type</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {mockVisaServices
+                                .filter(v => v.applicantName.toLowerCase() === viewingTraveler.applicantName.toLowerCase() || true)
+                                .slice(0, 3)
+                                .map(visa => (
+                                  <tr key={visa.id}>
+                                    <td className="font-mono"><strong>{visa.id}</strong></td>
+                                    <td>{visa.country}</td>
+                                    <td>{visa.visaType}</td>
+                                    <td>{visa.applicationDate}</td>
+                                    <td>{visa.caseOfficerName} ({visa.caseOfficerId})</td>
+                                    <td><span className="status-badge">{visa.paymentType}</span></td>
+                                    <td><span className="status-badge">{visa.status}</span></td>
+                                    <td><button className="btn btn-sm btn-primary" onClick={() => setViewingVisaDetails(visa)}>View Details &rarr;</button></td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* PDF Section 6: Booking History */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Holiday / Tour Booking History</div>
+                        </div>
+                        <div className="table-container">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Package ID</th>
+                                <th>Package Name</th>
+                                <th>Destination</th>
+                                <th>Duration</th>
+                                <th>Booking Date</th>
+                                <th>Departure Date</th>
+                                <th>Total Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {mockBookingServices.map(bk => (
+                                <tr key={bk.packageId}>
+                                  <td className="font-mono"><strong>{bk.packageId}</strong></td>
+                                  <td>{bk.packageName}</td>
+                                  <td>{bk.destination}</td>
+                                  <td>{bk.duration}</td>
+                                  <td>{bk.bookingDate}</td>
+                                  <td>{bk.departureDate}</td>
+                                  <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
+                                  <td><span className="status-badge">{bk.status}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingBookingDetails(bk)}>View Details &rarr;</button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 5. VISA SERVICES */}
+              {activeTab === 'visa' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Visa Services & Applications Management</div>
+                  </div>
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Application ID</th>
+                          <th>Applicant Name</th>
+                          <th>Country</th>
+                          <th>Visa Type</th>
+                          <th>Case Officer Name</th>
+                          <th>Case Officer ID</th>
+                          <th>Application Date</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockVisaServices.map(visa => (
+                          <tr key={visa.id}>
+                            <td className="font-mono"><strong>{visa.id}</strong></td>
+                            <td>{visa.applicantName}</td>
+                            <td>{visa.country}</td>
+                            <td>{visa.visaType}</td>
+                            <td>{visa.caseOfficerName}</td>
+                            <td className="font-mono">{visa.caseOfficerId}</td>
+                            <td>{visa.applicationDate}</td>
+                            <td><span className="status-badge">{visa.status}</span></td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm btn-primary" onClick={() => setViewingVisaDetails(visa)}>View Full Details &rarr;</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 6. BOOKING SERVICES */}
+              {activeTab === 'booking' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Booking Services (Holiday/Tour Management)</div>
+                  </div>
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Package ID</th>
+                          <th>Package Name</th>
+                          <th>Destination</th>
+                          <th>Duration</th>
+                          <th>Days / Nights</th>
+                          <th>Booking Date</th>
+                          <th>Total Price</th>
+                          <th>Departure Date</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockBookingServices.map(bk => (
+                          <tr key={bk.packageId}>
+                            <td className="font-mono"><strong>{bk.packageId}</strong></td>
+                            <td>{bk.packageName}</td>
+                            <td>{bk.destination}</td>
+                            <td>{bk.duration}</td>
+                            <td>{bk.days}D / {bk.nights}N</td>
+                            <td>{bk.bookingDate}</td>
+                            <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
+                            <td>{bk.departureDate}</td>
+                            <td><span className="status-badge">{bk.status}</span></td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm btn-primary" onClick={() => setViewingBookingDetails(bk)}>View Details &rarr;</button>
+                              <button className="btn btn-sm" onClick={() => { setSelectedBooking(bk); setShowExtendBookingModal(true); }}>Extend Duration</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 7. REVENUE & INVOICE */}
+              {activeTab === 'revenue' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Revenue & Invoice (Transaction History)</div>
+                    <div className="toolbar" style={{ margin: 0 }}>
+                      <button className="btn btn-sm" onClick={() => alert('Exporting to Excel...')}>Export Excel</button>
+                      <button className="btn btn-sm" onClick={() => alert('Exporting to PDF...')}>Export PDF</button>
+                    </div>
+                  </div>
+                  <div className="toolbar">
+                    <div className="filter-group">
+                      <label>Service Type:</label>
+                      <select><option>All</option><option>Visa</option><option>Holiday</option></select>
+                    </div>
+                    <div className="filter-group">
+                      <label>Payment Type:</label>
+                      <select><option>All</option><option>Prepaid</option><option>Postpaid</option></select>
+                    </div>
+                  </div>
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Transaction ID</th>
+                          <th>Application Name</th>
+                          <th>Customer Name</th>
+                          <th>Transaction Type</th>
+                          <th>Amount</th>
+                          {/* <th>Extended Booking Amt</th> */}
+                          <th>Payment Type</th>
+                          {/* <th>Payment Status</th> */}
+                          <th>Transaction Date</th>
+                          <th>Invoice</th>
+                          {/* <th>Actions</th> */}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockTransactions.map(txn => (
+                          <tr key={txn.id}>
+                            <td className="font-mono"><strong>{txn.id}</strong></td>
+                            <td>{txn.applicationName}</td>
+                            <td>{txn.customerName}</td>
+                            <td>{txn.transactionType}</td>
+                            <td className="font-mono">₹{txn.amount.toLocaleString()}</td>
+                            {/* <td className="font-mono">₹{txn.extendedBookingAmount.toLocaleString()}</td> */}
+                            <td>{txn.paymentType}</td>
+                            {/* <td><span className="status-badge">{txn.paymentStatus}</span></td> */}
+                            <td>{txn.transactionDate}</td>
+                            <td className="font-mono">{txn.invoice}</td>
+                            {/* <td className="action-cell">
+                              <button className="btn btn-sm" onClick={() => alert(`Generating Invoice for ${txn.invoice}`)}>Generate</button>
+                              <button className="btn btn-sm" onClick={() => alert(`Downloading Invoice ${txn.invoice}`)}>Download</button>
+                            </td> */}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 8. REPORTS & ANALYTICS */}
+              {activeTab === 'reports' && (
+                <div>
+                  <div className="section-header">
+                    <h2>Reports & Analytics (Business Insights)</h2>
+                    <div className="filter-group">
+                      <label>Filter:</label>
+                      <select><option>Today</option><option>This Week</option><option defaultValue>This Month</option><option>This Year</option><option>Custom Date Range</option></select>
+                    </div>
+                  </div>
+                  <div className="grid-cards">
+                    <div className="card">
+                      <div className="card-title">Approval Rate</div>
+                      <div className="card-value">{mockReportsMetrics.approvalRate}</div>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Avg Application Cycle</div>
+                      <div className="card-value">{mockReportsMetrics.avgApplicationCycle}</div>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Conversion Rate</div>
+                      <div className="card-value">{mockReportsMetrics.customerConversionRate}</div>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Total Revenue</div>
+                      <div className="card-value">{mockReportsMetrics.totalRevenue}</div>
+                    </div>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="section-box">
+                      <div className="section-title">Leads & Applications Summary</div>
+                      <p style={{ fontSize: '13px', marginTop: '10px' }}>Visa Applications: <strong>{mockReportsMetrics.visaApplications}</strong></p>
+                      <p style={{ fontSize: '13px' }}>Holiday Applications: <strong>{mockReportsMetrics.holidayApplications}</strong></p>
+                      <p style={{ fontSize: '13px' }}>Total Leads Received: <strong>{mockReportsMetrics.totalLeads}</strong></p>
+                      <p style={{ fontSize: '13px' }}>Converted Leads: <strong>{mockReportsMetrics.convertedLeads}</strong></p>
+                    </div>
+                    <div className="section-box">
+                      <div className="section-title">Application Status Distribution</div>
+                      <p style={{ fontSize: '13px', marginTop: '10px' }}>Completed Applications: <strong>{mockReportsMetrics.completedApplications}</strong></p>
+                      <p style={{ fontSize: '13px' }}>Pending Applications: <strong>{mockReportsMetrics.pendingApplications}</strong></p>
+                      <p style={{ fontSize: '13px' }}>Rejected Applications: <strong>{mockReportsMetrics.rejectedApplications}</strong></p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 9. ROLES & PERMISSIONS */}
+              {activeTab === 'roles' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Roles & Permissions (Staff Management)</div>
+                    <div>
+                      <button className="btn btn-sm mr-2" onClick={() => setShowAssignModal(true)}>Application Assignment Flow</button>
+                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddMemberModal(true)}>+ Add Member</button>
+                    </div>
+                  </div>
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Employee ID</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Role</th>
+                          <th>Department</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {staffList.map(mem => (
+                          <tr key={mem.employeeId}>
+                            <td className="font-mono"><strong>{mem.employeeId}</strong></td>
+                            <td>{mem.name}</td>
+                            <td>{mem.email}</td>
+                            <td>{mem.role}</td>
+                            <td>{mem.department}</td>
+                            <td><span className="status-badge">{mem.status}</span></td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm btn-primary" onClick={() => setSelectedMember(mem)}>View Member</button>
+                              <button className="btn btn-sm" onClick={() => setEditingMember({ ...mem })}>Edit</button>
+                              <button className="btn btn-sm" onClick={() => {
+                                setStaffList(staffList.map(s => s.employeeId === mem.employeeId ? { ...s, status: s.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' } : s));
+                              }}>
+                                {mem.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 10. REVIEWS & RATINGS */}
+              {activeTab === 'reviews' && (
+                <div className="section-box">
+                  <div className="section-header">
+                    <div className="section-title">Reviews & Ratings Management</div>
+                  </div>
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Customer Name</th>
+                          <th>Booking/App ID</th>
+                          <th>Package Name</th>
+                          <th>Destination</th>
+                          <th>Rating</th>
+                          <th>Review Text</th>
+                          <th>Date</th>
+                          <th>CRM Status</th>
+                          <th>Website Sync</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockReviews.map(rev => (
+                          <tr key={rev.id}>
+                            <td><strong>{rev.customerName}</strong></td>
+                            <td className="font-mono">{rev.bookingId}</td>
+                            <td>{rev.packageName}</td>
+                            <td>{rev.destination}</td>
+                            <td>{'★'.repeat(rev.rating)} ({rev.rating}/5)</td>
+                            <td>"{rev.review}"</td>
+                            <td>{rev.date}</td>
+                            <td><span className="status-badge">{rev.status}</span></td>
+                            <td><span className="status-badge">{rev.webStatus}</span></td>
+                            <td className="action-cell">
+                              <button className="btn btn-sm" onClick={() => alert(`Publishing review ${rev.id} to website`)}>Publish to Website</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => alert(`Hiding review ${rev.id} from website`)}>Hide from Website</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 11. PACKAGES & CATALOG MANAGEMENT */}
+              {activeTab === 'packages' && (
+                <div>
+                  {/* 2 Sub-Tabs Header */}
+                  <div className="tabs-header" style={{ marginBottom: '16px' }}>
+                    <button
+                      className={`tab-btn ${packagesSubTab === 'visa' ? 'active' : ''}`}
+                      onClick={() => setPackagesSubTab('visa')}
+                    >
+                      11.1 Visa Packages / Countries ({countriesList.length})
+                    </button>
+                    <button
+                      className={`tab-btn ${packagesSubTab === 'holiday' ? 'active' : ''}`}
+                      onClick={() => setPackagesSubTab('holiday')}
+                    >
+                      11.2 Holiday / Tour Packages ({holidayPackagesList.length})
+                    </button>
+                  </div>
+
+                  {/* SUB-TAB 1: VISA PACKAGES / COUNTRIES */}
+                  {packagesSubTab === 'visa' && (
+                    <div>
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Visa Packages & Countries Offered ({countriesList.length} Countries)</div>
+                          <button className="btn btn-primary btn-sm" onClick={() => setShowAddCountryVisaModal(true)}>
+                            + Add Visa Country
+                          </button>
+                        </div>
+
+                        {/* Country Cards & Table */}
+                        <div className="table-container mt-4">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Country / Image</th>
+                                <th>Country Name</th>
+                                <th>Code</th>
+                                <th>Visa Types Offered</th>
+                                <th>Processing Time</th>
+                                <th>Starting Fee (₹)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {countriesList.map(c => (
+                                <tr key={c.id || c.countryCode}>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <img
+                                        src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
+                                        alt={c.countryName}
+                                        style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                      />
+                                      <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
+                                    </div>
+                                  </td>
+                                  <td><strong>{c.countryName}</strong></td>
+                                  <td className="font-mono">{c.countryCode}</td>
+                                  <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
+                                  <td>{c.processingTime || '10-15 Days'}</td>
+                                  <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
+                                  <td><span className="status-badge">{c.status}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                    <button className="btn btn-sm" onClick={() => setEditingCountryVisa({ ...c })}>Edit</button>
+                                    <button className="btn btn-sm" onClick={() => {
+                                      setCountriesList(countriesList.map(item => item.countryCode === c.countryCode ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' } : item));
+                                    }}>
+                                      {c.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUB-TAB 2: HOLIDAY PACKAGES */}
+                  {packagesSubTab === 'holiday' && (
+                    <div>
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
+                          <button className="btn btn-primary btn-sm" onClick={() => setShowAddHolidayPackageModal(true)}>
+                            + Add Holiday Package
+                          </button>
+                        </div>
+
+                        {/* Holiday Package Cards Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                          {holidayPackagesList.map(pkg => (
+                            <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                              <img
+                                src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
+                                alt={pkg.packageName}
+                                style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                              />
+                              <div style={{ padding: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                  <div>
+                                    <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
+                                    <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                                  </div>
+                                  <span className="status-badge">{pkg.status}</span>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
+                                <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
+                                <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                  <strong>Inclusions:</strong> {pkg.inclusions}
+                                </p>
+                                <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                                  <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
+                                  <button className="btn btn-sm" onClick={() => {
+                                    setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
+                                  }}>
+                                    {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* --- MODALS FOR SUPER ADMIN --- */}
+      {/* Lead Details / Edit Modal */}
+      {selectedLead && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">View / Edit Lead: {selectedLead.leadName}</div>
+              <button className="close-btn" onClick={() => setSelectedLead(null)}>X</button>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Lead Name:</label>
+                <input
+                  type="text"
+                  value={selectedLead.leadName || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, leadName: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Company Name:</label>
+                <input
+                  type="text"
+                  value={selectedLead.companyName || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, companyName: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email ID:</label>
+                <input
+                  type="email"
+                  value={selectedLead.email || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number:</label>
+                <input
+                  type="text"
+                  value={selectedLead.phone || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Target Country:</label>
+                <input
+                  type="text"
+                  value={selectedLead.targetCountry || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, targetCountry: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Service Required:</label>
+                <input
+                  type="text"
+                  value={selectedLead.serviceRequired || selectedLead.leadType || ''}
+                  onChange={e => setSelectedLead({ ...selectedLead, serviceRequired: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Lead Source:</label>
+                <select
+                  value={selectedLead.source || 'Website'}
+                  onChange={e => setSelectedLead({ ...selectedLead, source: e.target.value })}
+                >
+                  <option value="Website">Website</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Assigned Staff:</label>
+                <select
+                  value={selectedLead.assignedStaff || 'Unassigned'}
+                  onChange={e => setSelectedLead({ ...selectedLead, assignedStaff: e.target.value })}
+                >
+                  <option value="Unassigned">Unassigned</option>
+                  {mockStaffMembers.map(s => (
+                    <option key={s.employeeId} value={s.name}>{s.name} ({s.role})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Status:</label>
+                <select
+                  value={selectedLead.status || 'Pending'}
+                  onChange={e => setSelectedLead({ ...selectedLead, status: e.target.value })}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="No Response">No Response</option>
+                  <option value="Converted">Converted</option>
+                  <option value="Rejected/Closed">Rejected/Closed</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Created Date:</label>
+                <input
+                  type="text"
+                  value={selectedLead.createdDate || ''}
+                  readOnly
+                  style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+                />
+              </div>
+            </div>
+            <div className="form-group mt-2">
+              <label>Remarks / Notes:</label>
+              <textarea
+                value={selectedLead.remarks || 'Client inquiring for family package options.'}
+                onChange={e => setSelectedLead({ ...selectedLead, remarks: e.target.value })}
+                rows="3"
+              ></textarea>
+            </div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setSelectedLead(null)}>Cancel / Close</button>
+              <button className="btn btn-primary" onClick={() => { alert(`Lead "${selectedLead.leadName}" updated successfully!`); setSelectedLead(null); }}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+      {/* Visa Application Details Modal */}
+      {selectedVisaApp && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '800px' }}>
+            <div className="modal-header">
+              <div className="modal-title">7.1 Visa Application Details - {selectedVisaApp.id}</div>
+              <button className="close-btn" onClick={() => setSelectedVisaApp(null)}>X</button>
+            </div>
+
+            <div className="section-box">
+              <div className="section-title">Applicant Information</div>
+              <div className="form-grid mt-4">
+                <div><strong>Applicant Name:</strong> {selectedVisaApp.applicantName}</div>
+                <div><strong>Country:</strong> {selectedVisaApp.country}</div>
+                <div><strong>Visa Type:</strong> {selectedVisaApp.visaType}</div>
+                <div><strong>Case Officer:</strong> {selectedVisaApp.caseOfficerName} ({selectedVisaApp.caseOfficerId})</div>
+                <div><strong>Application Date:</strong> {selectedVisaApp.applicationDate}</div>
+                <div><strong>Current Status:</strong> <span className="status-badge">{selectedVisaApp.status}</span></div>
+              </div>
+            </div>
+
+            <div className="section-box">
+              <div className="section-title">Document Management</div>
+              <p style={{ fontSize: '12px', margin: '8px 0' }}>Uploaded Docs: Passport_Copy.pdf, Bank_Statement_6M.pdf</p>
+              <div className="action-cell">
+                <button className="btn btn-sm" onClick={() => alert('Viewing document...')}>View Documents</button>
+                <button className="btn btn-sm" onClick={() => alert('Add Document option')}>Add Documents</button>
+                <button className="btn btn-sm btn-danger" onClick={() => alert('Remove Document')}>Remove Documents</button>
+              </div>
+            </div>
+
+            <div className="section-box">
+              <div className="section-title">Payment Management</div>
+              <div className="form-grid mt-4">
+                <div><strong>Payment Type:</strong> {selectedVisaApp.paymentType}</div>
+                <div><strong>Total Amount:</strong> ₹{selectedVisaApp.totalAmount.toLocaleString()}</div>
+                <div><strong>Paid Amount:</strong> ₹{selectedVisaApp.paidAmount.toLocaleString()}</div>
+                <div><strong>Pending Amount:</strong> ₹{selectedVisaApp.pendingAmount.toLocaleString()}</div>
+                <div><strong>Payment Status:</strong> {selectedVisaApp.paymentStatus}</div>
+                <div><strong>Reference:</strong> {selectedVisaApp.paymentRef}</div>
+              </div>
+            </div>
+
+            <div className="section-box">
+              <div className="section-title">Visa Upload & Action</div>
+              <div className="action-cell mt-4">
+                <button className="btn btn-sm btn-primary" onClick={() => alert('Uploading Visa Document')}>Upload Visa</button>
+                <button className="btn btn-sm" onClick={() => alert('Viewing Visa Document')}>View Visa</button>
+                <button className="btn btn-sm" onClick={() => alert('Downloading Visa Document')}>Download Visa</button>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn" onClick={() => setSelectedVisaApp(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Extend Booking Duration Modal */}
+      {showExtendBookingModal && selectedBooking && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">8.2 Extend Booking Duration - {selectedBooking.packageId}</div>
+              <button className="close-btn" onClick={() => setShowExtendBookingModal(false)}>X</button>
+            </div>
+            <p style={{ fontSize: '12px', marginBottom: '12px' }}>
+              Existing booking: <strong>{selectedBooking.duration}</strong> &bull; Current Price: <strong>₹{selectedBooking.totalPrice.toLocaleString()}</strong>
+            </p>
+            <div className="form-group">
+              <label>Additional Days:</label>
+              <input type="number" value={extendForm.days} onChange={e => setExtendForm({ ...extendForm, days: Number(e.target.value) })} />
+            </div>
+            <div className="form-group">
+              <label>Additional Nights:</label>
+              <input type="number" value={extendForm.nights} onChange={e => setExtendForm({ ...extendForm, nights: Number(e.target.value) })} />
+            </div>
+            <div className="form-group">
+              <label>Additional Charges (₹):</label>
+              <input type="number" value={extendForm.charges} onChange={e => setExtendForm({ ...extendForm, charges: Number(e.target.value) })} />
+            </div>
+            <div className="section-box" style={{ background: '#f5f5f5' }}>
+              <div><strong>Updated Total Amount:</strong> ₹{(selectedBooking.totalPrice + extendForm.charges).toLocaleString()}</div>
+            </div>
+            <div className="form-group">
+              <label>Remarks:</label>
+              <textarea value={extendForm.remarks} onChange={e => setExtendForm({ ...extendForm, remarks: e.target.value })} rows="2"></textarea>
+            </div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setShowExtendBookingModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert('Booking duration extended and payment updated!'); setShowExtendBookingModal(false); }}>Calculate & Save Extension</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Application Assignment Flow Modal */}
+      {showAssignModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Application Assignment Flow</div>
+              <button className="close-btn" onClick={() => setShowAssignModal(false)}>X</button>
+            </div>
+            <p style={{ fontSize: '12px', marginBottom: '16px' }}>Flow: Select Application &rarr; Select Case Officer &rarr; Assign Task & Responsibilities</p>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>1. Select Application:</label>
+              <select value={assignForm.appId} onChange={e => setAssignForm({ ...assignForm, appId: e.target.value })}>
+                {mockVisaServices.map(v => <option key={v.id} value={v.id}>{v.id} - {v.applicantName} ({v.country} - {v.visaType})</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>2. Select Staff Member / Case Officer:</label>
+              <select value={assignForm.staffId} onChange={e => setAssignForm({ ...assignForm, staffId: e.target.value })}>
+                {staffList.map(s => <option key={s.employeeId} value={s.employeeId}>{s.employeeId} - {s.name} ({s.department} / {s.role})</option>)}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>4. Specific Task Instructions / Responsibilities:</label>
+              <textarea
+                rows="2"
+                placeholder="Enter specific work or task he will perform for this application..."
+                value={assignForm.taskNotes}
+                onChange={e => setAssignForm({ ...assignForm, taskNotes: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAssignModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                alert(`Assigned Application ${assignForm.appId} to ${assignForm.staffId}!\nAssigned Task: "${assignForm.task}"`);
+                setShowAssignModal(false);
+              }}>Assign Application & Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Lead Modal */}
+      {showAddLeadModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Add New Lead</div>
+              <button className="close-btn" onClick={() => setShowAddLeadModal(false)}>X</button>
+            </div>
+            <div className="form-group"><label>Lead Name:</label><input type="text" placeholder="e.g. Ramesh Sharma" /></div>
+            <div className="form-group"><label>Company Name:</label><input type="text" placeholder="e.g. TechCorp (or Individual)" /></div>
+            <div className="form-group"><label>Email ID:</label><input type="email" placeholder="ramesh@example.com" /></div>
+            <div className="form-group"><label>Phone Number:</label><input type="text" placeholder="+91 98765 43210" /></div>
+            <div className="form-group"><label>Target Country:</label><input type="text" placeholder="e.g. United States / France" /></div>
+            <div className="form-group">
+              <label>Lead Type:</label>
+              <select><option>Visa</option><option>Holiday</option></select>
+            </div>
+            <div className="form-group">
+              <label>Source:</label>
+              <select><option>Website</option><option>Referral</option><option>Other</option></select>
+            </div>
+            <div className="form-group">
+              <label>Status:</label>
+              <select><option>Pending</option><option>In Progress</option><option>No Response</option><option>Converted</option><option>Rejected/Closed</option></select>
+            </div>
+            <div className="form-group">
+              <label>Remarks / Notes:</label>
+              <textarea rows="2" placeholder="Customer inquiry notes..."></textarea>
+            </div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setShowAddLeadModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert('New Lead Added Successfully!'); setShowAddLeadModal(false); }}>Save Lead</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Company Modal */}
+      {editingCompany && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Edit Company Details: {editingCompany.companyName}</div>
+              <button className="close-btn" onClick={() => setEditingCompany(null)}>X</button>
+            </div>
+            <div className="form-group">
+              <label>Company Name:</label>
+              <input
+                type="text"
+                value={editingCompany.companyName || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, companyName: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Registration Details:</label>
+              <input
+                type="text"
+                value={editingCompany.registrationDetails || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, registrationDetails: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Contact Person:</label>
+              <input
+                type="text"
+                value={editingCompany.contactPerson || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, contactPerson: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Email ID:</label>
+              <input
+                type="email"
+                value={editingCompany.email || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone Number:</label>
+              <input
+                type="text"
+                value={editingCompany.phone || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, phone: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Address:</label>
+              <input
+                type="text"
+                value={editingCompany.address || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, address: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Country:</label>
+              <input
+                type="text"
+                value={editingCompany.country || ''}
+                onChange={e => setEditingCompany({ ...editingCompany, country: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Status:</label>
+              <select
+                value={editingCompany.status || 'Active'}
+                onChange={e => setEditingCompany({ ...editingCompany, status: e.target.value })}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setEditingCompany(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert(`Company "${editingCompany.companyName}" updated successfully!`); setEditingCompany(null); }}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Company Modal */}
+      {showAddCompanyModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Add New Company</div>
+              <button className="close-btn" onClick={() => setShowAddCompanyModal(false)}>X</button>
+            </div>
+            <div className="form-group"><label>Company Name:</label><input type="text" placeholder="e.g. Apex Global Ltd" /></div>
+            <div className="form-group"><label>Registration Details:</label><input type="text" placeholder="REG-2026-XXXX" /></div>
+            <div className="form-group"><label>Contact Person:</label><input type="text" placeholder="Name" /></div>
+            <div className="form-group"><label>Email:</label><input type="email" placeholder="company@domain.com" /></div>
+            <div className="form-group"><label>Phone Number:</label><input type="text" placeholder="+91..." /></div>
+            <div className="form-group"><label>Country:</label><input type="text" defaultValue="India" /></div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setShowAddCompanyModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert('New Company Added!'); setShowAddCompanyModal(false); }}>Save Company</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Traveler Modal */}
+      {editingTraveler && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '750px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Traveler Details: {editingTraveler.applicantName} ({editingTraveler.travelerId})</div>
+              <button className="close-btn" onClick={() => setEditingTraveler(null)}>X</button>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Unique Traveler ID:</label>
+                <input type="text" value={editingTraveler.travelerId || ''} readOnly style={{ backgroundColor: '#f0f0f0' }} />
+              </div>
+              <div className="form-group">
+                <label>Applicant Name:</label>
+                <input
+                  type="text"
+                  value={editingTraveler.applicantName || ''}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, applicantName: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Mobile Number:</label>
+                <input
+                  type="text"
+                  value={editingTraveler.mobileNumber || ''}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, mobileNumber: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email ID:</label>
+                <input
+                  type="email"
+                  value={editingTraveler.email || ''}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Country:</label>
+                <input
+                  type="text"
+                  value={editingTraveler.country || ''}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, country: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Passport / Travel Details:</label>
+                <input
+                  type="text"
+                  value={editingTraveler.passport || ''}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, passport: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Status:</label>
+                <select
+                  value={editingTraveler.status || 'Active'}
+                  onChange={e => setEditingTraveler({ ...editingTraveler, status: e.target.value })}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Blocked">Blocked</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Registration Date:</label>
+                <input type="text" value={editingTraveler.registrationDate || ''} readOnly style={{ backgroundColor: '#f0f0f0' }} />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn" onClick={() => setEditingTraveler(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert(`Traveler "${editingTraveler.applicantName}" updated successfully!`); setEditingTraveler(null); }}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Traveler Modal */}
+      {showAddTravelerModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Add New Traveler</div>
+              <button className="close-btn" onClick={() => setShowAddTravelerModal(false)}>X</button>
+            </div>
+            <div className="form-group"><label>Applicant Name:</label><input type="text" placeholder="e.g. Vikramaditya Roy" /></div>
+            <div className="form-group"><label>Mobile Number:</label><input type="text" placeholder="+91 99112 23344" /></div>
+            <div className="form-group"><label>Email ID:</label><input type="email" placeholder="vikram@example.com" /></div>
+            <div className="form-group"><label>Country:</label><input type="text" defaultValue="India" /></div>
+            <div className="form-group"><label>Passport Details:</label><input type="text" placeholder="Passport No & Expiry" /></div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setShowAddTravelerModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => { alert('New Traveler Added Successfully!'); setShowAddTravelerModal(false); }}>Save Traveler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Payment Entry Modal */}
+      {showAddPaymentModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-title">Add Multiple Payment Entry</div>
+              <button className="close-btn" onClick={() => setShowAddPaymentModal(false)}>X</button>
+            </div>
+            <div className="form-group">
+              <label>Payment Entry Amount (₹):</label>
+              <input
+                type="number"
+                value={newPaymentForm.amount}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, amount: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Payment Type:</label>
+              <select
+                value={newPaymentForm.type}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, type: e.target.value })}
+              >
+                <option value="Prepaid">Prepaid</option>
+                <option value="Postpaid">Postpaid</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Payment Mode:</label>
+              <select
+                value={newPaymentForm.mode}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, mode: e.target.value })}
+              >
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="UPI / NetBanking">UPI / NetBanking</option>
+                <option value="Credit / Debit Card">Credit / Debit Card</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Payment Date:</label>
+              <input
+                type="date"
+                value={newPaymentForm.date}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, date: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Reference / TXN ID:</label>
+              <input
+                type="text"
+                value={newPaymentForm.ref}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, ref: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Payment Status:</label>
+              <select
+                value={newPaymentForm.status}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, status: e.target.value })}
+              >
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+            <div className="form-actions">
+              <button className="btn" onClick={() => setShowAddPaymentModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const entry = {
+                  id: `PAY-${101 + visaPaymentsList.length}`,
+                  type: newPaymentForm.type,
+                  mode: newPaymentForm.mode,
+                  amount: Number(newPaymentForm.amount),
+                  date: newPaymentForm.date,
+                  ref: newPaymentForm.ref,
+                  status: newPaymentForm.status
+                };
+                setVisaPaymentsList([...visaPaymentsList, entry]);
+                setShowAddPaymentModal(false);
+                alert(`Added payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+              }}>Save Payment Entry</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Payment Entry Modal */}
+      {editingPayment && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Payment Entry ({editingPayment.id})</div>
+              <button className="close-btn" onClick={() => setEditingPayment(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Amount (₹):</label>
+              <input
+                type="number"
+                value={editingPayment.amount}
+                onChange={e => setEditingPayment({ ...editingPayment, amount: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Payment Type:</label>
+              <select
+                value={editingPayment.type}
+                onChange={e => setEditingPayment({ ...editingPayment, type: e.target.value })}
+              >
+                <option value="Prepaid">Prepaid</option>
+                <option value="Postpaid">Postpaid</option>
+                <option value="Partial Payment">Partial Payment</option>
+                <option value="Full Payment">Full Payment</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Payment Mode:</label>
+              <select
+                value={editingPayment.mode}
+                onChange={e => setEditingPayment({ ...editingPayment, mode: e.target.value })}
+              >
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="UPI / NetBanking">UPI / NetBanking</option>
+                <option value="Credit / Debit Card">Credit / Debit Card</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Payment Date:</label>
+              <input
+                type="date"
+                value={editingPayment.date}
+                onChange={e => setEditingPayment({ ...editingPayment, date: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Reference / TXN ID:</label>
+              <input
+                type="text"
+                value={editingPayment.ref}
+                onChange={e => setEditingPayment({ ...editingPayment, ref: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Payment Status:</label>
+              <select
+                value={editingPayment.status}
+                onChange={e => setEditingPayment({ ...editingPayment, status: e.target.value })}
+              >
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingPayment(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setVisaPaymentsList(visaPaymentsList.map(p => p.id === editingPayment.id ? editingPayment : p));
+                setEditingPayment(null);
+              }}>Update Payment Entry</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Document Name Modal */}
+      {showAddDocModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add Document Name</div>
+              <button className="close-btn" onClick={() => setShowAddDocModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label>Document Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Passport Front Page, Bank Statement 6M, Salary Slip"
+                value={newDocName}
+                onChange={e => setNewDocName(e.target.value)}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label>Document Requirement:</label>
+              <select
+                value={newDocRequirement}
+                onChange={e => setNewDocRequirement(e.target.value)}
+              >
+                <option value="Mandatory">Mandatory</option>
+                <option value="Optional">Optional</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddDocModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (!newDocName.trim()) {
+                  alert('Please enter a document name.');
+                  return;
+                }
+                const newDoc = {
+                  id: visaDocsList.length + 1,
+                  name: newDocName.trim(),
+                  mandatory: newDocRequirement,
+                  status: 'Pending Verification'
+                };
+                setVisaDocsList([...visaDocsList, newDoc]);
+                setNewDocName('');
+                setShowAddDocModal(false);
+              }}>Add Document</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Staff Member Modal */}
+      {selectedMember && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Staff Member Details: {selectedMember.name}</div>
+              <button className="close-btn" onClick={() => setSelectedMember(null)}>X</button>
+            </div>
+            <div className="section-box" style={{ background: '#fafafa', marginBottom: '16px' }}>
+              <div className="form-grid" style={{ fontSize: '13px' }}>
+                <div><strong>Employee ID:</strong> {selectedMember.employeeId}</div>
+                <div><strong>Full Name:</strong> {selectedMember.name}</div>
+                <div><strong>Email Address:</strong> {selectedMember.email}</div>
+                <div><strong>Designation / Role:</strong> {selectedMember.role}</div>
+                <div><strong>Department:</strong> {selectedMember.department}</div>
+                <div><strong>System Status:</strong> <span className="status-badge">{selectedMember.status}</span></div>
+              </div>
+            </div>
+            <div className="section-box">
+              <div className="section-title">Assigned Applications Summary</div>
+              <p style={{ fontSize: '12px', margin: '8px 0' }}>Currently managing 4 Active Visa Applications & 2 Holiday Bookings.</p>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setSelectedMember(null)}>Close</button>
+              <button className="btn btn-primary" onClick={() => {
+                setEditingMember({ ...selectedMember });
+                setSelectedMember(null);
+              }}>Edit Member Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Staff Member Modal */}
+      {editingMember && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Staff Member ({editingMember.employeeId})</div>
+              <button className="close-btn" onClick={() => setEditingMember(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Employee Name:</label>
+              <input
+                type="text"
+                value={editingMember.name || ''}
+                onChange={e => setEditingMember({ ...editingMember, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Email Address:</label>
+              <input
+                type="email"
+                value={editingMember.email || ''}
+                onChange={e => setEditingMember({ ...editingMember, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Role / Designation:</label>
+              <select
+                value={editingMember.role || 'Senior Case Officer'}
+                onChange={e => setEditingMember({ ...editingMember, role: e.target.value })}
+              >
+                <option value="Senior Case Officer">Senior Case Officer</option>
+                <option value="Holiday Specialist">Holiday Specialist</option>
+                <option value="Visa Specialist">Visa Specialist</option>
+                <option value="Sub-Admin Staff">Sub-Admin Staff</option>
+                <option value="Customer Support">Customer Support</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Department:</label>
+              <select
+                value={editingMember.department || 'Visa Operations'}
+                onChange={e => setEditingMember({ ...editingMember, department: e.target.value })}
+              >
+                <option value="Visa Operations">Visa Operations</option>
+                <option value="Tour Operations">Tour Operations</option>
+                <option value="Customer Support">Customer Support</option>
+                <option value="Accounts & Billing">Accounts & Billing</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Status:</label>
+              <select
+                value={editingMember.status || 'ACTIVE'}
+                onChange={e => setEditingMember({ ...editingMember, status: e.target.value })}
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingMember(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setStaffList(staffList.map(s => s.employeeId === editingMember.employeeId ? editingMember : s));
+                setEditingMember(null);
+                alert(`Staff Member "${editingMember.name}" updated successfully!`);
+              }}>Save Member Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Staff Member Modal */}
+      {showAddMemberModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add New Staff Member</div>
+              <button className="close-btn" onClick={() => setShowAddMemberModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Full Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Rahul Sharma"
+                value={newMemberForm.name}
+                onChange={e => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Email Address:</label>
+              <input
+                type="email"
+                placeholder="rahul.s@rhglobal.com"
+                value={newMemberForm.email}
+                onChange={e => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Role / Designation:</label>
+              <select
+                value={newMemberForm.role}
+                onChange={e => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
+              >
+                <option value="Senior Case Officer">Senior Case Officer</option>
+                <option value="Holiday Specialist">Holiday Specialist</option>
+                <option value="Visa Specialist">Visa Specialist</option>
+                <option value="Sub-Admin Staff">Sub-Admin Staff</option>
+                <option value="Customer Support">Customer Support</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Department:</label>
+              <select
+                value={newMemberForm.department}
+                onChange={e => setNewMemberForm({ ...newMemberForm, department: e.target.value })}
+              >
+                <option value="Visa Operations">Visa Operations</option>
+                <option value="Tour Operations">Tour Operations</option>
+                <option value="Customer Support">Customer Support</option>
+                <option value="Accounts & Billing">Accounts & Billing</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Status:</label>
+              <select
+                value={newMemberForm.status}
+                onChange={e => setNewMemberForm({ ...newMemberForm, status: e.target.value })}
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddMemberModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (!newMemberForm.name.trim()) {
+                  alert('Please enter staff member name.');
+                  return;
+                }
+                const newEmp = {
+                  employeeId: `CO-${104 + staffList.length}`,
+                  name: newMemberForm.name.trim(),
+                  email: newMemberForm.email || `${newMemberForm.name.toLowerCase().replace(/\s+/g, '.')}@rhglobal.com`,
+                  role: newMemberForm.role,
+                  department: newMemberForm.department,
+                  status: newMemberForm.status
+                };
+                setStaffList([...staffList, newEmp]);
+                setNewMemberForm({ name: '', email: '', role: 'Visa Specialist', department: 'Visa Operations', status: 'ACTIVE' });
+                setShowAddMemberModal(false);
+                alert(`Added new staff member ${newEmp.name} (${newEmp.employeeId})!`);
+              }}>Add Staff Member</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Country Visa Modal */}
+      {editingCountryVisa && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Visa Country: {editingCountryVisa.countryName}</div>
+              <button className="close-btn" onClick={() => setEditingCountryVisa(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Name:</label>
+              <input
+                type="text"
+                value={editingCountryVisa.countryName || ''}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, countryName: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Code (ISO):</label>
+              <input
+                type="text"
+                value={editingCountryVisa.countryCode || ''}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, countryCode: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Processing Duration:</label>
+              <input
+                type="text"
+                value={editingCountryVisa.processingTime || ''}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, processingTime: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Starting Fee (₹):</label>
+              <input
+                type="number"
+                value={editingCountryVisa.startingPrice || 0}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, startingPrice: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Image URL / Banner:</label>
+              <input
+                type="text"
+                value={editingCountryVisa.imageUrl || ''}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, imageUrl: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Status:</label>
+              <select
+                value={editingCountryVisa.status || 'Active'}
+                onChange={e => setEditingCountryVisa({ ...editingCountryVisa, status: e.target.value })}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingCountryVisa(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setCountriesList(countriesList.map(c => c.countryCode === editingCountryVisa.countryCode ? editingCountryVisa : c));
+                if (viewingCountryVisaDetails && (viewingCountryVisaDetails.countryCode === editingCountryVisa.countryCode || viewingCountryVisaDetails.id === editingCountryVisa.id)) {
+                  setViewingCountryVisaDetails({ ...editingCountryVisa });
+                }
+                setEditingCountryVisa(null);
+                alert(`Country Visa for "${editingCountryVisa.countryName}" updated successfully!`);
+              }}>Save Country Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Country Visa Modal */}
+      {showAddCountryVisaModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add New Visa Country</div>
+              <button className="close-btn" onClick={() => setShowAddCountryVisaModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Name:</label>
+              <input type="text" placeholder="e.g. Canada, Australia, Germany" id="newCntyName" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Code (e.g. CA, AU):</label>
+              <input type="text" placeholder="e.g. CA" id="newCntyCode" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Processing Duration:</label>
+              <input type="text" placeholder="e.g. 10-15 Working Days" id="newCntyTime" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Starting Visa Fee (₹):</label>
+              <input type="number" placeholder="15000" id="newCntyPrice" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Country Flag Emoji / Image URL:</label>
+              <input type="text" placeholder="🇨🇦 or https://..." id="newCntyImg" />
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddCountryVisaModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const name = document.getElementById('newCntyName')?.value || 'New Country';
+                const code = document.getElementById('newCntyCode')?.value || 'NC';
+                const price = Number(document.getElementById('newCntyPrice')?.value) || 15000;
+                const newC = {
+                  id: `CNTY-${code}`,
+                  countryName: name,
+                  countryCode: code,
+                  flag: '🌐',
+                  imageUrl: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=600',
+                  visaTypesCount: 2,
+                  processingTime: '10-15 Days',
+                  startingPrice: price,
+                  status: 'Active',
+                  visaTypes: [
+                    { name: 'Standard Tourist Visa', validity: '6 Months', processingFee: price, stayDuration: '30 Days' }
+                  ],
+                  requiredDocs: [
+                    { name: 'Passport (Valid 6+ Months)', type: 'Mandatory', guidance: 'At least 2 blank pages.' },
+                    { name: 'Bank Statement (6 Months)', type: 'Mandatory', guidance: 'Official bank seal required.' }
+                  ],
+                  guidance: 'Standard visa application procedures apply.'
+                };
+                setCountriesList([...countriesList, newC]);
+                setShowAddCountryVisaModal(false);
+                alert(`Added new Visa Country "${name}"!`);
+              }}>Save New Country</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Holiday Package Modal */}
+      {editingHolidayPackage && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Holiday Package ({editingHolidayPackage.packageId})</div>
+              <button className="close-btn" onClick={() => setEditingHolidayPackage(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Name:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.packageName || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, packageName: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Destination / Location:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.destination || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, destination: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Duration:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.duration || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, duration: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Price per person (₹):</label>
+              <input
+                type="number"
+                value={editingHolidayPackage.price || 0}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, price: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Banner Image URL:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.imageUrl || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, imageUrl: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Tour Overview & Description:</label>
+              <textarea
+                rows="3"
+                value={editingHolidayPackage.description || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, description: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Inclusions Summary:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.inclusions || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, inclusions: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Exclusions Summary:</label>
+              <input
+                type="text"
+                value={editingHolidayPackage.exclusions || ''}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, exclusions: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Status:</label>
+              <select
+                value={editingHolidayPackage.status || 'Active'}
+                onChange={e => setEditingHolidayPackage({ ...editingHolidayPackage, status: e.target.value })}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingHolidayPackage(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === editingHolidayPackage.packageId ? editingHolidayPackage : p));
+                if (viewingHolidayPackageDetails && viewingHolidayPackageDetails.packageId === editingHolidayPackage.packageId) {
+                  setViewingHolidayPackageDetails({ ...editingHolidayPackage });
+                }
+                setEditingHolidayPackage(null);
+                alert(`Holiday Package "${editingHolidayPackage.packageName}" updated successfully!`);
+              }}>Save Package Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Holiday Package Modal */}
+      {showAddHolidayPackageModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add New Holiday Package</div>
+              <button className="close-btn" onClick={() => setShowAddHolidayPackageModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Package Name:</label>
+              <input type="text" placeholder="e.g. Japan Cherry Blossom & Culture Tour" id="newPkgName" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Destination / Country:</label>
+              <input type="text" placeholder="Tokyo & Kyoto, Japan" id="newPkgDest" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Duration (e.g. 7 Days / 6 Nights):</label>
+              <input type="text" placeholder="7 Days / 6 Nights" id="newPkgDuration" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Price per person (₹):</label>
+              <input type="number" placeholder="135000" id="newPkgPrice" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Inclusions Summary:</label>
+              <input type="text" placeholder="Hotels, Bullet Train Pass, Sightseeing, Transfers" id="newPkgInc" />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Banner Image URL:</label>
+              <input type="text" placeholder="https://..." id="newPkgImg" />
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddHolidayPackageModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const name = document.getElementById('newPkgName')?.value || 'New Holiday Package';
+                const dest = document.getElementById('newPkgDest')?.value || 'Tokyo, Japan';
+                const dur = document.getElementById('newPkgDuration')?.value || '7 Days / 6 Nights';
+                const price = Number(document.getElementById('newPkgPrice')?.value) || 120000;
+                const inc = document.getElementById('newPkgInc')?.value || 'Hotels, Breakfast, Sightseeing, Transfers';
+                const img = document.getElementById('newPkgImg')?.value || 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600';
+
+                const newPkg = {
+                  packageId: `PKG-${704 + holidayPackagesList.length}`,
+                  packageName: name,
+                  country: dest,
+                  destination: dest,
+                  duration: dur,
+                  days: 7,
+                  nights: 6,
+                  price: price,
+                  status: 'Active',
+                  imageUrl: img,
+                  description: 'Comprehensive guided holiday tour with luxury accommodation and sightseeing.',
+                  inclusions: inc,
+                  exclusions: 'Flights, Personal Expenses, Visa Fee',
+                  itinerary: [
+                    { day: 'Day 1', title: 'Arrival & Hotel Check-in', detail: 'Welcome at airport, private hotel transfer.' },
+                    { day: 'Day 2', title: 'Guided City Sightseeing Tour', detail: 'Explore major landmarks and historical attractions.' }
+                  ]
+                };
+                setHolidayPackagesList([...holidayPackagesList, newPkg]);
+                setShowAddHolidayPackageModal(false);
+                alert(`Added new Holiday Package "${name}"!`);
+              }}>Save Holiday Package</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Visa Type Modal */}
+      {editingVisaType && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Visa Type</div>
+              <button className="close-btn" onClick={() => setEditingVisaType(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Visa Type Name:</label>
+              <input
+                type="text"
+                value={editingVisaType.name || ''}
+                onChange={e => setEditingVisaType({ ...editingVisaType, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Validity Period:</label>
+              <input
+                type="text"
+                value={editingVisaType.validity || ''}
+                onChange={e => setEditingVisaType({ ...editingVisaType, validity: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Permitted Stay Duration:</label>
+              <input
+                type="text"
+                value={editingVisaType.stayDuration || ''}
+                onChange={e => setEditingVisaType({ ...editingVisaType, stayDuration: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Processing Fee (₹):</label>
+              <input
+                type="number"
+                value={editingVisaType.processingFee || 0}
+                onChange={e => setEditingVisaType({ ...editingVisaType, processingFee: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingVisaType(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const updatedTypes = (viewingCountryVisaDetails.visaTypes || []).map((vt, i) =>
+                  i === editingVisaType.index ? {
+                    name: editingVisaType.name,
+                    validity: editingVisaType.validity,
+                    stayDuration: editingVisaType.stayDuration,
+                    processingFee: editingVisaType.processingFee
+                  } : vt
+                );
+                const updatedCountry = { ...viewingCountryVisaDetails, visaTypes: updatedTypes, visaTypesCount: updatedTypes.length };
+                setViewingCountryVisaDetails(updatedCountry);
+                setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+                setEditingVisaType(null);
+              }}>Save Visa Type</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Visa Type Modal */}
+      {showAddVisaTypeModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add New Visa Type</div>
+              <button className="close-btn" onClick={() => setShowAddVisaTypeModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Visa Type Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Tourist Visa, Business Visa"
+                value={newVisaTypeForm.name}
+                onChange={e => setNewVisaTypeForm({ ...newVisaTypeForm, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Validity Period:</label>
+              <input
+                type="text"
+                placeholder="e.g. 6 Months Multiple Entry"
+                value={newVisaTypeForm.validity}
+                onChange={e => setNewVisaTypeForm({ ...newVisaTypeForm, validity: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Permitted Stay Duration:</label>
+              <input
+                type="text"
+                placeholder="e.g. up to 90 Days"
+                value={newVisaTypeForm.stayDuration}
+                onChange={e => setNewVisaTypeForm({ ...newVisaTypeForm, stayDuration: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Processing Fee (₹):</label>
+              <input
+                type="number"
+                placeholder="18500"
+                value={newVisaTypeForm.processingFee}
+                onChange={e => setNewVisaTypeForm({ ...newVisaTypeForm, processingFee: Number(e.target.value) })}
+              />
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddVisaTypeModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (!newVisaTypeForm.name) { alert('Please enter a visa type name'); return; }
+                const updatedTypes = [...(viewingCountryVisaDetails.visaTypes || []), { ...newVisaTypeForm }];
+                const updatedCountry = { ...viewingCountryVisaDetails, visaTypes: updatedTypes, visaTypesCount: updatedTypes.length };
+                setViewingCountryVisaDetails(updatedCountry);
+                setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+                setShowAddVisaTypeModal(false);
+                setNewVisaTypeForm({ name: '', validity: '', stayDuration: '', processingFee: 15000 });
+              }}>Add Visa Type</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Document Requirement Modal */}
+      {editingCountryDoc && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Document Requirement</div>
+              <button className="close-btn" onClick={() => setEditingCountryDoc(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Document Name:</label>
+              <input
+                type="text"
+                value={editingCountryDoc.name || ''}
+                onChange={e => setEditingCountryDoc({ ...editingCountryDoc, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Requirement Type:</label>
+              <select
+                value={editingCountryDoc.type || 'Mandatory'}
+                onChange={e => setEditingCountryDoc({ ...editingCountryDoc, type: e.target.value })}
+              >
+                <option value="Mandatory">Mandatory</option>
+                <option value="Optional">Optional</option>
+                <option value="Conditional">Conditional</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Guidelines & Format Instructions:</label>
+              <textarea
+                rows="3"
+                value={editingCountryDoc.guidance || ''}
+                onChange={e => setEditingCountryDoc({ ...editingCountryDoc, guidance: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingCountryDoc(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const updatedDocs = (viewingCountryVisaDetails.requiredDocs || []).map((doc, i) =>
+                  i === editingCountryDoc.index ? {
+                    name: editingCountryDoc.name,
+                    type: editingCountryDoc.type,
+                    guidance: editingCountryDoc.guidance
+                  } : doc
+                );
+                const updatedCountry = { ...viewingCountryVisaDetails, requiredDocs: updatedDocs };
+                setViewingCountryVisaDetails(updatedCountry);
+                setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+                setEditingCountryDoc(null);
+              }}>Save Document Requirement</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Document Requirement Modal */}
+      {showAddCountryDocModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add Document Requirement</div>
+              <button className="close-btn" onClick={() => setShowAddCountryDocModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Document Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Bank Statement (6 Months), ITR Returns"
+                value={newCountryDocForm.name}
+                onChange={e => setNewCountryDocForm({ ...newCountryDocForm, name: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Requirement Type:</label>
+              <select
+                value={newCountryDocForm.type}
+                onChange={e => setNewCountryDocForm({ ...newCountryDocForm, type: e.target.value })}
+              >
+                <option value="Mandatory">Mandatory</option>
+                <option value="Optional">Optional</option>
+                <option value="Conditional">Conditional</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Guidelines & Format Instructions:</label>
+              <textarea
+                rows="3"
+                placeholder="Enter guidelines or instructions for applicants..."
+                value={newCountryDocForm.guidance}
+                onChange={e => setNewCountryDocForm({ ...newCountryDocForm, guidance: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddCountryDocModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (!newCountryDocForm.name) { alert('Please enter a document name'); return; }
+                const updatedDocs = [...(viewingCountryVisaDetails.requiredDocs || []), { ...newCountryDocForm }];
+                const updatedCountry = { ...viewingCountryVisaDetails, requiredDocs: updatedDocs };
+                setViewingCountryVisaDetails(updatedCountry);
+                setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+                setShowAddCountryDocModal(false);
+                setNewCountryDocForm({ name: '', type: 'Mandatory', guidance: '' });
+              }}>Add Document Requirement</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Guidance Modal */}
+      {editingGuidanceText !== null && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '550px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Official Embassy Guidance & Instructions</div>
+              <button className="close-btn" onClick={() => setEditingGuidanceText(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Step-by-Step Application Instructions & Embassy Guidelines:</label>
+              <textarea
+                rows="5"
+                placeholder="Enter embassy guidance, application process instructions, interview tips..."
+                value={editingGuidanceText}
+                onChange={e => setEditingGuidanceText(e.target.value)}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingGuidanceText(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const updatedCountry = { ...viewingCountryVisaDetails, guidance: editingGuidanceText };
+                setViewingCountryVisaDetails(updatedCountry);
+                setCountriesList(countriesList.map(c => c.countryCode === updatedCountry.countryCode || c.id === updatedCountry.id ? updatedCountry : c));
+                setEditingGuidanceText(null);
+              }}>Save Guidance</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Itinerary Day Modal */}
+      {editingItineraryDay && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Edit Itinerary Day</div>
+              <button className="close-btn" onClick={() => setEditingItineraryDay(null)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Label (e.g. Day 1, Day 2):</label>
+              <input
+                type="text"
+                value={editingItineraryDay.day || ''}
+                onChange={e => setEditingItineraryDay({ ...editingItineraryDay, day: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Title / Activity Name:</label>
+              <input
+                type="text"
+                value={editingItineraryDay.title || ''}
+                onChange={e => setEditingItineraryDay({ ...editingItineraryDay, title: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Activity Details & Description:</label>
+              <textarea
+                rows="4"
+                value={editingItineraryDay.detail || ''}
+                onChange={e => setEditingItineraryDay({ ...editingItineraryDay, detail: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setEditingItineraryDay(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const updatedItin = (viewingHolidayPackageDetails.itinerary || []).map((itin, idx) =>
+                  idx === editingItineraryDay.index ? {
+                    day: editingItineraryDay.day,
+                    title: editingItineraryDay.title,
+                    detail: editingItineraryDay.detail
+                  } : itin
+                );
+                const updatedPkg = { ...viewingHolidayPackageDetails, itinerary: updatedItin };
+                setViewingHolidayPackageDetails(updatedPkg);
+                setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === updatedPkg.packageId ? updatedPkg : p));
+                setEditingItineraryDay(null);
+              }}>Save Itinerary Day</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Itinerary Day Modal */}
+      {showAddItineraryDayModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <div className="modal-title">Add New Itinerary Day</div>
+              <button className="close-btn" onClick={() => setShowAddItineraryDayModal(false)}>X</button>
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Label (e.g. Day 1, Day 2):</label>
+              <input
+                type="text"
+                placeholder="e.g. Day 7"
+                value={newItineraryDayForm.day}
+                onChange={e => setNewItineraryDayForm({ ...newItineraryDayForm, day: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Title / Activity Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Shopping & Departure Transfer"
+                value={newItineraryDayForm.title}
+                onChange={e => setNewItineraryDayForm({ ...newItineraryDayForm, title: e.target.value })}
+              />
+            </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Day Activity Details & Description:</label>
+              <textarea
+                rows="4"
+                placeholder="Describe planned activities, sightseeing, meals, transfers..."
+                value={newItineraryDayForm.detail}
+                onChange={e => setNewItineraryDayForm({ ...newItineraryDayForm, detail: e.target.value })}
+              ></textarea>
+            </div>
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddItineraryDayModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (!newItineraryDayForm.title.trim()) { alert('Please enter a day title.'); return; }
+                const updatedItin = [...(viewingHolidayPackageDetails.itinerary || []), { ...newItineraryDayForm }];
+                const updatedPkg = { ...viewingHolidayPackageDetails, itinerary: updatedItin, days: updatedItin.length };
+                setViewingHolidayPackageDetails(updatedPkg);
+                setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === updatedPkg.packageId ? updatedPkg : p));
+                setShowAddItineraryDayModal(false);
+                setNewItineraryDayForm({ day: '', title: '', detail: '' });
+              }}>Add Itinerary Day</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

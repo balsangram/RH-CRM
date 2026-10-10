@@ -270,6 +270,30 @@ export default function SuperAdminDashboard({ onLogout }) {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showExtendBookingModal, setShowExtendBookingModal] = useState(false);
+  const [bookingList, setBookingList] = useState(mockBookingServices);
+  const [showAddBookingModal, setShowAddBookingModal] = useState(false);
+  const [newBookingForm, setNewBookingForm] = useState({
+    packageSelectionType: 'existing',
+    selectedPackageId: 'PKG-701',
+    packageName: 'Bali Island Beach Getaway',
+    destination: 'Bali, Indonesia',
+    duration: '6 Days / 5 Nights',
+    days: 6,
+    nights: 5,
+    customerName: '',
+    contactDetails: '',
+    email: '',
+    bookingDate: '2026-10-10',
+    departureDate: '2026-11-20',
+    totalPrice: 85000,
+    paidAmount: 85000,
+    status: 'Active',
+    paymentType: 'Prepaid',
+    paymentStatus: 'Paid',
+    caseOfficerName: 'Priya Singh',
+    caseOfficerId: 'CO-102',
+    notes: ''
+  });
   const [graphFilter, setGraphFilter] = useState('This Month');
   const [leadFilterType, setLeadFilterType] = useState('All');
   const [leadFilterStatus, setLeadFilterStatus] = useState('All');
@@ -370,7 +394,7 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
               <span>6. Booking Applications</span>
-              {/* <span className="nav-badge">{mockBookingServices.length}</span> */}
+              {/* <span className="nav-badge">{bookingList.length}</span> */}
             </button>
           </li>
           <li>
@@ -639,8 +663,12 @@ export default function SuperAdminDashboard({ onLogout }) {
                   <div><strong>Booking Date:</strong> {viewingBookingDetails.bookingDate || '2026-10-01'}</div>
                   <div><strong>Departure Date:</strong> {viewingBookingDetails.departureDate || '2026-11-15'}</div>
                   <div><strong>Total Package Price:</strong> ₹{(viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000).toLocaleString()}</div>
-                  <div><strong>Customer Name:</strong> Vikram Roy</div>
-                  <div><strong>Contact Phone:</strong> +91 99112 23344</div>
+                  <div><strong>Customer Name:</strong> {viewingBookingDetails.customerName || 'Vikram Roy'}</div>
+                  <div><strong>Contact Phone:</strong> {viewingBookingDetails.contactDetails || '+91 99112 23344'}</div>
+                  {viewingBookingDetails.email && <div><strong>Email:</strong> {viewingBookingDetails.email}</div>}
+                  {viewingBookingDetails.caseOfficerName && <div><strong>Tour Specialist:</strong> {viewingBookingDetails.caseOfficerName}</div>}
+                  {viewingBookingDetails.paymentType && <div><strong>Payment Type:</strong> {viewingBookingDetails.paymentType}</div>}
+                  {viewingBookingDetails.invoiceNo && <div><strong>Invoice Ref:</strong> {viewingBookingDetails.invoiceNo}</div>}
                 </div>
               </div>
 
@@ -664,7 +692,10 @@ export default function SuperAdminDashboard({ onLogout }) {
                       <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>
-                  <button className="btn btn-sm btn-primary" onClick={() => alert(`Booking status updated to "${viewingBookingDetails.status}"!`)}>
+                  <button className="btn btn-sm btn-primary" onClick={() => {
+                    alert(`Booking status updated to "${viewingBookingDetails.status}"!`);
+                    setBookingList(bookingList.map(b => b.packageId === viewingBookingDetails.packageId ? { ...b, status: viewingBookingDetails.status } : b));
+                  }}>
                     Save Status Update
                   </button>
                 </div>
@@ -1721,6 +1752,43 @@ export default function SuperAdminDashboard({ onLogout }) {
                       <div className="section-box">
                         <div className="section-header">
                           <div className="section-title">Holiday / Tour Booking History</div>
+                          <button className="btn btn-sm btn-primary" onClick={() => {
+                            const firstPkg = holidayPackagesList[0] || {
+                              packageId: 'PKG-701',
+                              packageName: 'Bali Island Beach Getaway',
+                              destination: 'Bali, Indonesia',
+                              duration: '6 Days / 5 Nights',
+                              days: 6,
+                              nights: 5,
+                              price: 85000
+                            };
+                            setNewBookingForm({
+                              packageSelectionType: 'existing',
+                              selectedPackageId: firstPkg.packageId,
+                              packageId: `PKG-${701 + bookingList.length}`,
+                              packageName: firstPkg.packageName,
+                              destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
+                              duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
+                              days: firstPkg.days || 6,
+                              nights: firstPkg.nights || 5,
+                              customerName: viewingTraveler.applicantName,
+                              contactDetails: viewingTraveler.mobileNumber || '',
+                              email: viewingTraveler.email || '',
+                              bookingDate: '2026-10-10',
+                              departureDate: '2026-11-20',
+                              totalPrice: firstPkg.price || 85000,
+                              paidAmount: firstPkg.price || 85000,
+                              status: 'Active',
+                              paymentType: 'Prepaid',
+                              paymentStatus: 'Paid',
+                              caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
+                              caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
+                              notes: ''
+                            });
+                            setShowAddBookingModal(true);
+                          }}>
+                            + Add Booking
+                          </button>
                         </div>
                         <div className="table-container">
                           <table>
@@ -1738,7 +1806,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                               </tr>
                             </thead>
                             <tbody>
-                              {mockBookingServices.map(bk => (
+                              {bookingList.map(bk => (
                                 <tr key={bk.packageId}>
                                   <td className="font-mono"><strong>{bk.packageId}</strong></td>
                                   <td>{bk.packageName}</td>
@@ -1813,6 +1881,43 @@ export default function SuperAdminDashboard({ onLogout }) {
                 <div className="section-box">
                   <div className="section-header">
                     <div className="section-title">Booking Services (Holiday/Tour Management)</div>
+                    <button className="btn btn-primary" onClick={() => {
+                      const firstPkg = holidayPackagesList[0] || {
+                        packageId: 'PKG-701',
+                        packageName: 'Bali Island Beach Getaway',
+                        destination: 'Bali, Indonesia',
+                        duration: '6 Days / 5 Nights',
+                        days: 6,
+                        nights: 5,
+                        price: 85000
+                      };
+                      setNewBookingForm({
+                        packageSelectionType: 'existing',
+                        selectedPackageId: firstPkg.packageId,
+                        packageId: `PKG-${701 + bookingList.length}`,
+                        packageName: firstPkg.packageName,
+                        destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
+                        duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
+                        days: firstPkg.days || 6,
+                        nights: firstPkg.nights || 5,
+                        customerName: '',
+                        contactDetails: '',
+                        email: '',
+                        bookingDate: '2026-10-10',
+                        departureDate: '2026-11-20',
+                        totalPrice: firstPkg.price || 85000,
+                        paidAmount: firstPkg.price || 85000,
+                        status: 'Active',
+                        paymentType: 'Prepaid',
+                        paymentStatus: 'Paid',
+                        caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
+                        caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
+                        notes: ''
+                      });
+                      setShowAddBookingModal(true);
+                    }}>
+                      + Add Booking
+                    </button>
                   </div>
                   <div className="table-container">
                     <table>
@@ -1831,7 +1936,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {mockBookingServices.map(bk => (
+                        {bookingList.map(bk => (
                           <tr key={bk.packageId}>
                             <td className="font-mono"><strong>{bk.packageId}</strong></td>
                             <td>{bk.packageName}</td>
@@ -2409,7 +2514,26 @@ export default function SuperAdminDashboard({ onLogout }) {
             </div>
             <div className="form-actions">
               <button className="btn" onClick={() => setShowExtendBookingModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { alert('Booking duration extended and payment updated!'); setShowExtendBookingModal(false); }}>Calculate & Save Extension</button>
+              <button className="btn btn-primary" onClick={() => {
+                if (selectedBooking) {
+                  const newDays = Number(selectedBooking.days || 0) + Number(extendForm.days || 0);
+                  const newNights = Number(selectedBooking.nights || 0) + Number(extendForm.nights || 0);
+                  const newTotal = Number(selectedBooking.totalPrice || 0) + Number(extendForm.charges || 0);
+                  const updated = {
+                    ...selectedBooking,
+                    days: newDays,
+                    nights: newNights,
+                    duration: `${newDays} Days / ${newNights} Nights`,
+                    totalPrice: newTotal
+                  };
+                  setBookingList(bookingList.map(b => b.packageId === selectedBooking.packageId ? updated : b));
+                  if (viewingBookingDetails && viewingBookingDetails.packageId === selectedBooking.packageId) {
+                    setViewingBookingDetails(updated);
+                  }
+                }
+                alert('Booking duration extended and payment updated!');
+                setShowExtendBookingModal(false);
+              }}>Calculate & Save Extension</button>
             </div>
           </div>
         </div>
@@ -2912,6 +3036,363 @@ export default function SuperAdminDashboard({ onLogout }) {
         </div>
       )}
 
+      {/* Add Booking Modal */}
+      {showAddBookingModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '650px' }}>
+            <div className="modal-header">
+              <div className="modal-title">+ Add New Holiday / Tour Booking</div>
+              <button className="close-btn" onClick={() => setShowAddBookingModal(false)}>X</button>
+            </div>
+
+            {/* Package Choice */}
+            <div className="form-group">
+              <label>Holiday Package: *</label>
+              <select
+                value={newBookingForm.packageSelectionType === 'custom' ? 'custom' : newBookingForm.selectedPackageId}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val === 'custom') {
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      packageSelectionType: 'custom',
+                      selectedPackageId: 'custom',
+                      packageName: '',
+                      destination: '',
+                      days: 5,
+                      nights: 4,
+                      duration: '5 Days / 4 Nights',
+                      totalPrice: 50000,
+                      paidAmount: newBookingForm.paymentType === 'Prepaid' ? 50000 : 0
+                    });
+                  } else {
+                    const matched = holidayPackagesList.find(p => p.packageId === val);
+                    if (matched) {
+                      setNewBookingForm({
+                        ...newBookingForm,
+                        packageSelectionType: 'existing',
+                        selectedPackageId: matched.packageId,
+                        packageName: matched.packageName,
+                        destination: matched.destination || matched.country || '',
+                        days: matched.days || 6,
+                        nights: matched.nights || 5,
+                        duration: matched.duration || `${matched.days} Days / ${matched.nights} Nights`,
+                        totalPrice: matched.price || 85000,
+                        paidAmount: newBookingForm.paymentType === 'Prepaid' ? (matched.price || 85000) : 0
+                      });
+                    }
+                  }
+                }}
+              >
+                {holidayPackagesList.map(pkg => (
+                  <option key={pkg.packageId} value={pkg.packageId}>
+                    {pkg.packageName} ({pkg.packageId}) &bull; ₹{pkg.price?.toLocaleString()} &bull; {pkg.duration}
+                  </option>
+                ))}
+                <option value="custom">+ Custom / Customized Tour Package</option>
+              </select>
+            </div>
+
+            {newBookingForm.packageSelectionType === 'custom' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Custom Tour / Package Name: *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Switzerland Scenic Rail Journey"
+                    value={newBookingForm.packageName}
+                    onChange={e => setNewBookingForm({ ...newBookingForm, packageName: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Destination: *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Zurich & Lucerne, Switzerland"
+                    value={newBookingForm.destination}
+                    onChange={e => setNewBookingForm({ ...newBookingForm, destination: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Quick Traveler Select (Optional) */}
+            <div className="form-group">
+              <label>Select Registered Customer (Optional):</label>
+              <select
+                onChange={e => {
+                  if (!e.target.value) return;
+                  const trv = mockTravelers.find(t => t.travelerId === e.target.value);
+                  if (trv) {
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      customerName: trv.applicantName,
+                      contactDetails: trv.mobileNumber,
+                      email: trv.email
+                    });
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="">-- Choose Existing Traveler or enter manually below --</option>
+                {mockTravelers.map(trv => (
+                  <option key={trv.travelerId} value={trv.travelerId}>
+                    {trv.applicantName} ({trv.travelerId}) - {trv.mobileNumber}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Customer Name, Phone, Email */}
+            <div className="form-group">
+              <label>Customer Full Name: *</label>
+              <input
+                type="text"
+                placeholder="e.g. Vikramaditya Roy"
+                value={newBookingForm.customerName}
+                onChange={e => setNewBookingForm({ ...newBookingForm, customerName: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Contact Mobile Number: *</label>
+                <input
+                  type="text"
+                  placeholder="+91 99112 23344"
+                  value={newBookingForm.contactDetails}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, contactDetails: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email ID:</label>
+                <input
+                  type="email"
+                  placeholder="vikram.roy@example.com"
+                  value={newBookingForm.email}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Dates & Duration */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Booking Date:</label>
+                <input
+                  type="date"
+                  value={newBookingForm.bookingDate}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, bookingDate: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Departure Date: *</label>
+                <input
+                  type="date"
+                  value={newBookingForm.departureDate}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, departureDate: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Days:</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newBookingForm.days}
+                  onChange={e => {
+                    const days = Number(e.target.value);
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      days,
+                      duration: `${days} Days / ${newBookingForm.nights} Nights`
+                    });
+                  }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Nights:</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newBookingForm.nights}
+                  onChange={e => {
+                    const nights = Number(e.target.value);
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      nights,
+                      duration: `${newBookingForm.days} Days / ${nights} Nights`
+                    });
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Pricing & Payments */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Total Package Price (₹): *</label>
+                <input
+                  type="number"
+                  value={newBookingForm.totalPrice}
+                  onChange={e => {
+                    const totalPrice = Number(e.target.value);
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      totalPrice,
+                      paidAmount: newBookingForm.paymentType === 'Prepaid' ? totalPrice : newBookingForm.paidAmount
+                    });
+                  }}
+                />
+              </div>
+              <div className="form-group">
+                <label>Payment Method:</label>
+                <select
+                  value={newBookingForm.paymentType}
+                  onChange={e => {
+                    const paymentType = e.target.value;
+                    setNewBookingForm({
+                      ...newBookingForm,
+                      paymentType,
+                      paidAmount: paymentType === 'Prepaid' ? newBookingForm.totalPrice : 0
+                    });
+                  }}
+                >
+                  <option value="Prepaid">Prepaid (Paid upfront)</option>
+                  <option value="Postpaid">Postpaid (Pay later / Partial)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Amount Paid Now (₹):</label>
+                <input
+                  type="number"
+                  value={newBookingForm.paidAmount}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, paidAmount: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            {/* Remaining balance banner */}
+            <div style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '8px 12px', borderRadius: '4px', marginBottom: '14px', fontSize: '13px', display: 'flex', justifyContent: 'space-between' }}>
+              <span><strong>Paid:</strong> ₹{Number(newBookingForm.paidAmount || 0).toLocaleString()}</span>
+              <span><strong>Balance Due:</strong> ₹{Math.max(0, Number(newBookingForm.totalPrice || 0) - Number(newBookingForm.paidAmount || 0)).toLocaleString()}</span>
+              <span><strong>Payment Status:</strong> {Number(newBookingForm.paidAmount || 0) >= Number(newBookingForm.totalPrice || 0) ? 'PAID IN FULL' : (Number(newBookingForm.paidAmount || 0) > 0 ? 'PARTIAL' : 'PENDING')}</span>
+            </div>
+
+            {/* Staff Specialist & Status */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Assign Tour Specialist / Officer:</label>
+                <select
+                  value={newBookingForm.caseOfficerId}
+                  onChange={e => {
+                    const officer = staffList.find(s => s.employeeId === e.target.value);
+                    if (officer) {
+                      setNewBookingForm({
+                        ...newBookingForm,
+                        caseOfficerId: officer.employeeId,
+                        caseOfficerName: officer.name
+                      });
+                    }
+                  }}
+                >
+                  {staffList.map(staff => (
+                    <option key={staff.employeeId} value={staff.employeeId}>
+                      {staff.name} ({staff.employeeId} - {staff.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Booking Status:</label>
+                <select
+                  value={newBookingForm.status}
+                  onChange={e => setNewBookingForm({ ...newBookingForm, status: e.target.value })}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Under Review">Under Review</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="form-group">
+              <label>Special Requests / Tour Notes (Optional):</label>
+              <textarea
+                placeholder="e.g. Vegetarian meals requested, airport transfer at Terminal 3, extra bed..."
+                rows="2"
+                value={newBookingForm.notes}
+                onChange={e => setNewBookingForm({ ...newBookingForm, notes: e.target.value })}
+              />
+            </div>
+
+            <div className="form-actions mt-4">
+              <button className="btn" onClick={() => setShowAddBookingModal(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!newBookingForm.customerName.trim()) {
+                    alert('Please enter customer full name.');
+                    return;
+                  }
+                  if (!newBookingForm.packageName.trim()) {
+                    alert('Please specify holiday package name.');
+                    return;
+                  }
+                  const nextId = `PKG-${701 + bookingList.length}`;
+                  const createdBooking = {
+                    packageId: nextId,
+                    packageName: newBookingForm.packageName.trim(),
+                    destination: newBookingForm.destination.trim() || 'Holiday Destination',
+                    duration: `${newBookingForm.days} Days / ${newBookingForm.nights} Nights`,
+                    days: Number(newBookingForm.days) || 1,
+                    nights: Number(newBookingForm.nights) || 0,
+                    bookingDate: newBookingForm.bookingDate || '2026-10-10',
+                    departureDate: newBookingForm.departureDate || '2026-11-20',
+                    totalPrice: Number(newBookingForm.totalPrice) || 85000,
+                    paidAmount: Number(newBookingForm.paidAmount) || 0,
+                    pendingAmount: Math.max(0, (Number(newBookingForm.totalPrice) || 0) - (Number(newBookingForm.paidAmount) || 0)),
+                    status: newBookingForm.status,
+                    customerName: newBookingForm.customerName.trim(),
+                    contactDetails: newBookingForm.contactDetails.trim() || '+91 99112 23344',
+                    email: newBookingForm.email.trim() || 'customer@example.com',
+                    paymentType: newBookingForm.paymentType,
+                    paymentStatus: Number(newBookingForm.paidAmount) >= Number(newBookingForm.totalPrice) ? 'Paid' : (Number(newBookingForm.paidAmount) > 0 ? 'Partial' : 'Pending'),
+                    caseOfficerName: newBookingForm.caseOfficerName,
+                    caseOfficerId: newBookingForm.caseOfficerId,
+                    invoiceNo: `INV-2026-08${80 + bookingList.length + 1}`,
+                    notes: newBookingForm.notes
+                  };
+
+                  setBookingList([createdBooking, ...bookingList]);
+
+                  if (createdBooking.paidAmount > 0) {
+                    setBookingPaymentsList([
+                      {
+                        id: `PAY-BKG-${701 + bookingPaymentsList.length}`,
+                        type: createdBooking.paymentType,
+                        mode: 'Bank Transfer',
+                        amount: createdBooking.paidAmount,
+                        date: createdBooking.bookingDate,
+                        ref: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                        status: 'Completed'
+                      },
+                      ...bookingPaymentsList
+                    ]);
+                  }
+
+                  setShowAddBookingModal(false);
+                  alert(`Holiday Booking "${nextId}" created successfully for ${createdBooking.customerName}!`);
+                }}
+              >
+                Create Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Payment Entry Modal */}
       {showAddPaymentModal && (
         <div className="modal-overlay">
@@ -2979,18 +3460,33 @@ export default function SuperAdminDashboard({ onLogout }) {
             <div className="form-actions">
               <button className="btn" onClick={() => setShowAddPaymentModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
-                const entry = {
-                  id: `PAY-${101 + visaPaymentsList.length}`,
-                  type: newPaymentForm.type,
-                  mode: newPaymentForm.mode,
-                  amount: Number(newPaymentForm.amount),
-                  date: newPaymentForm.date,
-                  ref: newPaymentForm.ref,
-                  status: newPaymentForm.status
-                };
-                setVisaPaymentsList([...visaPaymentsList, entry]);
-                setShowAddPaymentModal(false);
-                alert(`Added payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+                if (viewingBookingDetails) {
+                  const entry = {
+                    id: `PAY-BKG-${701 + bookingPaymentsList.length}`,
+                    type: newPaymentForm.type,
+                    mode: newPaymentForm.mode,
+                    amount: Number(newPaymentForm.amount),
+                    date: newPaymentForm.date,
+                    ref: newPaymentForm.ref,
+                    status: newPaymentForm.status
+                  };
+                  setBookingPaymentsList([...bookingPaymentsList, entry]);
+                  setShowAddPaymentModal(false);
+                  alert(`Added booking payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+                } else {
+                  const entry = {
+                    id: `PAY-${101 + visaPaymentsList.length}`,
+                    type: newPaymentForm.type,
+                    mode: newPaymentForm.mode,
+                    amount: Number(newPaymentForm.amount),
+                    date: newPaymentForm.date,
+                    ref: newPaymentForm.ref,
+                    status: newPaymentForm.status
+                  };
+                  setVisaPaymentsList([...visaPaymentsList, entry]);
+                  setShowAddPaymentModal(false);
+                  alert(`Added payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+                }
               }}>Save Payment Entry</button>
             </div>
           </div>
@@ -3067,6 +3563,7 @@ export default function SuperAdminDashboard({ onLogout }) {
               <button className="btn" onClick={() => setEditingPayment(null)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
                 setVisaPaymentsList(visaPaymentsList.map(p => p.id === editingPayment.id ? editingPayment : p));
+                setBookingPaymentsList(bookingPaymentsList.map(p => p.id === editingPayment.id ? editingPayment : p));
                 setEditingPayment(null);
               }}>Update Payment Entry</button>
             </div>

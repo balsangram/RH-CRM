@@ -36,7 +36,7 @@ export default function LoginPages({ currentLoginRole, setLoginRole, onLoginSucc
             <div className="login-subtitle">RH Global CRM &bull; Administrative Portal</div>
             <form onSubmit={handleLoginSubmit}>
               <div className="form-group">
-                <label>Email ID / Username</label>
+                <label>Email ID </label>
                 <input
                   type="email"
                   placeholder="admin@rhglobal.com"
@@ -46,12 +46,12 @@ export default function LoginPages({ currentLoginRole, setLoginRole, onLoginSucc
                 />
               </div>
               <div className="form-group">
-                <label>Password / OTP</label>
+                <label>Enter OTP</label>
                 <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password || 'superadmin123'}
-                  onChange={e => setPassword(e.target.value)}
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp || '582910'}
+                  onChange={e => setOtp(e.target.value)}
                   required
                 />
               </div>
@@ -81,12 +81,12 @@ export default function LoginPages({ currentLoginRole, setLoginRole, onLoginSucc
                 />
               </div>
               <div className="form-group">
-                <label>Password / OTP</label>
+                <label>Enter OTP</label>
                 <input
-                  type="password"
-                  placeholder="Enter Password / OTP"
-                  value={password || 'staffpass123'}
-                  onChange={e => setPassword(e.target.value)}
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp || '582910'}
+                  onChange={e => setOtp(e.target.value)}
                   required
                 />
               </div>

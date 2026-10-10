@@ -19,6 +19,29 @@ export default function StaffDashboard({ onLogout }) {
   const [hasExtensionPermission, setHasExtensionPermission] = useState(false); // Demonstrating approval requirement
   const [extensionForm, setExtensionForm] = useState({ days: 2, nights: 1, charges: 12000, remarks: 'Client requested extension in Paris.' });
 
+  // Document Management State
+  const [visaDocsList, setVisaDocsList] = useState([
+    { id: 'DOC-301-1', name: 'Passport Front Page', mandatory: 'MANDATORY', status: 'VERIFIED' },
+    { id: 'DOC-301-2', name: 'Bank Statement (6 Months)', mandatory: 'MANDATORY', status: 'PENDING VERIFICATION' },
+    { id: 'DOC-301-3', name: 'Employment NOC Letter', mandatory: 'OPTIONAL', status: 'VERIFIED' }
+  ]);
+  const [showAddDocModal, setShowAddDocModal] = useState(false);
+  const [newDocName, setNewDocName] = useState('');
+  const [newDocRequirement, setNewDocRequirement] = useState('MANDATORY');
+
+  // Payment Management State
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [newPaymentAmount, setNewPaymentAmount] = useState('');
+  const [newPaymentMode, setNewPaymentMode] = useState('Credit Card / Online');
+  const [newPaymentRef, setNewPaymentRef] = useState('');
+  const [paymentsList, setPaymentsList] = useState([
+    { id: 'PMT-001', date: '2026-10-02', mode: 'Credit Card / Online', amount: 10000, refNo: 'PAY-887123', status: 'Confirmed' }
+  ]);
+  const [holidayPaymentsList, setHolidayPaymentsList] = useState([
+    { id: 'PAY-701', type: 'PREPAID', mode: 'Bank Transfer', amount: 35000, date: '2026-10-01', ref: 'TXN-998200' },
+    { id: 'PAY-702', type: 'INSTALLMENT', mode: 'Credit Card / Online', amount: 50000, date: '2026-10-05', ref: 'TXN-998540' }
+  ]);
+
   // Mock Countries & Packages List (Matching Super Admin datasets)
   const [countriesList] = useState([
     {
@@ -180,7 +203,10 @@ export default function StaffDashboard({ onLogout }) {
   ]);
 
   // Filter assigned items for staff member Amit Verma (CO-101)
-  const assignedVisaApps = mockVisaServices.filter(v => v.caseOfficerId === 'CO-101');
+  const [assignedVisaAppsState, setAssignedVisaAppsState] = useState(
+    mockVisaServices.filter(v => v.caseOfficerId === 'CO-101')
+  );
+  const assignedVisaApps = assignedVisaAppsState;
   const assignedHolidayApps = mockBookingServices; // Mock assigned holiday bookings
 
   // Merged Applications List (Visa + Holiday)
@@ -247,7 +273,7 @@ export default function StaffDashboard({ onLogout }) {
               <span>3. Packages</span>
             </button>
           </li>
-       
+
         </ul>
         <div className="sidebar-footer">
           <div>Logged in: <strong>amit.v@rhglobal.com</strong></div>
@@ -270,80 +296,115 @@ export default function StaffDashboard({ onLogout }) {
         </header>
 
         <main className="content-body">
-          {/* 1. OVERVIEW */}
-          {activeTab === 'overview' && (
+          {selectedVisaApp ? (
+            /* DEDICATED FULL-PAGE VISA APPLICATION DETAILS VIEW (MATCHING IMAGE 2 EXACTLY) */
             <div>
-              <div className="grid-cards">
-                <div className="card">
-                  <div className="card-title">Total Assigned Applications</div>
-                  <div className="card-value">{staffSummary.totalAssigned}</div>
-                  <p style={{ fontSize: '11px', color: '#555' }}>Assigned to logged-in staff</p>
-                  <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View All &rarr;</button>
-                </div>
-                <div className="card">
-                  <div className="card-title">Active Applications</div>
-                  <div className="card-value">{staffSummary.active}</div>
-                  <p style={{ fontSize: '11px', color: '#555' }}>Currently being processed</p>
-                  <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Active &rarr;</button>
-                </div>
-                <div className="card">
-                  <div className="card-title">Pending Applications</div>
-                  <div className="card-value">{staffSummary.pending}</div>
-                  <p style={{ fontSize: '11px', color: '#555' }}>Waiting for review/action</p>
-                  <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Pending &rarr;</button>
-                </div>
-                <div className="card">
-                  <div className="card-title">Completed Applications</div>
-                  <div className="card-value">{staffSummary.completed}</div>
-                  <p style={{ fontSize: '11px', color: '#555' }}>Successfully completed</p>
-                  <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Completed &rarr;</button>
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setSelectedVisaApp(null)}>
+                  &larr; Back to Applications / Profile
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
                 </div>
               </div>
 
-              {/* SINGLE MERGED TABLE ON OVERVIEW */}
+              {/* 1. Header Box: Visa Application Details */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Visa Application Details: {selectedVisaApp.id}</div>
+                  <span className="status-badge">{selectedVisaApp.status}</span>
+                </div>
+                <div className="form-grid" style={{ fontSize: '13px' }}>
+                  <div><strong>Applicant Name:</strong> {selectedVisaApp.applicantName}</div>
+                  <div><strong>Email ID:</strong> vikram.roy@gmail.com</div>
+                  <div><strong>Mobile Number:</strong> +91 99112 23344</div>
+                  <div><strong>Target Country:</strong> {selectedVisaApp.country}</div>
+                  <div><strong>Visa Type:</strong> {selectedVisaApp.visaType}</div>
+                  <div><strong>Passport Details:</strong> Z9847291 (Exp: 2031-05-12)</div>
+                  <div><strong>Case Officer:</strong> {selectedVisaApp.caseOfficerName || 'Amit Verma'} ({selectedVisaApp.caseOfficerId || 'CO-101'})</div>
+                  <div><strong>Application Date:</strong> {selectedVisaApp.applicationDate}</div>
+                </div>
+              </div>
+
+              {/* 2. Application Status Progression & Update */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Application Status Progression & Update</div>
+                </div>
+
+
+
+                <div className="toolbar mt-4" style={{ backgroundColor: '#f9f9f9', padding: '12px', border: '1px solid #ccc' }}>
+                  <div className="filter-group">
+                    <label>Change Application Status to:</label>
+                    <select
+                      value={selectedVisaApp.status}
+                      onChange={e => {
+                        const updatedStatus = e.target.value;
+                        const updatedApp = { ...selectedVisaApp, status: updatedStatus };
+                        setSelectedVisaApp(updatedApp);
+                        setAssignedVisaAppsState(assignedVisaAppsState.map(v => v.id === selectedVisaApp.id ? updatedApp : v));
+                      }}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="Proceed">Proceed</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Rejected">Rejected</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => alert(`Status updated to "${selectedVisaApp.status}"!`)}
+                  >
+                    Save Status Update
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Document Management & Verification Status (Matches Image 2 exactly) */}
               <div className="section-box">
                 <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div className="section-title">Assigned Applications ({allAssignedApps.length})</div>
-                  <button className="btn btn-sm btn-primary" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>
-                    Go to Applications Page &rarr;
+                  <div className="section-title">Document Management & Verification Status</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddDocModal(true)}>
+                    + Add Document Name
                   </button>
                 </div>
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Application ID</th>
-                        <th>Applicant / Customer Name</th>
-                        <th>Application Type</th>
-                        <th>Country / Destination</th>
-                        <th>Application Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>DOCUMENT NAME</th>
+                        <th>DOCUMENT REQUIREMENT</th>
+                        <th>VERIFICATION STATUS</th>
+                        <th>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {allAssignedApps.map((app, index) => (
-                        <tr key={index}>
-                          <td className="font-mono"><strong>{app.id}</strong></td>
-                          <td>{app.applicantName}</td>
-                          <td><span className="status-badge">{app.type}</span> ({app.details})</td>
-                          <td>{app.destination}</td>
-                          <td>{app.date}</td>
-                          <td><span className="status-badge">{app.status}</span></td>
+                      {visaDocsList.map(doc => (
+                        <tr key={doc.id}>
+                          <td><strong>{doc.name}</strong></td>
+                          <td><span className="status-badge">{doc.mandatory}</span></td>
+                          <td>
+                            <span className="status-badge" style={{
+                              backgroundColor: doc.status === 'Verified' || doc.status === 'VERIFIED' ? '#e6ffe6' : doc.status === 'Rejected' || doc.status === 'REJECTED' ? '#ffe6e6' : '#fff'
+                            }}>
+                              {doc.status}
+                            </span>
+                          </td>
                           <td className="action-cell">
-                            <button
-                              className="btn btn-sm"
-                              onClick={() => {
-                                setActiveTab('all');
-                                if (app.category === 'visa') {
-                                  setAppSubTab('visa');
-                                } else {
-                                  setAppSubTab('holiday');
-                                }
-                              }}
-                            >
-                              View &rarr;
-                            </button>
+                            <button className="btn btn-sm" onClick={() => {
+                              setVisaDocsList(visaDocsList.map(d => d.id === doc.id ? { ...d, status: 'VERIFIED' } : d));
+                            }}>Verify</button>
+                            <button className="btn btn-sm" onClick={() => {
+                              setVisaDocsList(visaDocsList.map(d => d.id === doc.id ? { ...d, status: 'REJECTED' } : d));
+                            }}>Reject</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => {
+                              setVisaDocsList(visaDocsList.filter(d => d.id !== doc.id));
+                            }}>Remove</button>
                           </td>
                         </tr>
                       ))}
@@ -351,389 +412,376 @@ export default function StaffDashboard({ onLogout }) {
                   </table>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* 2. APPLICATIONS PAGE WITH 2 TOP BUTTONS (VISA / HOLIDAY) */}
-          {activeTab === 'all' && (
-            <div>
-              {/* 2 TOP BUTTONS (VISA APPLICATIONS / HOLIDAY APPLICATIONS) */}
-              <div className="tabs-header" style={{ marginBottom: '16px' }}>
-                <button
-                  className={`tab-btn ${appSubTab === 'visa' || appSubTab === 'all' ? 'active' : ''}`}
-                  onClick={() => setAppSubTab('visa')}
-                >
-                  Visa Applications ({assignedVisaApps.length})
-                </button>
-                <button
-                  className={`tab-btn ${appSubTab === 'holiday' ? 'active' : ''}`}
-                  onClick={() => setAppSubTab('holiday')}
-                >
-                  Holiday Applications ({assignedHolidayApps.length})
-                </button>
+              {/* 4. Payment Management (Multiple Payment Entries) */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+                {hasPaymentPermission ? (
+                  <div>
+                    <div className="form-grid mt-4">
+                      <div><strong>Payment Type:</strong> {selectedVisaApp.paymentType || 'Installment (2 Parts)'}</div>
+                      <div><strong>Total Amount:</strong> ₹{(selectedVisaApp.totalAmount || 18500).toLocaleString()}</div>
+                      <div><strong>Paid Amount:</strong> ₹{(paymentsList.reduce((acc, p) => acc + Number(p.amount), 0)).toLocaleString()}</div>
+                      <div><strong>Pending Amount:</strong> ₹{Math.max(0, (selectedVisaApp.totalAmount || 18500) - paymentsList.reduce((acc, p) => acc + Number(p.amount), 0)).toLocaleString()}</div>
+                      <div><strong>Payment Status:</strong> {selectedVisaApp.paymentStatus || 'Partially Paid'}</div>
+                    </div>
+                    <div className="table-container mt-4">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Payment ID</th>
+                            <th>Date</th>
+                            <th>Payment Mode</th>
+                            <th>Ref / Transaction ID</th>
+                            <th>Amount (₹)</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paymentsList.map(pmt => (
+                            <tr key={pmt.id}>
+                              <td className="font-mono"><strong>{pmt.id}</strong></td>
+                              <td>{pmt.date}</td>
+                              <td>{pmt.mode}</td>
+                              <td className="font-mono">{pmt.refNo}</td>
+                              <td className="font-mono">₹{Number(pmt.amount).toLocaleString()}</td>
+                              <td><span className="status-badge">{pmt.status}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="action-cell mt-4">
+                      <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>+ Add Payment Entry</button>
+                      <button className="btn btn-sm" onClick={() => alert('Downloading Payment Invoice PDF')}>Download Invoice</button>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '12px', color: '#777', marginTop: '8px' }}>
+                    <em>Payment management is not permitted for your current role level. Contact Super Admin to enable payment permissions.</em>
+                  </p>
+                )}
               </div>
 
-              {/* DISPLAY ASSIGNED VISA APPLICATIONS (2) WHEN VISA BUTTON IS CLICKED */}
-              {(appSubTab === 'visa' || appSubTab === 'all') && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Assigned Visa Applications ({assignedVisaApps.length})</div>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Application ID</th>
-                          <th>Applicant Name</th>
-                          <th>Country</th>
-                          <th>Visa Type</th>
-                          <th>Case Officer Name</th>
-                          <th>Case Officer ID</th>
-                          <th>Application Date</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {assignedVisaApps.map(visa => (
-                          <tr key={visa.id}>
-                            <td className="font-mono"><strong>{visa.id}</strong></td>
-                            <td>{visa.applicantName}</td>
-                            <td>{visa.country}</td>
-                            <td>{visa.visaType}</td>
-                            <td>{visa.caseOfficerName}</td>
-                            <td className="font-mono">{visa.caseOfficerId}</td>
-                            <td>{visa.applicationDate}</td>
-                            <td><span className="status-badge">{visa.status}</span></td>
-                            <td className="action-cell">
-                              <button className="btn btn-sm" onClick={() => setSelectedVisaApp(visa)}>View / Edit Details</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* 5. Visa Upload */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Visa Document Upload & Final Issuance</div>
                 </div>
-              )}
-
-              {/* DISPLAY ASSIGNED HOLIDAY APPLICATIONS (2) WHEN HOLIDAY BUTTON IS CLICKED */}
-              {appSubTab === 'holiday' && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Assigned Holiday Applications ({assignedHolidayApps.length})</div>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>App / Booking ID</th>
-                          <th>Package ID</th>
-                          <th>Package Name</th>
-                          <th>Customer Name</th>
-                          <th>Destination</th>
-                          <th>Duration</th>
-                          <th>Total Price</th>
-                          <th>Payment Status</th>
-                          <th>Booking Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {assignedHolidayApps.map(bk => (
-                          <tr key={bk.packageId}>
-                            <td className="font-mono"><strong>{bk.packageId}</strong></td>
-                            <td className="font-mono">{bk.packageId}</td>
-                            <td>{bk.packageName}</td>
-                            <td>{bk.customerName}</td>
-                            <td>{bk.destination}</td>
-                            <td>{bk.duration}</td>
-                            <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
-                            <td><span className="status-badge">{bk.paymentStatus}</span></td>
-                            <td><span className="status-badge">{bk.status}</span></td>
-                            <td className="action-cell">
-                              <button className="btn btn-sm" onClick={() => setSelectedHolidayApp(bk)}>View / Edit</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <p style={{ fontSize: '12px', margin: '8px 0' }}>Upload final approved visa document to attach to application:</p>
+                <div className="action-cell">
+                  <button className="btn btn-sm btn-primary" onClick={() => alert('Final Visa File Uploaded')}>Upload Visa</button>
+                  <button className="btn btn-sm" onClick={() => alert('Viewing Final Visa')}>View Visa</button>
+                  <button className="btn btn-sm" onClick={() => alert('Downloading Final Visa')}>Download Visa</button>
                 </div>
-              )}
+              </div>
             </div>
-          )}
-
-          {/* 3. PACKAGES */}
-          {activeTab === 'packages' && (
+          ) : selectedHolidayApp ? (
+            /* DEDICATED FULL-PAGE HOLIDAY APPLICATION DETAILS VIEW (MATCHING SUPER ADMIN RICH DETAILS) */
             <div>
-              {viewingCountryVisaDetails ? (
-                /* DEDICATED FULL-PAGE COUNTRY VISA DETAILS VIEW (STAFF READ-ONLY) */
-                <div>
-                  <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <button className="btn" onClick={() => setViewingCountryVisaDetails(null)}>
-                      &larr; Back to Packages & Catalog
+              <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                <button className="btn" onClick={() => setSelectedHolidayApp(null)}>
+                  &larr; Back to Applications / Profile
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+              </div>
+
+              {/* 1. Header Box: Holiday Application Details */}
+              <div className="section-box" style={{ background: '#fafafa' }}>
+                <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Holiday Application Details: {selectedHolidayApp.packageId || 'PKG-701'}</div>
+                  <span className="status-badge">{selectedHolidayApp.status || 'ACTIVE'}</span>
+                </div>
+                <div className="form-grid" style={{ fontSize: '13px' }}>
+                  <div><strong>Customer Name:</strong> {selectedHolidayApp.customerName || 'Sanya Malhotra'}</div>
+                  <div><strong>Email ID:</strong> {selectedHolidayApp.email || 'sanya.m@gmail.com'}</div>
+                  <div><strong>Mobile Number:</strong> {selectedHolidayApp.contactDetails || '+91 98111 55443'}</div>
+                  <div><strong>Package Name:</strong> {selectedHolidayApp.packageName || 'Bali Island Beach Getaway'}</div>
+                  <div><strong>Destination:</strong> {selectedHolidayApp.destination || 'Bali, Indonesia'}</div>
+                  <div><strong>Duration:</strong> {selectedHolidayApp.duration || '6 Days / 5 Nights'}</div>
+                  <div><strong>Departure Date:</strong> {selectedHolidayApp.departureDate || '2026-11-15'}</div>
+                  <div><strong>Total Price:</strong> ₹{(selectedHolidayApp.totalPrice || selectedHolidayApp.price || 85000).toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* 2. Booking Application Status Progression & Update */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Booking Application Status Progression & Update</div>
+                </div>
+                <div className="toolbar mt-4" style={{ backgroundColor: '#f9f9f9', padding: '12px', border: '1px solid #ccc' }}>
+                  <div className="filter-group">
+                    <label>Change Application / Booking Status to:</label>
+                    <select
+                      value={selectedHolidayApp.status || 'ACTIVE'}
+                      onChange={e => {
+                        const updatedStatus = e.target.value;
+                        setSelectedHolidayApp({ ...selectedHolidayApp, status: updatedStatus });
+                      }}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Under Review">Under Review</option>
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <button className="btn btn-sm btn-primary" onClick={() => alert(`Booking status updated to "${selectedHolidayApp.status || 'ACTIVE'}"!`)}>
+                    Save Status Update
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Payment Management (Multiple Payment Entries) - Matches Screenshot 2 */}
+              <div className="section-box">
+                <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
+                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
+                    + Add Payment Entry
+                  </button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '16px' }}>
+                  <div className="card">
+                    <div className="card-title">TOTAL PACKAGE PRICE</div>
+                    <div className="card-value">₹{(selectedHolidayApp.totalPrice || selectedHolidayApp.price || 85000).toLocaleString()}</div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">TOTAL PAID AMOUNT</div>
+                    <div className="card-value">
+                      ₹{holidayPaymentsList.reduce((acc, p) => acc + Number(p.amount), 0).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">REMAINING BALANCE</div>
+                    <div className="card-value">
+                      ₹{Math.max(0, (selectedHolidayApp.totalPrice || selectedHolidayApp.price || 85000) - holidayPaymentsList.reduce((acc, p) => acc + Number(p.amount), 0)).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-title">PAYMENT STATUS</div>
+                    <div className="card-value" style={{ fontSize: '16px' }}>
+                      {holidayPaymentsList.reduce((acc, p) => acc + Number(p.amount), 0) >= (selectedHolidayApp.totalPrice || selectedHolidayApp.price || 85000) ? 'PAID IN FULL' : 'PARTIALLY PAID'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payments Table */}
+                <div className="table-container mt-4">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>PAYMENT ID</th>
+                        <th>PAYMENT TYPE</th>
+                        <th>PAYMENT MODE</th>
+                        <th>AMOUNT (₹)</th>
+                        <th>PAYMENT DATE</th>
+                        <th>REFERENCE / TXN ID</th>
+                        <th>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {holidayPaymentsList.map(pay => (
+                        <tr key={pay.id}>
+                          <td className="font-mono"><strong>{pay.id}</strong></td>
+                          <td><span className="status-badge">{pay.type}</span></td>
+                          <td>{pay.mode}</td>
+                          <td className="font-mono">₹{Number(pay.amount).toLocaleString()}</td>
+                          <td>{pay.date}</td>
+                          <td className="font-mono">{pay.ref}</td>
+                          <td className="action-cell">
+                            <button className="btn btn-sm" onClick={() => alert(`Downloading receipt for ${pay.id}`)}>Download</button>
+                            <button className="btn btn-sm" onClick={() => alert(`Editing payment ${pay.id}`)}>Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => setHolidayPaymentsList(holidayPaymentsList.filter(p => p.id !== pay.id))}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 4. Extend Booking Duration & Special Requests (Preserving existing staff flow) */}
+              <div className="section-box">
+                <div className="section-header">
+                  <div className="section-title">Extend Booking Duration & Special Requests</div>
+                </div>
+                {hasExtensionPermission ? (
+                  <div>
+                    <p style={{ fontSize: '12px', marginBottom: '8px' }}>Staff has permission to extend directly:</p>
+                    <div className="form-grid">
+                      <div className="form-group"><label>Add Days:</label><input type="number" defaultValue="2" /></div>
+                      <div className="form-group"><label>Add Nights:</label><input type="number" defaultValue="1" /></div>
+                      <div className="form-group"><label>Add Charges (₹):</label><input type="number" defaultValue="12000" /></div>
+                    </div>
+                    <button className="btn btn-primary btn-sm mt-4" onClick={() => alert('Booking extended & total recalculated!')}>Update Booking</button>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ fontSize: '12px', color: '#333', marginBottom: '8px' }}>
+                      Extending this booking requires management approval. Submit an <strong>Extension Request</strong> to Super Admin:
+                    </p>
+                    <div className="form-group">
+                      <label>Extension Details & Remarks:</label>
+                      <textarea value={extensionForm.remarks} onChange={e => setExtensionForm({ ...extensionForm, remarks: e.target.value })} rows="2"></textarea>
+                    </div>
+                    <button className="btn btn-primary btn-sm mt-4" onClick={() => alert('Extension Request submitted to Super Admin for approval!')}>
+                      Submit Extension Request to Super Admin &rarr;
                     </button>
                   </div>
-
-                  {/* Country Header Box */}
-                  <div className="section-box" style={{ background: '#fafafa' }}>
-                    <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '28px' }}>{viewingCountryVisaDetails.flag || '🌐'}</span>
-                        <span>Visa Details: {viewingCountryVisaDetails.countryName} ({viewingCountryVisaDetails.countryCode})</span>
-                      </div>
-                      <span className="status-badge">{viewingCountryVisaDetails.status || 'Active'}</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* 1. OVERVIEW */}
+              {activeTab === 'overview' && (
+                <div>
+                  <div className="grid-cards">
+                    <div className="card">
+                      <div className="card-title">Total Assigned Applications</div>
+                      <div className="card-value">{staffSummary.totalAssigned}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Assigned to logged-in staff</p>
+                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View All &rarr;</button>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '20px', marginTop: '12px' }}>
-                      <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
-                        <img
-                          src={viewingCountryVisaDetails.imageUrl}
-                          alt={viewingCountryVisaDetails.countryName}
-                          style={{ width: '100%', height: '140px', objectFit: 'cover' }}
-                        />
-                      </div>
-                      <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
-                        <div><strong>Country Name:</strong> {viewingCountryVisaDetails.countryName}</div>
-                        <div><strong>Country Code:</strong> {viewingCountryVisaDetails.countryCode}</div>
-                        <div><strong>Visa Types Provided:</strong> {(viewingCountryVisaDetails.visaTypes ? viewingCountryVisaDetails.visaTypes.length : 0)} Visa Types</div>
-                        <div><strong>Standard Processing Time:</strong> {viewingCountryVisaDetails.processingTime || '10-15 Days'}</div>
-                        <div><strong>Starting Visa Fee:</strong> ₹{(viewingCountryVisaDetails.startingPrice || 18500).toLocaleString()}</div>
-                        <div><strong>Embassy Status:</strong> Active Visa Issuance</div>
-                      </div>
+                    <div className="card">
+                      <div className="card-title">Active Applications</div>
+                      <div className="card-value">{staffSummary.active}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Currently being processed</p>
+                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Active &rarr;</button>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Pending Applications</div>
+                      <div className="card-value">{staffSummary.pending}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Waiting for review/action</p>
+                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Pending &rarr;</button>
+                    </div>
+                    <div className="card">
+                      <div className="card-title">Completed Applications</div>
+                      <div className="card-value">{staffSummary.completed}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Successfully completed</p>
+                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Completed &rarr;</button>
                     </div>
                   </div>
 
-                  {/* Visa Types Provided */}
+                  {/* SINGLE MERGED TABLE ON OVERVIEW */}
                   <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">1. Visa Types Provided for {viewingCountryVisaDetails.countryName}</div>
+                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="section-title">Assigned Applications ({allAssignedApps.length})</div>
+                      <button className="btn btn-sm btn-primary" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>
+                        Go to Applications Page &rarr;
+                      </button>
                     </div>
-                    <div className="table-container mt-4">
+                    <div className="table-container">
                       <table>
                         <thead>
                           <tr>
-                            <th>Visa Type Name</th>
-                            <th>Validity Period</th>
-                            <th>Permitted Stay Duration</th>
-                            <th>Processing Fee (₹)</th>
+                            <th>Application ID</th>
+                            <th>Applicant / Customer Name</th>
+                            <th>Application Type</th>
+                            <th>Country / Destination</th>
+                            <th>Application Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(viewingCountryVisaDetails.visaTypes && viewingCountryVisaDetails.visaTypes.length > 0) ? (
-                            viewingCountryVisaDetails.visaTypes.map((vt, i) => (
-                              <tr key={i}>
-                                <td><strong>{vt.name}</strong></td>
-                                <td>{vt.validity}</td>
-                                <td>{vt.stayDuration}</td>
-                                <td className="font-mono">₹{(vt.processingFee || 0).toLocaleString()}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="4" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
-                                No visa types added yet.
+                          {allAssignedApps.map((app, index) => (
+                            <tr key={index}>
+                              <td className="font-mono"><strong>{app.id}</strong></td>
+                              <td>{app.applicantName}</td>
+                              <td><span className="status-badge">{app.type}</span> ({app.details})</td>
+                              <td>{app.destination}</td>
+                              <td>{app.date}</td>
+                              <td><span className="status-badge">{app.status}</span></td>
+                              <td className="action-cell">
+                                <button
+                                  className="btn btn-sm"
+                                  onClick={() => {
+                                    setActiveTab('all');
+                                    if (app.category === 'visa') {
+                                      setAppSubTab('visa');
+                                    } else {
+                                      setAppSubTab('holiday');
+                                    }
+                                  }}
+                                >
+                                  View &rarr;
+                                </button>
                               </td>
                             </tr>
-                          )}
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
-
-                  {/* Document Requirements Matrix */}
-                  <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">2. Document Requirements & Matrix</div>
-                    </div>
-                    <div className="table-container mt-4">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Document Name</th>
-                            <th>Requirement Type</th>
-                            <th>Guidelines & Format Instructions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(viewingCountryVisaDetails.requiredDocs && viewingCountryVisaDetails.requiredDocs.length > 0) ? (
-                            viewingCountryVisaDetails.requiredDocs.map((doc, i) => (
-                              <tr key={i}>
-                                <td><strong>{doc.name}</strong></td>
-                                <td><span className="status-badge">{doc.type}</span></td>
-                                <td>{doc.guidance}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="3" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
-                                No document requirements added yet.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Embassy Step-by-Step Guidance */}
-                  <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">3. Official Embassy Guidance & Application Instructions</div>
-                    </div>
-                    {viewingCountryVisaDetails.guidance && viewingCountryVisaDetails.guidance.trim() !== '' ? (
-                      <div style={{ fontSize: '13px', lineHeight: '1.6', background: '#f9f9f9', padding: '16px', border: '1px solid #ccc', marginTop: '12px' }}>
-                        <p><strong>Step-by-Step Guidance:</strong></p>
-                        <p>{viewingCountryVisaDetails.guidance}</p>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc', marginTop: '12px' }}>
-                        <p style={{ color: '#666' }}>No official embassy guidance available.</p>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              ) : viewingHolidayPackageDetails ? (
-                /* DEDICATED FULL-PAGE HOLIDAY PACKAGE DETAILS VIEW (STAFF READ-ONLY) */
+              )}
+
+              {/* 2. APPLICATIONS PAGE WITH 2 TOP BUTTONS (VISA / HOLIDAY) */}
+              {activeTab === 'all' && (
                 <div>
-                  <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <button className="btn" onClick={() => setViewingHolidayPackageDetails(null)}>
-                      &larr; Back to Packages & Catalog
-                    </button>
-                  </div>
-
-                  {/* Header Banner */}
-                  <div className="section-box" style={{ background: '#fafafa' }}>
-                    <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div className="section-title">Holiday Package: {viewingHolidayPackageDetails.packageName} ({viewingHolidayPackageDetails.packageId})</div>
-                      <span className="status-badge">{viewingHolidayPackageDetails.status || 'Active'}</span>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '20px', marginTop: '12px' }}>
-                      <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
-                        <img
-                          src={viewingHolidayPackageDetails.imageUrl}
-                          alt={viewingHolidayPackageDetails.packageName}
-                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        />
-                      </div>
-                      <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
-                        <div><strong>Package ID:</strong> {viewingHolidayPackageDetails.packageId}</div>
-                        <div><strong>Package Name:</strong> {viewingHolidayPackageDetails.packageName}</div>
-                        <div><strong>Country / Region:</strong> {viewingHolidayPackageDetails.country}</div>
-                        <div><strong>Destination:</strong> {viewingHolidayPackageDetails.destination}</div>
-                        <div><strong>Duration:</strong> {viewingHolidayPackageDetails.duration}</div>
-                        <div><strong>Package Price:</strong> <span style={{ fontSize: '16px', fontWeight: 'bold' }}>₹{(viewingHolidayPackageDetails.price || 85000).toLocaleString()}</span> per person</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description & Overview */}
-                  <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">Tour Overview & Description</div>
-                    </div>
-                    <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.description}</p>
-                  </div>
-
-                  {/* Inclusions & Exclusions */}
-                  <div className="form-grid">
-                    <div className="section-box">
-                      <div className="section-header">
-                        <div className="section-title">Package Inclusions</div>
-                      </div>
-                      <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.inclusions}</p>
-                    </div>
-                    <div className="section-box">
-                      <div className="section-header">
-                        <div className="section-title">Package Exclusions</div>
-                      </div>
-                      <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.exclusions}</p>
-                    </div>
-                  </div>
-
-                  {/* Day-by-Day Itinerary */}
-                  <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">Day-by-Day Tour Itinerary</div>
-                    </div>
-                    <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {(viewingHolidayPackageDetails.itinerary && viewingHolidayPackageDetails.itinerary.length > 0) ? (
-                        viewingHolidayPackageDetails.itinerary.map((itin, idx) => (
-                          <div key={idx} style={{ border: '1px solid #ccc', padding: '12px', background: '#fcfcfc' }}>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '6px', marginBottom: '8px' }}>
-                              <span>{itin.day}: {itin.title}</span>
-                            </div>
-                            <p style={{ fontSize: '12px', color: '#444', lineHeight: '1.5' }}>{itin.detail}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc' }}>
-                          <p style={{ color: '#666' }}>No itinerary details available.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* MAIN PACKAGES CATALOG VIEW WITH 2 SUB-TABS (MATCHING SUPER ADMIN) */
-                <div>
-                  {/* 2 Sub-Tabs Header */}
+                  {/* 2 TOP BUTTONS (VISA APPLICATIONS / HOLIDAY APPLICATIONS) */}
                   <div className="tabs-header" style={{ marginBottom: '16px' }}>
                     <button
-                      className={`tab-btn ${packagesSubTab === 'visa' ? 'active' : ''}`}
-                      onClick={() => setPackagesSubTab('visa')}
+                      className={`tab-btn ${appSubTab === 'visa' || appSubTab === 'all' ? 'active' : ''}`}
+                      onClick={() => setAppSubTab('visa')}
                     >
-                      Visa Packages / Countries ({countriesList.length})
+                      Visa Applications ({assignedVisaApps.length})
                     </button>
                     <button
-                      className={`tab-btn ${packagesSubTab === 'holiday' ? 'active' : ''}`}
-                      onClick={() => setPackagesSubTab('holiday')}
+                      className={`tab-btn ${appSubTab === 'holiday' ? 'active' : ''}`}
+                      onClick={() => setAppSubTab('holiday')}
                     >
-                      Holiday / Tour Packages ({holidayPackagesList.length})
+                      Holiday Applications ({assignedHolidayApps.length})
                     </button>
                   </div>
 
-                  {/* SUB-TAB 1: VISA PACKAGES / COUNTRIES */}
-                  {packagesSubTab === 'visa' && (
+                  {/* DISPLAY ASSIGNED VISA APPLICATIONS (2) WHEN VISA BUTTON IS CLICKED */}
+                  {(appSubTab === 'visa' || appSubTab === 'all') && (
                     <div className="section-box">
                       <div className="section-header">
-                        <div className="section-title">Visa Packages & Countries Offered ({countriesList.length} Countries)</div>
+                        <div className="section-title">Assigned Visa Applications ({assignedVisaApps.length})</div>
                       </div>
-
-                      <div className="table-container mt-4">
+                      <div className="table-container">
                         <table>
                           <thead>
                             <tr>
-                              <th>Country / Image</th>
-                              <th>Country Name</th>
-                              <th>Code</th>
-                              <th>Visa Types Offered</th>
-                              <th>Processing Time</th>
-                              <th>Starting Fee (₹)</th>
+                              <th>Application ID</th>
+                              <th>Applicant Name</th>
+                              <th>Country</th>
+                              <th>Visa Type</th>
+                              <th>Case Officer Name</th>
+                              <th>Case Officer ID</th>
+                              <th>Application Date</th>
                               <th>Status</th>
-                              <th>Actions</th>
+                              <th>Action</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {countriesList.map(c => (
-                              <tr key={c.id || c.countryCode}>
-                                <td>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <img
-                                      src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
-                                      alt={c.countryName}
-                                      style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
-                                    />
-                                    <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
-                                  </div>
-                                </td>
-                                <td><strong>{c.countryName}</strong></td>
-                                <td className="font-mono">{c.countryCode}</td>
-                                <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
-                                <td>{c.processingTime || '10-15 Days'}</td>
-                                <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
-                                <td><span className="status-badge">{c.status}</span></td>
+                            {assignedVisaApps.map(visa => (
+                              <tr key={visa.id}>
+                                <td className="font-mono"><strong>{visa.id}</strong></td>
+                                <td>{visa.applicantName}</td>
+                                <td>{visa.country}</td>
+                                <td>{visa.visaType}</td>
+                                <td>{visa.caseOfficerName}</td>
+                                <td className="font-mono">{visa.caseOfficerId}</td>
+                                <td>{visa.applicationDate}</td>
+                                <td><span className="status-badge">{visa.status}</span></td>
                                 <td className="action-cell">
-                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                  <button className="btn btn-sm" onClick={() => setSelectedVisaApp(visa)}>View</button>
                                 </td>
                               </tr>
                             ))}
@@ -743,258 +791,510 @@ export default function StaffDashboard({ onLogout }) {
                     </div>
                   )}
 
-                  {/* SUB-TAB 2: HOLIDAY PACKAGES */}
-                  {packagesSubTab === 'holiday' && (
+                  {/* DISPLAY ASSIGNED HOLIDAY APPLICATIONS (2) WHEN HOLIDAY BUTTON IS CLICKED */}
+                  {appSubTab === 'holiday' && (
                     <div className="section-box">
                       <div className="section-header">
-                        <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
+                        <div className="section-title">Assigned Holiday Applications ({assignedHolidayApps.length})</div>
                       </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                        {holidayPackagesList.map(pkg => (
-                          <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
-                            <img
-                              src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
-                              alt={pkg.packageName}
-                              style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                            />
-                            <div style={{ padding: '12px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                                <div>
-                                  <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
-                                  <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
-                                </div>
-                                <span className="status-badge">{pkg.status}</span>
-                              </div>
-                              <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
-                              <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
-                              <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
-                                <strong>Inclusions:</strong> {pkg.inclusions}
-                              </p>
-                              <div className="action-cell" style={{ justifyContent: 'flex-start' }}>
-                                <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>App / Booking ID</th>
+                              <th>Package ID</th>
+                              <th>Package Name</th>
+                              <th>Customer Name</th>
+                              <th>Destination</th>
+                              <th>Duration</th>
+                              <th>Total Price</th>
+                              <th>Payment Status</th>
+                              <th>Booking Status</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {assignedHolidayApps.map(bk => (
+                              <tr key={bk.packageId}>
+                                <td className="font-mono"><strong>{bk.packageId}</strong></td>
+                                <td className="font-mono">{bk.packageId}</td>
+                                <td>{bk.packageName}</td>
+                                <td>{bk.customerName}</td>
+                                <td>{bk.destination}</td>
+                                <td>{bk.duration}</td>
+                                <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
+                                <td><span className="status-badge">{bk.paymentStatus}</span></td>
+                                <td><span className="status-badge">{bk.status}</span></td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm" onClick={() => setSelectedHolidayApp(bk)}>View</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* 5. STAFF PROFILE */}
-          {activeTab === 'profile' && (
-            <div className="section-box" style={{ maxWidth: '600px' }}>
-              <div className="section-header">
-                <div className="section-title">Staff Profile Information</div>
-              </div>
-              <div className="form-grid">
-                <div><strong>Employee ID:</strong> CO-101</div>
-                <div><strong>Name:</strong> Amit Verma</div>
-                <div><strong>Email:</strong> amit.v@rhglobal.com</div>
-                <div><strong>Mobile Number:</strong> +91 98888 77766</div>
-                <div><strong>Department:</strong> Visa Operations (Read-Only)</div>
-                <div><strong>Role:</strong> Senior Case Officer (Read-Only)</div>
-                <div><strong>Account Status:</strong> <span className="status-badge">Active</span></div>
-              </div>
-              <p style={{ fontSize: '11px', color: '#666', marginTop: '14px' }}>
-                * Note: Staff members cannot modify their department, role, or system permissions directly. Changes must be made by Super Admin.
-              </p>
-              <div className="form-actions" style={{ justifyContent: 'flex-start' }}>
-                <button className="btn btn-primary" onClick={() => alert('Profile update saved')}>Edit Profile</button>
-                <button className="btn" onClick={() => alert('Change Password flow triggered')}>Change Password</button>
-                <button className="btn btn-danger" onClick={onLogout}>Logout</button>
-              </div>
-            </div>
+              {/* 3. PACKAGES */}
+              {activeTab === 'packages' && (
+                <div>
+                  {viewingCountryVisaDetails ? (
+                    /* DEDICATED FULL-PAGE COUNTRY VISA DETAILS VIEW (STAFF READ-ONLY) */
+                    <div>
+                      <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <button className="btn" onClick={() => setViewingCountryVisaDetails(null)}>
+                          &larr; Back to Packages & Catalog
+                        </button>
+                      </div>
+
+                      {/* Country Header Box */}
+                      <div className="section-box" style={{ background: '#fafafa' }}>
+                        <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '28px' }}>{viewingCountryVisaDetails.flag || '🌐'}</span>
+                            <span>Visa Details: {viewingCountryVisaDetails.countryName} ({viewingCountryVisaDetails.countryCode})</span>
+                          </div>
+                          <span className="status-badge">{viewingCountryVisaDetails.status || 'Active'}</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '20px', marginTop: '12px' }}>
+                          <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
+                            <img
+                              src={viewingCountryVisaDetails.imageUrl}
+                              alt={viewingCountryVisaDetails.countryName}
+                              style={{ width: '100%', height: '140px', objectFit: 'cover' }}
+                            />
+                          </div>
+                          <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
+                            <div><strong>Country Name:</strong> {viewingCountryVisaDetails.countryName}</div>
+                            <div><strong>Country Code:</strong> {viewingCountryVisaDetails.countryCode}</div>
+                            <div><strong>Visa Types Provided:</strong> {(viewingCountryVisaDetails.visaTypes ? viewingCountryVisaDetails.visaTypes.length : 0)} Visa Types</div>
+                            <div><strong>Standard Processing Time:</strong> {viewingCountryVisaDetails.processingTime || '10-15 Days'}</div>
+                            <div><strong>Starting Visa Fee:</strong> ₹{(viewingCountryVisaDetails.startingPrice || 18500).toLocaleString()}</div>
+                            <div><strong>Embassy Status:</strong> Active Visa Issuance</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Visa Types Provided */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">1. Visa Types Provided for {viewingCountryVisaDetails.countryName}</div>
+                        </div>
+                        <div className="table-container mt-4">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Visa Type Name</th>
+                                <th>Validity Period</th>
+                                <th>Permitted Stay Duration</th>
+                                <th>Processing Fee (₹)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(viewingCountryVisaDetails.visaTypes && viewingCountryVisaDetails.visaTypes.length > 0) ? (
+                                viewingCountryVisaDetails.visaTypes.map((vt, i) => (
+                                  <tr key={i}>
+                                    <td><strong>{vt.name}</strong></td>
+                                    <td>{vt.validity}</td>
+                                    <td>{vt.stayDuration}</td>
+                                    <td className="font-mono">₹{(vt.processingFee || 0).toLocaleString()}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="4" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+                                    No visa types added yet.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Document Requirements Matrix */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">2. Document Requirements & Matrix</div>
+                        </div>
+                        <div className="table-container mt-4">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Document Name</th>
+                                <th>Requirement Type</th>
+                                <th>Guidelines & Format Instructions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(viewingCountryVisaDetails.requiredDocs && viewingCountryVisaDetails.requiredDocs.length > 0) ? (
+                                viewingCountryVisaDetails.requiredDocs.map((doc, i) => (
+                                  <tr key={i}>
+                                    <td><strong>{doc.name}</strong></td>
+                                    <td><span className="status-badge">{doc.type}</span></td>
+                                    <td>{doc.guidance}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="3" style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+                                    No document requirements added yet.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Embassy Step-by-Step Guidance */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">3. Official Embassy Guidance & Application Instructions</div>
+                        </div>
+                        {viewingCountryVisaDetails.guidance && viewingCountryVisaDetails.guidance.trim() !== '' ? (
+                          <div style={{ fontSize: '13px', lineHeight: '1.6', background: '#f9f9f9', padding: '16px', border: '1px solid #ccc', marginTop: '12px' }}>
+                            <p><strong>Step-by-Step Guidance:</strong></p>
+                            <p>{viewingCountryVisaDetails.guidance}</p>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc', marginTop: '12px' }}>
+                            <p style={{ color: '#666' }}>No official embassy guidance available.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : viewingHolidayPackageDetails ? (
+                    /* DEDICATED FULL-PAGE HOLIDAY PACKAGE DETAILS VIEW (STAFF READ-ONLY) */
+                    <div>
+                      <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <button className="btn" onClick={() => setViewingHolidayPackageDetails(null)}>
+                          &larr; Back to Packages & Catalog
+                        </button>
+                      </div>
+
+                      {/* Header Banner */}
+                      <div className="section-box" style={{ background: '#fafafa' }}>
+                        <div className="section-header" style={{ marginBottom: '8px', paddingBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className="section-title">Holiday Package: {viewingHolidayPackageDetails.packageName} ({viewingHolidayPackageDetails.packageId})</div>
+                          <span className="status-badge">{viewingHolidayPackageDetails.status || 'Active'}</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '20px', marginTop: '12px' }}>
+                          <div style={{ border: '1px solid #ccc', padding: '4px', background: '#fff' }}>
+                            <img
+                              src={viewingHolidayPackageDetails.imageUrl}
+                              alt={viewingHolidayPackageDetails.packageName}
+                              style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                            />
+                          </div>
+                          <div className="form-grid" style={{ fontSize: '13px', alignContent: 'center' }}>
+                            <div><strong>Package ID:</strong> {viewingHolidayPackageDetails.packageId}</div>
+                            <div><strong>Package Name:</strong> {viewingHolidayPackageDetails.packageName}</div>
+                            <div><strong>Country / Region:</strong> {viewingHolidayPackageDetails.country}</div>
+                            <div><strong>Destination:</strong> {viewingHolidayPackageDetails.destination}</div>
+                            <div><strong>Duration:</strong> {viewingHolidayPackageDetails.duration}</div>
+                            <div><strong>Package Price:</strong> <span style={{ fontSize: '16px', fontWeight: 'bold' }}>₹{(viewingHolidayPackageDetails.price || 85000).toLocaleString()}</span> per person</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Description & Overview */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Tour Overview & Description</div>
+                        </div>
+                        <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.description}</p>
+                      </div>
+
+                      {/* Inclusions & Exclusions */}
+                      <div className="form-grid">
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Package Inclusions</div>
+                          </div>
+                          <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.inclusions}</p>
+                        </div>
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Package Exclusions</div>
+                          </div>
+                          <p style={{ fontSize: '13px', marginTop: '10px', lineHeight: '1.6' }}>{viewingHolidayPackageDetails.exclusions}</p>
+                        </div>
+                      </div>
+
+                      {/* Day-by-Day Itinerary */}
+                      <div className="section-box">
+                        <div className="section-header">
+                          <div className="section-title">Day-by-Day Tour Itinerary</div>
+                        </div>
+                        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {(viewingHolidayPackageDetails.itinerary && viewingHolidayPackageDetails.itinerary.length > 0) ? (
+                            viewingHolidayPackageDetails.itinerary.map((itin, idx) => (
+                              <div key={idx} style={{ border: '1px solid #ccc', padding: '12px', background: '#fcfcfc' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 'bold', borderBottom: '1px solid #eee', paddingBottom: '6px', marginBottom: '8px' }}>
+                                  <span>{itin.day}: {itin.title}</span>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#444', lineHeight: '1.5' }}>{itin.detail}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fafafa', border: '1px dashed #ccc' }}>
+                              <p style={{ color: '#666' }}>No itinerary details available.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* MAIN PACKAGES CATALOG VIEW WITH 2 SUB-TABS (MATCHING SUPER ADMIN) */
+                    <div>
+                      {/* 2 Sub-Tabs Header */}
+                      <div className="tabs-header" style={{ marginBottom: '16px' }}>
+                        <button
+                          className={`tab-btn ${packagesSubTab === 'visa' ? 'active' : ''}`}
+                          onClick={() => setPackagesSubTab('visa')}
+                        >
+                          Visa Packages / Countries ({countriesList.length})
+                        </button>
+                        <button
+                          className={`tab-btn ${packagesSubTab === 'holiday' ? 'active' : ''}`}
+                          onClick={() => setPackagesSubTab('holiday')}
+                        >
+                          Holiday / Tour Packages ({holidayPackagesList.length})
+                        </button>
+                      </div>
+
+                      {/* SUB-TAB 1: VISA PACKAGES / COUNTRIES */}
+                      {packagesSubTab === 'visa' && (
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Visa Packages & Countries Offered ({countriesList.length} Countries)</div>
+                          </div>
+
+                          <div className="table-container mt-4">
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Country / Image</th>
+                                  <th>Country Name</th>
+                                  <th>Code</th>
+                                  <th>Visa Types Offered</th>
+                                  <th>Processing Time</th>
+                                  <th>Starting Fee (₹)</th>
+                                  <th>Status</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {countriesList.map(c => (
+                                  <tr key={c.id || c.countryCode}>
+                                    <td>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <img
+                                          src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
+                                          alt={c.countryName}
+                                          style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                        />
+                                        <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
+                                      </div>
+                                    </td>
+                                    <td><strong>{c.countryName}</strong></td>
+                                    <td className="font-mono">{c.countryCode}</td>
+                                    <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
+                                    <td>{c.processingTime || '10-15 Days'}</td>
+                                    <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
+                                    <td><span className="status-badge">{c.status}</span></td>
+                                    <td className="action-cell">
+                                      <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SUB-TAB 2: HOLIDAY PACKAGES */}
+                      {packagesSubTab === 'holiday' && (
+                        <div className="section-box">
+                          <div className="section-header">
+                            <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                            {holidayPackagesList.map(pkg => (
+                              <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                                <img
+                                  src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
+                                  alt={pkg.packageName}
+                                  style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                                />
+                                <div style={{ padding: '12px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                    <div>
+                                      <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
+                                      <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                                    </div>
+                                    <span className="status-badge">{pkg.status}</span>
+                                  </div>
+                                  <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
+                                  <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
+                                  <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                    <strong>Inclusions:</strong> {pkg.inclusions}
+                                  </p>
+                                  <div className="action-cell" style={{ justifyContent: 'flex-start' }}>
+                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 5. STAFF PROFILE */}
+              {activeTab === 'profile' && (
+                <div className="section-box" style={{ maxWidth: '600px' }}>
+                  <div className="section-header">
+                    <div className="section-title">Staff Profile Information</div>
+                  </div>
+                  <div className="form-grid">
+                    <div><strong>Employee ID:</strong> CO-101</div>
+                    <div><strong>Name:</strong> Amit Verma</div>
+                    <div><strong>Email:</strong> amit.v@rhglobal.com</div>
+                    <div><strong>Mobile Number:</strong> +91 98888 77766</div>
+                    <div><strong>Department:</strong> Visa Operations (Read-Only)</div>
+                    <div><strong>Role:</strong> Senior Case Officer (Read-Only)</div>
+                    <div><strong>Account Status:</strong> <span className="status-badge">Active</span></div>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#666', marginTop: '14px' }}>
+                    * Note: Staff members cannot modify their department, role, or system permissions directly. Changes must be made by Super Admin.
+                  </p>
+                  <div className="form-actions" style={{ justifyContent: 'flex-start' }}>
+                    <button className="btn btn-primary" onClick={() => alert('Profile update saved')}>Edit Profile</button>
+                    <button className="btn" onClick={() => alert('Change Password flow triggered')}>Change Password</button>
+                    <button className="btn btn-danger" onClick={onLogout}>Logout</button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
 
-      {/* --- STAFF MODALS --- */}
-      {/* Visa Application Details Modal */}
-      {selectedVisaApp && (
+      {/* --- ADD DOCUMENT MODAL --- */}
+      {showAddDocModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '800px' }}>
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
             <div className="modal-header">
-              <div className="modal-title">4.1 Staff Visa Application Details: {selectedVisaApp.id}</div>
-              <button className="close-btn" onClick={() => setSelectedVisaApp(null)}>X</button>
+              <div className="modal-title">Add Document Requirement</div>
+              <button className="close-btn" onClick={() => setShowAddDocModal(false)}>X</button>
             </div>
-
-            <div className="section-box">
-              <div className="section-title">Applicant Information</div>
-              <div className="form-grid mt-4">
-                <div><strong>Applicant Name:</strong> {selectedVisaApp.applicantName}</div>
-                <div><strong>Email:</strong> vikram.roy@gmail.com</div>
-                <div><strong>Mobile Number:</strong> +91 99112 23344</div>
-                <div><strong>Country:</strong> {selectedVisaApp.country}</div>
-                <div><strong>Passport Details:</strong> Z9847291 (Exp: 2031-05-12)</div>
-                <div><strong>Visa Type:</strong> {selectedVisaApp.visaType}</div>
-              </div>
+            <div className="form-group mt-4">
+              <label>Document Name:</label>
+              <input
+                type="text"
+                placeholder="e.g. Income Tax Returns (3 Years)"
+                value={newDocName}
+                onChange={e => setNewDocName(e.target.value)}
+              />
             </div>
-
-            <div className="section-box">
-              <div className="section-title">Document Management</div>
-              <div className="table-container mt-4">
-                <table>
-                  <thead>
-                    <tr><th>Document Name</th><th>Verification Status</th><th>Action</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Passport_Front_Page.pdf</td>
-                      <td><span className="status-badge">Verified</span></td>
-                      <td><button className="btn btn-sm" onClick={() => alert('Changed verification status')}>Change Status</button></td>
-                    </tr>
-                    <tr>
-                      <td>Bank_Statement_6Months.pdf</td>
-                      <td><span className="status-badge">Pending</span></td>
-                      <td><button className="btn btn-sm" onClick={() => alert('Changed verification status')}>Change Status</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="action-cell mt-4">
-                <button className="btn btn-sm" onClick={() => alert('View Documents')}>View Documents</button>
-                <button className="btn btn-sm" onClick={() => alert('Add required document')}>Add Required Doc</button>
-                <button className="btn btn-sm btn-primary" onClick={() => alert('Uploading additional document')}>Upload Additional Doc</button>
-              </div>
+            <div className="form-group mt-4">
+              <label>Requirement Type:</label>
+              <select value={newDocRequirement} onChange={e => setNewDocRequirement(e.target.value)}>
+                <option value="MANDATORY">MANDATORY</option>
+                <option value="OPTIONAL">OPTIONAL</option>
+              </select>
             </div>
-
-            <div className="section-box">
-              <div className="section-title">Application Status Update Flow</div>
-              <p style={{ fontSize: '12px', margin: '8px 0' }}>Current Lifecycle Stage:</p>
-              <div className="stepper-container">
-                <div className={`stepper-item ${selectedVisaApp.status === 'Pending' ? 'active' : ''}`}>1. Pending</div>
-                <div className="stepper-arrow">&darr;</div>
-                <div className={`stepper-item ${selectedVisaApp.status === 'Under Review' ? 'active' : ''}`}>2. Under Review</div>
-                <div className="stepper-arrow">&darr;</div>
-                <div className={`stepper-item ${selectedVisaApp.status === 'Proceed' ? 'active' : ''}`}>3. Proceed</div>
-                <div className="stepper-arrow">&darr;</div>
-                <div className={`stepper-item ${selectedVisaApp.status === 'Approved' ? 'active' : ''}`}>4. Approved / Rejected</div>
-                <div className="stepper-arrow">&darr;</div>
-                <div className={`stepper-item ${selectedVisaApp.status === 'Completed' ? 'active' : ''}`}>5. Completed</div>
-              </div>
-              <div className="filter-group mt-4">
-                <label>Update Status to:</label>
-                <select defaultValue={selectedVisaApp.status}>
-                  <option>Pending</option>
-                  <option>Under Review</option>
-                  <option>Proceed</option>
-                  <option>Approved</option>
-                  <option>Rejected</option>
-                  <option>Completed</option>
-                </select>
-                <button className="btn btn-sm btn-primary" onClick={() => alert('Status updated successfully!')}>Update Status</button>
-              </div>
-            </div>
-
-            {/* 4.2 Visa Payment Information (Conditional based on Permission) */}
-            <div className="section-box">
-              <div className="section-title">4.2 Visa Payment Information</div>
-              {hasPaymentPermission ? (
-                <div>
-                  <div className="form-grid mt-4">
-                    <div><strong>Payment Type:</strong> {selectedVisaApp.paymentType}</div>
-                    <div><strong>Total Amount:</strong> ₹{selectedVisaApp.totalAmount.toLocaleString()}</div>
-                    <div><strong>Paid Amount:</strong> ₹{selectedVisaApp.paidAmount.toLocaleString()}</div>
-                    <div><strong>Pending Amount:</strong> ₹{selectedVisaApp.pendingAmount.toLocaleString()}</div>
-                    <div><strong>Payment Status:</strong> {selectedVisaApp.paymentStatus}</div>
-                  </div>
-                  <div className="action-cell mt-4">
-                    <button className="btn btn-sm" onClick={() => alert('Create Payment')}>Create Payment</button>
-                    <button className="btn btn-sm" onClick={() => alert('View Payment')}>View Payment</button>
-                    <button className="btn btn-sm" onClick={() => alert('Update Payment')}>Update Payment</button>
-                    <button className="btn btn-sm" onClick={() => alert('Download Invoice')}>Download Invoice</button>
-                  </div>
-                </div>
-              ) : (
-                <p style={{ fontSize: '12px', color: '#777', marginTop: '8px' }}>
-                  <em>Payment management is not permitted for your current role level. Contact Super Admin to enable payment permissions.</em>
-                </p>
-              )}
-            </div>
-
-            {/* 4.3 Visa Upload */}
-            <div className="section-box">
-              <div className="section-title">4.3 Visa Upload</div>
-              <p style={{ fontSize: '12px', margin: '8px 0' }}>Upload final approved visa document to attach to application:</p>
-              <div className="action-cell">
-                <button className="btn btn-sm btn-primary" onClick={() => alert('Final Visa File Uploaded')}>Upload Visa</button>
-                <button className="btn btn-sm" onClick={() => alert('Viewing Final Visa')}>View Visa</button>
-                <button className="btn btn-sm" onClick={() => alert('Downloading Final Visa')}>Download Visa</button>
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button className="btn" onClick={() => setSelectedVisaApp(null)}>Close</button>
+            <div className="form-actions mt-4">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  if (!newDocName.trim()) return alert('Please enter document name');
+                  const newDoc = {
+                    id: `DOC-${Date.now()}`,
+                    name: newDocName.trim(),
+                    mandatory: newDocRequirement,
+                    status: 'PENDING VERIFICATION'
+                  };
+                  setVisaDocsList([...visaDocsList, newDoc]);
+                  setNewDocName('');
+                  setShowAddDocModal(false);
+                }}
+              >
+                Add Document
+              </button>
+              <button className="btn btn-sm" onClick={() => setShowAddDocModal(false)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Holiday Application Details Modal & Extend Duration */}
-      {selectedHolidayApp && (
+      {/* --- ADD PAYMENT ENTRY MODAL --- */}
+      {showAddPaymentModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '750px' }}>
+          <div className="modal-content" style={{ maxWidth: '450px' }}>
             <div className="modal-header">
-              <div className="modal-title">5.1 Holiday Application Details: {selectedHolidayApp.packageId}</div>
-              <button className="close-btn" onClick={() => setSelectedHolidayApp(null)}>X</button>
+              <div className="modal-title">Add Payment Entry</div>
+              <button className="close-btn" onClick={() => setShowAddPaymentModal(false)}>X</button>
             </div>
-
-            <div className="section-box">
-              <div className="section-title">Customer Details</div>
-              <div className="form-grid mt-4">
-                <div><strong>Customer Name:</strong> {selectedHolidayApp.customerName}</div>
-                <div><strong>Email:</strong> {selectedHolidayApp.email}</div>
-                <div><strong>Mobile Number:</strong> {selectedHolidayApp.contactDetails}</div>
-                <div><strong>Traveler Count:</strong> 2 Adults</div>
-              </div>
+            <div className="form-group mt-4">
+              <label>Payment Amount (₹):</label>
+              <input
+                type="number"
+                placeholder="e.g. 8500"
+                value={newPaymentAmount}
+                onChange={e => setNewPaymentAmount(e.target.value)}
+              />
             </div>
-
-            <div className="section-box">
-              <div className="section-title">Package Details</div>
-              <div className="form-grid mt-4">
-                <div><strong>Package Name:</strong> {selectedHolidayApp.packageName}</div>
-                <div><strong>Package ID:</strong> {selectedHolidayApp.packageId}</div>
-                <div><strong>Destination:</strong> {selectedHolidayApp.destination}</div>
-                <div><strong>Duration:</strong> {selectedHolidayApp.duration}</div>
-                <div><strong>Departure Date:</strong> {selectedHolidayApp.departureDate}</div>
-              </div>
+            <div className="form-group mt-4">
+              <label>Payment Mode:</label>
+              <select value={newPaymentMode} onChange={e => setNewPaymentMode(e.target.value)}>
+                <option value="Credit Card / Online">Credit Card / Online</option>
+                <option value="UPI / NetBanking">UPI / NetBanking</option>
+                <option value="Cash Deposit">Cash Deposit</option>
+                <option value="Bank Wire Transfer">Bank Wire Transfer</option>
+              </select>
             </div>
-
-            <div className="section-box">
-              <div className="section-title">5.2 Extend Booking Duration</div>
-              {hasExtensionPermission ? (
-                <div>
-                  <p style={{ fontSize: '12px', marginBottom: '8px' }}>Staff has permission to extend directly:</p>
-                  <div className="form-grid">
-                    <div className="form-group"><label>Add Days:</label><input type="number" defaultValue="2" /></div>
-                    <div className="form-group"><label>Add Nights:</label><input type="number" defaultValue="1" /></div>
-                    <div className="form-group"><label>Add Charges (₹):</label><input type="number" defaultValue="12000" /></div>
-                  </div>
-                  <button className="btn btn-primary btn-sm" onClick={() => alert('Booking extended & total recalculated!')}>Update Booking</button>
-                </div>
-              ) : (
-                <div>
-                  <p style={{ fontSize: '12px', color: '#333', marginBottom: '8px' }}>
-                    Extending this booking requires management approval. Submit an <strong>Extension Request</strong> to Super Admin:
-                  </p>
-                  <div className="form-group">
-                    <label>Extension Details & Remarks:</label>
-                    <textarea value={extensionForm.remarks} onChange={e => setExtensionForm({ ...extensionForm, remarks: e.target.value })} rows="2"></textarea>
-                  </div>
-                  <button className="btn btn-primary btn-sm" onClick={() => alert('Extension Request submitted to Super Admin for approval!')}>
-                    Submit Extension Request to Super Admin &rarr;
-                  </button>
-                </div>
-              )}
+            <div className="form-group mt-4">
+              <label>Transaction / Reference ID:</label>
+              <input
+                type="text"
+                placeholder="e.g. TXN-994811"
+                value={newPaymentRef}
+                onChange={e => setNewPaymentRef(e.target.value)}
+              />
             </div>
-
-            <div className="form-actions">
-              <button className="btn" onClick={() => setSelectedHolidayApp(null)}>Close</button>
+            <div className="form-actions mt-4">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  if (!newPaymentAmount || Number(newPaymentAmount) <= 0) return alert('Please enter a valid payment amount');
+                  const newEntry = {
+                    id: `PMT-00${paymentsList.length + 1}`,
+                    date: new Date().toISOString().split('T')[0],
+                    mode: newPaymentMode,
+                    amount: Number(newPaymentAmount),
+                    refNo: newPaymentRef || `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                    status: 'Confirmed'
+                  };
+                  setPaymentsList([...paymentsList, newEntry]);
+                  setNewPaymentAmount('');
+                  setNewPaymentRef('');
+                  setShowAddPaymentModal(false);
+                }}
+              >
+                Save Payment Entry
+              </button>
+              <button className="btn btn-sm" onClick={() => setShowAddPaymentModal(false)}>Cancel</button>
             </div>
           </div>
         </div>

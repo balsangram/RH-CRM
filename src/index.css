@@ -681,3 +681,555 @@ tr:nth-child(even) {
 .ambiguity-notice strong {
   text-transform: uppercase;
 }
+
+/* ==========================================================================
+   Pure Black & White Wireframe Lead Graphs Component Styles
+   ========================================================================== */
+.lead-graph-wrapper.bw-wireframe {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-family);
+  margin-bottom: 20px;
+}
+
+.lead-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 12px;
+}
+
+.lead-graph-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lead-graph-main-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.lead-graph-subtitle {
+  font-size: 12px;
+  color: #555555;
+}
+
+.lead-graph-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Wireframe Chart Type Switcher */
+.chart-type-toggle.bw-toggle {
+  display: flex;
+  border: 1px solid #000000;
+  background: #ffffff;
+  padding: 2px;
+  gap: 2px;
+}
+
+.bw-toggle .type-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 0px;
+  transition: all 0.15s ease;
+}
+
+.bw-toggle .type-btn:hover {
+  background: #f0f0f0;
+}
+
+.bw-toggle .type-btn.active {
+  background: #000000;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Wireframe Dropdown */
+.filter-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.lead-filter-select.bw-select {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  color: #000000;
+  outline: none;
+  cursor: pointer;
+  border-radius: 0px;
+}
+
+/* Wireframe Export CSV Button */
+.export-csv-btn.bw-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 0px;
+}
+
+.export-csv-btn.bw-btn:hover {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* Custom Date Range Wireframe Bar */
+.custom-range-bar.bw-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f9f9f9;
+  padding: 8px 12px;
+  border: 1px solid #000000;
+  flex-wrap: wrap;
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.date-input-group input {
+  padding: 3px 6px;
+  font-size: 11px;
+  border: 1px solid #000000;
+  background: #ffffff;
+}
+
+.btn-apply-range.bw-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+  cursor: pointer;
+}
+
+/* Metric Wireframe Summary Cards */
+.lead-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.summary-mini-card.bw-card {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 0px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.summary-mini-card.bw-card:hover {
+  background: #f9f9f9;
+}
+
+.summary-mini-card.dimmed {
+  opacity: 0.4;
+}
+
+.card-badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 0px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.holiday-dot-bw {
+  background-color: #000000;
+  border: 1px solid #000000;
+}
+
+.visa-dot-bw {
+  background-color: #888888;
+  border: 1px solid #000000;
+}
+
+.mini-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.mini-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #555555;
+  text-transform: uppercase;
+}
+
+.mini-card-num-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.mini-card-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #000000;
+  font-family: var(--font-mono);
+}
+
+.trend-badge.bw-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  color: #000000;
+}
+
+.peak-badge.bw-peak {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000000;
+  border: 1px solid #000000;
+  background: #f0f0f0;
+  padding: 1px 6px;
+}
+
+.mini-card-sub {
+  font-size: 11px;
+  color: #666666;
+}
+
+/* Ratio Progress Bar Wireframe */
+.lead-ratio-bar.bw-ratio {
+  display: flex;
+  height: 6px;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #000000;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.ratio-fill.holiday-fill-bw { background-color: #000000; }
+.ratio-fill.visa-fill-bw { background-color: #888888; }
+
+/* Wireframe Chart Canvas Layout */
+.chart-canvas-container.bw-canvas {
+  position: relative;
+  height: 240px;
+  width: 100%;
+  display: flex;
+  border: 1px solid #000000;
+  background: #ffffff;
+  padding: 16px 12px 10px 12px;
+}
+
+/* Y-Axis Grid Lines Wireframe */
+.y-axis-container {
+  position: absolute;
+  inset: 16px 12px 30px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.y-axis-tick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 0;
+}
+
+.tick-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000000;
+  font-family: var(--font-mono);
+  width: 28px;
+  text-align: right;
+}
+
+.grid-line.bw-grid {
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+/* Chart Body Container Wireframe */
+.chart-body {
+  margin-left: 36px;
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+/* Bar Chart Rendering Wireframe */
+.bars-group-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 180px;
+  width: 100%;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+}
+
+.bar-column-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  flex: 1;
+  position: relative;
+}
+
+.bars-pair {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+}
+
+.bar-item {
+  width: 20px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 0px;
+}
+
+.holiday-bar-bw {
+  background-color: #000000;
+  border: 1px solid #000000;
+}
+
+.visa-bar-bw {
+  background-color: #888888;
+  border: 1px solid #000000;
+}
+
+.bar-column-group.hovered .bar-item {
+  filter: brightness(0.8);
+}
+
+.bar-val-hover {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: #000000;
+  font-family: var(--font-mono);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.bar-column-group:hover .bar-val-hover {
+  opacity: 1;
+}
+
+.x-axis-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #000000;
+  font-family: var(--font-mono);
+  margin-top: 6px;
+}
+
+.x-axis-label.active {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+/* Stacked Wireframe Bar Chart */
+.bars-group-container.stacked .stacked-bar-column.bw-stacked-col {
+  width: 24px;
+  border: 1px solid #000000;
+  border-radius: 0px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.stacked-segment.holiday-segment-bw {
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.stacked-segment.visa-segment-bw {
+  background-color: #888888;
+  color: #000000;
+  font-size: 10px;
+  font-weight: 700;
+  border-top: 1px solid #000000;
+}
+
+/* SVG Wireframe Area/Line Chart */
+.svg-area-container {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.svg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  border-bottom: 1px solid #000000;
+}
+
+.area-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.x-labels-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  margin-top: 6px;
+}
+
+/* Wireframe Tooltip */
+.chart-tooltip.bw-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: #ffffff;
+  border: 1px solid #000000;
+  color: #000000;
+  padding: 6px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 50;
+  box-shadow: 3px 3px 0px #000000;
+  pointer-events: none;
+  border-radius: 0px;
+}
+
+.bw-tooltip.line-tooltip {
+  bottom: auto;
+}
+
+.bw-tooltip .tooltip-header {
+  font-weight: 800;
+  font-size: 11px;
+  color: #000000;
+  margin-bottom: 3px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.bw-tooltip .tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bw-tooltip .tooltip-total {
+  font-size: 11px;
+  color: #000000;
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px dashed #000000;
+  font-weight: 700;
+}
+
+/* Wireframe Legend Footer */
+.lead-graph-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #000000;
+  padding-top: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.interactive-legend {
+  display: flex;
+  gap: 12px;
+}
+
+.legend-chip.bw-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #000000;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 0px;
+}
+
+.legend-chip.bw-chip:hover {
+  background: #f0f0f0;
+}
+
+.legend-chip.bw-chip.disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.chart-info-note {
+  font-size: 11px;
+  color: #555555;
+}
+
+

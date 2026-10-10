@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LeadGraphs from './LeadGraphs';
 import {
   mockSummaryCards,
   mockRecentLeads,
@@ -1055,66 +1056,8 @@ export default function SuperAdminDashboard({ onLogout }) {
                     </div>
                   </div>
 
-                  {/* Lead Graphs Wireframe */}
-                  <div className="section-box">
-                    <div className="section-header">
-                      <div className="section-title">Lead Graphs (Holiday vs Visa Leads)</div>
-                      <div className="filter-group">
-                        <label>Filter:</label>
-                        <select value={graphFilter} onChange={e => setGraphFilter(e.target.value)}>
-                          <option>Today</option>
-                          <option>This Week</option>
-                          <option>This Month</option>
-                          <option>This Year</option>
-                          <option>Custom Date Range</option>
-                        </select>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '12px', marginBottom: '12px' }}>Overview of lead volume received over time ({graphFilter}):</p>
-                    <div className="graph-container">
-                      <div className="graph-bars">
-                        <div className="graph-bar-group">
-                          <div className="graph-bar-pair">
-                            <div className="bar-1" style={{ height: '60%' }}></div>
-                            <div className="bar-2" style={{ height: '40%' }}></div>
-                          </div>
-                          <span className="graph-label">Mon</span>
-                        </div>
-                        <div className="graph-bar-group">
-                          <div className="graph-bar-pair">
-                            <div className="bar-1" style={{ height: '80%' }}></div>
-                            <div className="bar-2" style={{ height: '50%' }}></div>
-                          </div>
-                          <span className="graph-label">Tue</span>
-                        </div>
-                        <div className="graph-bar-group">
-                          <div className="graph-bar-pair">
-                            <div className="bar-1" style={{ height: '45%' }}></div>
-                            <div className="bar-2" style={{ height: '70%' }}></div>
-                          </div>
-                          <span className="graph-label">Wed</span>
-                        </div>
-                        <div className="graph-bar-group">
-                          <div className="graph-bar-pair">
-                            <div className="bar-1" style={{ height: '90%' }}></div>
-                            <div className="bar-2" style={{ height: '65%' }}></div>
-                          </div>
-                          <span className="graph-label">Thu</span>
-                        </div>
-                        <div className="graph-bar-group">
-                          <div className="graph-bar-pair">
-                            <div className="bar-1" style={{ height: '75%' }}></div>
-                            <div className="bar-2" style={{ height: '55%' }}></div>
-                          </div>
-                          <span className="graph-label">Fri</span>
-                        </div>
-                      </div>
-                      <div className="graph-legend">
-                        <div className="legend-item"><div className="legend-box" style={{ background: '#000000' }}></div> Holiday Leads</div>
-                        <div className="legend-item"><div className="legend-box" style={{ background: '#888888' }}></div> Visa Leads</div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Lead Graphs Analytics Component */}
+                  <LeadGraphs initialFilter={graphFilter} />
 
                   {/* Recent Leads Table */}
                   <div className="section-box">

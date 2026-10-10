@@ -87,7 +87,7 @@ export default function UserDashboard({ customerType = 'company', onLogout }) {
             <li>
               <button className={activeTab === 'employees' ? 'active' : ''} onClick={() => { setActiveTab('employees'); setSelectedApp(null); setSelectedBookingApp(null); }}>
                 <span>5. Company Employees / Travelers</span>
-                <span className="nav-badge">{mockCompanyEmployees.length}</span>
+                {/* <span className="nav-badge">{mockCompanyEmployees.length}</span> */}
               </button>
             </li>
           )}
@@ -102,10 +102,7 @@ export default function UserDashboard({ customerType = 'company', onLogout }) {
             </button>
           </li>
         </ul>
-        <div className="sidebar-footer">
-          <div>User: <strong>{userType === 'company' ? 'contact@rhglobal.com' : 'vikram.roy@gmail.com'}</strong></div>
-          <button className="btn btn-sm mt-4" style={{ width: '100%' }} onClick={onLogout}>Logout</button>
-        </div>
+
       </aside>
 
       {/* Main Layout */}

@@ -329,31 +329,31 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>
               <span>2. Leads Management</span>
-              <span className="nav-badge">{mockLeadsFull.length}</span>
+              {/* <span className="nav-badge">{mockLeadsFull.length}</span> */}
             </button>
           </li>
           <li>
             <button className={activeTab === 'companies' ? 'active' : ''} onClick={() => setActiveTab('companies')}>
               <span>3. Companies / Clients</span>
-              <span className="nav-badge">{mockCompanies.length}</span>
+              {/* <span className="nav-badge">{mockCompanies.length}</span> */}
             </button>
           </li>
           <li>
             <button className={activeTab === 'travelers' ? 'active' : ''} onClick={() => setActiveTab('travelers')}>
               <span>4. Travelers / Customers</span>
-              <span className="nav-badge">{mockTravelers.length}</span>
+              {/* <span className="nav-badge">{mockTravelers.length}</span> */}
             </button>
           </li>
           <li>
             <button className={activeTab === 'visa' ? 'active' : ''} onClick={() => setActiveTab('visa')}>
               <span>5. Visa Applications</span>
-              <span className="nav-badge">{mockVisaServices.length}</span>
+              {/* <span className="nav-badge">{mockVisaServices.length}</span> */}
             </button>
           </li>
           <li>
             <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
               <span>6. Booking Applications</span>
-              <span className="nav-badge">{mockBookingServices.length}</span>
+              {/* <span className="nav-badge">{mockBookingServices.length}</span> */}
             </button>
           </li>
           <li>
@@ -369,13 +369,13 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'roles' ? 'active' : ''} onClick={() => setActiveTab('roles')}>
               <span>9. Roles & Permissions</span>
-              <span className="nav-badge">{mockStaffMembers.length}</span>
+              {/* <span className="nav-badge">{mockStaffMembers.length}</span> */}
             </button>
           </li>
           <li>
             <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
               <span>10. Reviews & Ratings</span>
-              <span className="nav-badge">{mockReviews.length}</span>
+              {/* <span className="nav-badge">{mockReviews.length}</span> */}
             </button>
           </li>
           <li>
@@ -384,10 +384,10 @@ export default function SuperAdminDashboard({ onLogout }) {
             </button>
           </li>
         </ul>
-        <div className="sidebar-footer">
+        {/* <div className="sidebar-footer">
           <div>Logged in: <strong>admin@rhglobal.com</strong></div>
           <button className="btn btn-sm mt-4" style={{ width: '100%' }} onClick={onLogout}>Logout</button>
-        </div>
+        </div>mockCompanies */}
       </aside>
 
       {/* Main Content */}

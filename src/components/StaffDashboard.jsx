@@ -265,7 +265,7 @@ export default function StaffDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'all' ? 'active' : ''} onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>
               <span>2. Applications</span>
-              <span className="nav-badge">{staffSummary.totalAssigned}</span>
+              {/* <span className="nav-badge">{staffSummary.totalAssigned}</span> */}
             </button>
           </li>
           <li>
@@ -275,11 +275,7 @@ export default function StaffDashboard({ onLogout }) {
           </li>
 
         </ul>
-        <div className="sidebar-footer">
-          <div>Logged in: <strong>amit.v@rhglobal.com</strong></div>
-          <p style={{ fontSize: '10px' }}>Employee ID: CO-101</p>
-          <button className="btn btn-sm mt-4" style={{ width: '100%' }} onClick={onLogout}>Logout</button>
-        </div>
+
       </aside>
 
       {/* Main Layout */}

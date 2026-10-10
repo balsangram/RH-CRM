@@ -13,7 +13,12 @@ export default defineConfig({
           res.setHeader = function (name, value) {
             if (typeof name === 'string' && name.toLowerCase() === 'content-type') {
               if (typeof value === 'string' && (value.includes('application/octet-stream') || value.includes('text/plain'))) {
-                if (req.url && (req.url.includes('.jsx') || req.url.includes('.js') || req.url.includes('.tsx') || req.url.includes('.ts'))) {
+                const url = (req.url || '').toLowerCase();
+                const isMediaOrDoc = url.endsWith('.css') || url.endsWith('.html') || url.endsWith('.png') ||
+                                     url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.gif') ||
+                                     url.endsWith('.svg') || url.endsWith('.ico') || url.endsWith('.json') ||
+                                     url.endsWith('.woff') || url.endsWith('.woff2');
+                if (!isMediaOrDoc) {
                   value = 'application/javascript; charset=utf-8';
                 }
               }
@@ -26,5 +31,6 @@ export default defineConfig({
     }
   ]
 })
+
 
 

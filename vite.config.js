@@ -29,7 +29,28 @@ export default defineConfig({
         });
       }
     }
-  ]
+  ],
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+          if (id.includes('SuperAdminDashboard')) {
+            return 'superadmin-dashboard';
+          }
+          if (id.includes('StaffDashboard')) {
+            return 'staff-dashboard';
+          }
+          if (id.includes('UserDashboard')) {
+            return 'user-dashboard';
+          }
+        }
+      }
+    }
+  }
 })
 
 

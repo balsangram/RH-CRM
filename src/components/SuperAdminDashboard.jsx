@@ -14,10 +14,7 @@ import {
   mockTransactions,
   mockReportsMetrics,
   mockStaffMembers,
-  mockReviews,
-  mockCountries,
-  mockVisaDocumentsMatrix,
-  mockHolidayPackages
+  mockReviews
 } from '../mockData';
 
 export default function SuperAdminDashboard({ onLogout }) {

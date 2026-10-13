@@ -7,12 +7,327 @@ export const mockSummaryCards = {
   totalLeads: 42
 };
 
+export const LEAD_STAGES = [
+  { id: 'lead', name: 'Stage 1: Lead', shortName: 'Lead', description: 'Inbound inquiries from Website, Social & Direct' },
+  { id: 'qualified', name: 'Stage 2: Qualified', shortName: 'Qualified', description: 'Profile, travel dates & budget verified' },
+  { id: 'proposal', name: 'Stage 3: Proposal', shortName: 'Proposal', description: 'Proposal & quotation drafted / sent' },
+  { id: 'negotiation', name: 'Stage 4: Negotiation', shortName: 'Negotiation', description: 'Terms, discounts & itinerary finalization' },
+  { id: 'converted', name: 'Converted', shortName: 'Converted', description: 'Deal won & converted into Cases' }
+];
+
+export const LEAD_SOURCES = ['Website Form', 'Direct entry', 'FB / Instagram'];
+export const LEAD_TYPES = ['Visa', 'Holiday'];
+
 export const mockRecentLeads = [
-  { id: 'LD-1001', leadName: 'Rahul Sharma', companyName: 'Apex Tours & Tech', email: 'rahul.s@apextours.com', phone: '+91 98765 43210', leadType: 'Visa', source: 'Website', status: 'Pending', createdDate: '2026-10-08', actions: ['View', 'Edit', 'Delete'] },
-  { id: 'LD-1002', leadName: 'Ananya Roy', companyName: 'Individual', email: 'ananya.roy@gmail.com', phone: '+91 98123 45678', leadType: 'Holiday', source: 'Referral', status: 'In Progress', createdDate: '2026-10-07', actions: ['View', 'Edit', 'Delete'] },
-  { id: 'LD-1003', leadName: 'David Miller', companyName: 'Global Horizons Inc', email: 'dmiller@ghorizons.com', phone: '+1 415 555 0192', leadType: 'Visa', source: 'Website', status: 'Converted', createdDate: '2026-10-06', actions: ['View', 'Edit', 'Delete'] },
-  { id: 'LD-1004', leadName: 'Priya Patel', companyName: 'Individual', email: 'priya.patel@yahoo.com', phone: '+91 97654 32109', leadType: 'Holiday', source: 'Other', status: 'No Response', createdDate: '2026-10-05', actions: ['View', 'Edit', 'Delete'] },
-  { id: 'LD-1005', leadName: 'Vikram Seth', companyName: 'Zenith Consultancy', email: 'v.seth@zenith.in', phone: '+91 99000 11223', leadType: 'Visa', source: 'Website', status: 'Rejected/Closed', createdDate: '2026-10-04', actions: ['View', 'Edit', 'Delete'] }
+  {
+    id: 'LD-1001',
+    leadName: 'Rahul Sharma',
+    companyName: 'Apex Tours & Tech',
+    email: 'rahul.s@apextours.com',
+    phone: '+91 98765 43210',
+    leadType: 'Visa',
+    source: 'Website Form',
+    stage: 'lead',
+    status: 'New Inquiry',
+    createdDate: '2026-10-08',
+    targetCountry: 'United States',
+    serviceRequired: 'B1/B2 Business Visa',
+    estimatedValue: 28000,
+    assignedStaff: 'Amit Verma',
+    remarks: 'Inquiring for urgent executive visa processing for US conference in November.',
+    checklist: [
+      { id: 'c1', label: 'Initial contact made with applicant', completed: true, mandatory: true },
+      { id: 'c2', label: 'Understand travel purpose and dates', completed: false, mandatory: true },
+      { id: 'c3', label: 'Log applicant details & KYC into CRM', completed: false, mandatory: false }
+    ],
+    proposalData: null,
+    caseId: null
+  },
+  {
+    id: 'LD-1008',
+    leadName: 'Sneha Kulkarni',
+    companyName: 'Individual',
+    email: 'sneha.k@gmail.com',
+    phone: '+91 98222 34567',
+    leadType: 'Holiday',
+    source: 'FB / Instagram',
+    stage: 'lead',
+    status: 'Inbound Lead',
+    createdDate: '2026-10-08',
+    targetCountry: 'Bali (Indonesia)',
+    serviceRequired: '6D/5N Luxury Villa Package',
+    estimatedValue: 75000,
+    assignedStaff: 'Priya Singh',
+    remarks: 'Customer saw Instagram campaign for Bali romantic getaway. Looking for beachfront villa options.',
+    checklist: [
+      { id: 'c1', label: 'Initial contact made with applicant', completed: true, mandatory: true },
+      { id: 'c2', label: 'Understand travel purpose and dates', completed: true, mandatory: true },
+      { id: 'c3', label: 'Log applicant details & KYC into CRM', completed: false, mandatory: false }
+    ],
+    proposalData: null,
+    caseId: null
+  },
+  {
+    id: 'LD-1002',
+    leadName: 'Ananya Roy',
+    companyName: 'Individual',
+    email: 'ananya.roy@gmail.com',
+    phone: '+91 98123 45678',
+    leadType: 'Holiday',
+    source: 'Direct entry',
+    stage: 'qualified',
+    status: 'Profile Verified',
+    createdDate: '2026-10-07',
+    targetCountry: 'Switzerland',
+    serviceRequired: '7 Days Alps Grand Tour',
+    estimatedValue: 145000,
+    assignedStaff: 'Priya Singh',
+    remarks: 'Family of 3 planning December winter trip. Passports valid, budget verified.',
+    checklist: [
+      { id: 'c1', label: 'Passport validity verified (> 6 Months)', completed: true, mandatory: true },
+      { id: 'c2', label: 'Travel dates & group size confirmed', completed: true, mandatory: true },
+      { id: 'c3', label: 'Budget & eligibility confirmed', completed: true, mandatory: true }
+    ],
+    proposalData: null,
+    caseId: null
+  },
+  {
+    id: 'LD-1007',
+    leadName: 'Meera Nair',
+    companyName: 'Individual',
+    email: 'meera.nair@hotmail.com',
+    phone: '+91 97777 66655',
+    leadType: 'Visa',
+    source: 'FB / Instagram',
+    stage: 'qualified',
+    status: 'Docs Assessed',
+    createdDate: '2026-10-02',
+    targetCountry: 'Schengen (France)',
+    serviceRequired: 'Short-stay Tourist C Visa',
+    estimatedValue: 18500,
+    assignedStaff: 'Amit Verma',
+    remarks: 'Attending Paris fashion week. Bank balance and previous travel history verified.',
+    checklist: [
+      { id: 'c1', label: 'Passport validity verified (> 6 Months)', completed: true, mandatory: true },
+      { id: 'c2', label: 'Travel dates & group size confirmed', completed: true, mandatory: true },
+      { id: 'c3', label: 'Budget & eligibility confirmed', completed: false, mandatory: true }
+    ],
+    proposalData: null,
+    caseId: null
+  },
+  {
+    id: 'LD-1006',
+    leadName: 'Siddharth Rao',
+    companyName: 'TechCorp Pvt Ltd',
+    email: 's.rao@techcorp.com',
+    phone: '+91 98888 77766',
+    leadType: 'Visa',
+    source: 'Website Form',
+    stage: 'proposal',
+    status: 'Proposal Sent',
+    createdDate: '2026-10-03',
+    targetCountry: 'United States',
+    serviceRequired: 'Express B1 Business Visa Processing',
+    estimatedValue: 35000,
+    assignedStaff: 'Amit Verma',
+    remarks: 'Quotation sent including embassy appointment expedited booking and document legalisation.',
+    checklist: [
+      { id: 'c1', label: 'Detailed proposal & itinerary prepared', completed: true, mandatory: true },
+      { id: 'c2', label: 'Quotation generated with itemized cost', completed: true, mandatory: true },
+      { id: 'c3', label: 'Proposal sent to client with validity', completed: true, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-301',
+      totalAmount: 35000,
+      taxPercent: 18,
+      discount: 2500,
+      validUntil: '2026-10-22',
+      status: 'Sent to Client',
+      items: [
+        { desc: 'US B1 Visa Official Embassy Processing Fee', qty: 1, rate: 16500 },
+        { desc: 'Priority Slot Booking & Document Legalisation', qty: 1, rate: 12000 },
+        { desc: 'Dedicated Case Officer Concierge Assistance', qty: 1, rate: 6500 }
+      ]
+    },
+    caseId: null
+  },
+  {
+    id: 'LD-1010',
+    leadName: 'Dr. Manish & Neha Goel',
+    companyName: 'Individual',
+    email: 'm.goel@apollohospitals.org',
+    phone: '+91 97111 88990',
+    leadType: 'Holiday',
+    source: 'Direct entry',
+    stage: 'proposal',
+    status: 'Quotation Drafted',
+    createdDate: '2026-10-04',
+    targetCountry: 'Japan',
+    serviceRequired: '10 Days Cherry Blossom Cultural Tour',
+    estimatedValue: 240000,
+    assignedStaff: 'Priya Singh',
+    remarks: 'Customized luxury itinerary: Tokyo, Kyoto, Osaka bullet train passes with English guide.',
+    checklist: [
+      { id: 'c1', label: 'Detailed proposal & itinerary prepared', completed: true, mandatory: true },
+      { id: 'c2', label: 'Quotation generated with itemized cost', completed: true, mandatory: true },
+      { id: 'c3', label: 'Proposal sent to client with validity', completed: false, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-302',
+      totalAmount: 240000,
+      taxPercent: 5,
+      discount: 10000,
+      validUntil: '2026-10-25',
+      status: 'Draft Ready',
+      items: [
+        { desc: '4-Star Hotels with Breakfast (9 Nights)', qty: 2, rate: 80000 },
+        { desc: 'JR 7-Day Unlimited Shinkansen Bullet Pass', qty: 2, rate: 22000 },
+        { desc: 'Private Kyoto Temple Guided Excursion', qty: 1, rate: 26000 }
+      ]
+    },
+    caseId: null
+  },
+  {
+    id: 'LD-1004',
+    leadName: 'Priya Patel',
+    companyName: 'Individual',
+    email: 'priya.patel@yahoo.com',
+    phone: '+91 97654 32109',
+    leadType: 'Holiday',
+    source: 'FB / Instagram',
+    stage: 'negotiation',
+    status: 'In Price Negotiation',
+    createdDate: '2026-10-05',
+    targetCountry: 'Dubai (UAE)',
+    serviceRequired: '5 Days Dubai Desert & Marina Experience',
+    estimatedValue: 92000,
+    assignedStaff: 'Priya Singh',
+    remarks: 'Client requested 10% discount on 5-star hotel upgrade and complimentary desert safari buggy.',
+    checklist: [
+      { id: 'c1', label: 'Client queries & pricing feedback addressed', completed: true, mandatory: true },
+      { id: 'c2', label: 'Special corporate/group discounts reviewed', completed: true, mandatory: true },
+      { id: 'c3', label: 'Commercial terms & payment schedule approved', completed: false, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-298',
+      totalAmount: 92000,
+      taxPercent: 5,
+      discount: 8000,
+      validUntil: '2026-10-18',
+      status: 'Under Review',
+      items: [
+        { desc: 'Atlantis The Palm Deluxe Room (4 Nights)', qty: 1, rate: 68000 },
+        { desc: 'VIP Desert Safari with Quad Biking', qty: 2, rate: 12000 },
+        { desc: 'Burj Khalifa At the Top & Sky Views', qty: 2, rate: 12000 }
+      ]
+    },
+    caseId: null
+  },
+  {
+    id: 'LD-1011',
+    leadName: 'Rajiv Singhania',
+    companyName: 'Zenith Logistics',
+    email: 'r.singhania@zenithlog.com',
+    phone: '+91 99000 44556',
+    leadType: 'Visa',
+    source: 'Direct entry',
+    stage: 'negotiation',
+    status: 'Reviewing Terms',
+    createdDate: '2026-10-06',
+    targetCountry: 'United Kingdom',
+    serviceRequired: '2-Year Long Term Business Visa',
+    estimatedValue: 55000,
+    assignedStaff: 'Amit Verma',
+    remarks: 'Negotiating expedited biometrics fees and corporate credit terms (post-paid invoicing).',
+    checklist: [
+      { id: 'c1', label: 'Client queries & pricing feedback addressed', completed: true, mandatory: true },
+      { id: 'c2', label: 'Special corporate/group discounts reviewed', completed: true, mandatory: true },
+      { id: 'c3', label: 'Commercial terms & payment schedule approved', completed: true, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-295',
+      totalAmount: 55000,
+      taxPercent: 18,
+      discount: 3000,
+      validUntil: '2026-10-20',
+      status: 'Terms Agreed',
+      items: [
+        { desc: 'UKVI 2-Year Multiple Entry Visa Fee', qty: 1, rate: 42000 },
+        { desc: 'Priority Lounge & Mobile Biometrics Service', qty: 1, rate: 13000 }
+      ]
+    },
+    caseId: null
+  },
+  {
+    id: 'LD-1003',
+    leadName: 'David Miller',
+    companyName: 'Global Horizons Inc',
+    email: 'dmiller@ghorizons.com',
+    phone: '+1 415 555 0192',
+    leadType: 'Visa',
+    source: 'Website Form',
+    stage: 'converted',
+    status: 'Converted to Case',
+    createdDate: '2026-10-06',
+    targetCountry: 'Schengen (Germany)',
+    serviceRequired: 'Multiple Entry Business Visa',
+    estimatedValue: 42000,
+    assignedStaff: 'Amit Verma',
+    remarks: 'Deal closed! Transferred to Cases. Assigned to Amit Verma (Senior Case Officer - Visa Operations).',
+    checklist: [
+      { id: 'c1', label: 'Client confirmation signed & received', completed: true, mandatory: true },
+      { id: 'c2', label: 'Order & payment structure selected (Prepaid)', completed: true, mandatory: true },
+      { id: 'c3', label: 'Case created and assigned to Case Officer', completed: true, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-280',
+      totalAmount: 42000,
+      taxPercent: 18,
+      discount: 2000,
+      validUntil: '2026-10-15',
+      status: 'Accepted',
+      items: [
+        { desc: 'German Consulate Multiple Entry Business Visa', qty: 1, rate: 28000 },
+        { desc: 'Expedited Appointment & Biometrics Support', qty: 1, rate: 14000 }
+      ]
+    },
+    caseId: 'CASE-3049'
+  },
+  {
+    id: 'LD-1012',
+    leadName: 'Ritu Varma',
+    companyName: 'Individual',
+    email: 'ritu.v@gmail.com',
+    phone: '+91 99888 12345',
+    leadType: 'Holiday',
+    source: 'FB / Instagram',
+    stage: 'converted',
+    status: 'Converted to Case',
+    createdDate: '2026-10-04',
+    targetCountry: 'Maldives',
+    serviceRequired: 'All-Inclusive Overwater Villa 5D/4N',
+    estimatedValue: 195000,
+    assignedStaff: 'Priya Singh',
+    remarks: 'Prepaid 50% deposit received. Converted to Case and assigned to Tour Operations.',
+    checklist: [
+      { id: 'c1', label: 'Client confirmation signed & received', completed: true, mandatory: true },
+      { id: 'c2', label: 'Order & payment structure selected (Prepaid)', completed: true, mandatory: true },
+      { id: 'c3', label: 'Case created and assigned to Case Officer', completed: true, mandatory: true }
+    ],
+    proposalData: {
+      quotationNo: 'QUO-2026-274',
+      totalAmount: 195000,
+      taxPercent: 5,
+      discount: 15000,
+      validUntil: '2026-10-12',
+      status: 'Accepted',
+      items: [
+        { desc: 'Centara Grand Island Overwater Suite (4N)', qty: 1, rate: 165000 },
+        { desc: 'Roundtrip Seaplane Transfers', qty: 2, rate: 15000 }
+      ]
+    },
+    caseId: 'CASE-3050'
+  }
 ];
 
 export const mockRejectedApplications = [
@@ -22,9 +337,7 @@ export const mockRejectedApplications = [
 ];
 
 export const mockLeadsFull = [
-  ...mockRecentLeads,
-  { id: 'LD-1006', leadName: 'Siddharth Rao', companyName: 'TechCorp Pvt Ltd', email: 's.rao@techcorp.com', phone: '+91 98888 77766', leadType: 'Visa', source: 'Website', status: 'In Progress', createdDate: '2026-10-03', targetCountry: 'United States', serviceRequired: 'B1/B2 Visa', remarks: 'Requires urgent processing for conference.', assignedStaff: 'Officer Amit Verma', updatedDate: '2026-10-08' },
-  { id: 'LD-1007', leadName: 'Meera Nair', companyName: 'Individual', email: 'meera.nair@hotmail.com', phone: '+91 97777 66655', leadType: 'Holiday', source: 'Referral', status: 'Pending', createdDate: '2026-10-02', targetCountry: 'Switzerland', serviceRequired: '7 Days Alps Package', remarks: 'Honeymoon trip request.', assignedStaff: 'Staff Priya Singh', updatedDate: '2026-10-05' }
+  ...mockRecentLeads
 ];
 
 export const mockCompanies = [

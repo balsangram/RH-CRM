@@ -1232,4 +1232,595 @@ tr:nth-child(even) {
   color: #555555;
 }
 
+/* ==========================================================================
+   LEADS MANAGEMENT KANBAN PIPELINE & SIDE SHEET SYSTEM
+   Strictly following wireframe / high-contrast specifications
+   ========================================================================== */
+
+.kanban-wrapper {
+  width: 100%;
+}
+
+/* Top Pipeline Stepper Strip */
+.pipeline-metrics-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border-dark);
+  background-color: #fafafa;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  gap: 8px;
+}
+
+.pipeline-metric-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.step-badge-number {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.pipeline-metric-step.converted-step .step-badge-number {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.step-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-title {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.step-stats {
+  font-size: 11px;
+  color: #555555;
+}
+
+.pipeline-arrow {
+  font-size: 14px;
+  color: #888888;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Checklist Warning Alert Box */
+.checklist-warning-box {
+  border: 2px solid #000000;
+  background-color: #fff9e6;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+/* Kanban Board Container */
+.kanban-board-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.kanban-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(250px, 1fr));
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* Individual Kanban Column */
+.kanban-column {
+  border: 1px solid var(--border-dark);
+  background-color: #fcfcfc;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.kanban-column-drop-active {
+  background-color: #f0f0f0;
+  border: 2px dashed #000000;
+}
+
+.kanban-column-converted {
+  background-color: #f7f7f7;
+}
+
+.kanban-column-header {
+  border-bottom: 1px solid var(--border-dark);
+  background-color: #ffffff;
+  padding: 10px 12px;
+}
+
+.kanban-column-title {
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-count-pill {
+  font-size: 11px;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  padding: 1px 6px;
+  font-weight: bold;
+}
+
+.kanban-column-desc {
+  font-size: 10px;
+  color: #666666;
+  margin-top: 2px;
+}
+
+.stage-banner-callout {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid #000000;
+}
+
+.kanban-column-converted .stage-banner-callout {
+  background-color: #222222;
+}
+
+/* Cards List */
+.kanban-cards-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.kanban-empty-column {
+  border: 1px dashed #cccccc;
+  padding: 24px 10px;
+  text-align: center;
+  margin-top: 10px;
+  background-color: #ffffff;
+}
+
+/* Individual Lead Card */
+.kanban-card {
+  border: 1px solid var(--border-dark);
+  background-color: #ffffff;
+  padding: 10px;
+  box-shadow: 2px 2px 0px #000000;
+  cursor: grab;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  position: relative;
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card-dragging {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.kanban-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.kanban-type-badge {
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  padding: 1px 5px;
+  letter-spacing: 0.5px;
+}
+
+.kanban-source-badge {
+  font-size: 10px;
+  border: 1px solid #999999;
+  background-color: #f5f5f5;
+  padding: 1px 5px;
+  color: #333333;
+}
+
+.kanban-lead-id {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #666666;
+}
+
+.kanban-card-body {
+  cursor: pointer;
+}
+
+.kanban-lead-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.kanban-lead-name:hover {
+  text-decoration: underline;
+}
+
+.kanban-company-text {
+  font-size: 11px;
+  color: #555555;
+  margin-top: 1px;
+}
+
+.kanban-service-row {
+  font-size: 11px;
+  margin: 6px 0;
+  color: #222222;
+}
+
+.kanban-service-tag {
+  color: #666666;
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.kanban-value-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  border-top: 1px dotted #cccccc;
+  padding-top: 5px;
+  margin-top: 6px;
+}
+
+.kanban-val {
+  font-weight: bold;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.kanban-assigned {
+  font-size: 10px;
+  color: #555555;
+}
+
+/* Proposal & Case Chips on Cards */
+.kanban-quotation-chip {
+  border: 1px solid #000000;
+  background-color: #fdfdfd;
+  padding: 3px 6px;
+  font-size: 10px;
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-case-chip {
+  border: 1px solid #000000;
+  background-color: #000000;
+  color: #ffffff;
+  padding: 3px 6px;
+  font-size: 10px;
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-checklist-indicator {
+  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid #eeeeee;
+}
+
+/* Special Stage Buttons */
+.kanban-special-actions {
+  margin-top: 8px;
+}
+
+/* Card Footer Controls */
+.kanban-card-footer {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 6px;
+}
+
+/* ==========================================================================
+   SIDE SHEET DRAWER ("SIDE SHEET: Has checklist based on stages")
+   ========================================================================== */
+
+.side-sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1050;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.side-sheet-panel {
+  width: 500px;
+  max-width: 90vw;
+  height: 100%;
+  background-color: #ffffff;
+  border-left: 2px solid #000000;
+  box-shadow: -6px 0px 0px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.side-sheet-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #000000;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.side-sheet-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.side-sheet-section {
+  border: 1px solid var(--border-dark);
+  padding: 14px;
+  background-color: #ffffff;
+}
+
+.side-sheet-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+/* Stepper inside Side Sheet */
+.side-sheet-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.side-stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+}
+
+.side-stepper-step .step-circle {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000000;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.side-stepper-step.completed .step-circle {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.side-stepper-step.active .step-circle {
+  border: 2px solid #000000;
+  background-color: #ffffff;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.side-stepper-step .step-label {
+  font-size: 10px;
+  color: #666666;
+}
+
+.side-stepper-step.active .step-label {
+  font-weight: bold;
+  color: #000000;
+}
+
+/* Side Checklist Box */
+.side-checklist-box {
+  background-color: #fafafa;
+  border: 1px solid #dddddd;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.checklist-done {
+  text-decoration: line-through;
+  color: #777777;
+}
+
+.mandatory-tag {
+  font-size: 9px;
+  border: 1px solid #000000;
+  padding: 0px 4px;
+  background-color: #ffffff;
+  color: #000000;
+  margin-left: auto;
+  font-weight: bold;
+}
+
+/* Quotation Summary inside Side Sheet */
+.quotation-summary-card {
+  border: 1px solid #000000;
+  padding: 10px;
+  background-color: #fbfbfb;
+}
+
+.case-active-banner {
+  border: 2px solid #000000;
+  background-color: #f0f0f0;
+  padding: 12px;
+}
+
+.side-sheet-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #000000;
+  background-color: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ==========================================================================
+   PROPOSAL CREATOR & QUOTATION PAPER STYLES
+   ========================================================================== */
+
+.quotation-summary-box {
+  border: 1px solid #000000;
+  background-color: #fafafa;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  width: 280px;
+  margin-left: auto;
+}
+
+.quotation-calc-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.quotation-calc-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: bold;
+  border-top: 1px solid #000000;
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+.official-quotation-paper {
+  border: 2px solid #000000;
+  background-color: #ffffff;
+  padding: 24px;
+  box-shadow: 4px 4px 0px #000000;
+  font-family: var(--font-family);
+}
+
+.quotation-paper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.quotation-paper-client {
+  display: flex;
+  justify-content: space-between;
+  background-color: #fafafa;
+  border: 1px solid #000000;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.quotation-paper-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.quotation-paper-table th {
+  border-bottom: 2px solid #000000;
+  text-align: left;
+  padding: 8px;
+  font-size: 12px;
+  background-color: #f0f0f0;
+}
+
+.quotation-paper-table td {
+  border-bottom: 1px solid #dddddd;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.quotation-paper-totals {
+  width: 280px;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  text-align: right;
+}
+
 

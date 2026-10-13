@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LeadGraphs from './LeadGraphs';
+import LeadsKanban from './LeadsKanban';
 import {
   mockSummaryCards,
   mockRecentLeads,
@@ -19,11 +20,25 @@ import {
 
 export default function SuperAdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [leadsList, setLeadsList] = useState(mockLeadsFull);
   const [selectedLead, setSelectedLead] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySubTab, setCompanySubTab] = useState('applications');
   const [companyAppFilterType, setCompanyAppFilterType] = useState('All');
+
+  // Leads pipeline state handlers
+  const handleUpdateLead = (updatedLead) => {
+    setLeadsList(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+  };
+
+  const handleAddLead = (newLead) => {
+    setLeadsList(prev => [newLead, ...prev]);
+  };
+
+  const handleDeleteLead = (leadId) => {
+    setLeadsList(prev => prev.filter(l => l.id !== leadId));
+  };
   const [companyAppFilterStatus, setCompanyAppFilterStatus] = useState('All');
   const [companyAppSearch, setCompanyAppSearch] = useState('');
   const [companyEmpFilterStatus, setCompanyEmpFilterStatus] = useState('All');
@@ -367,7 +382,7 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>
               <span>2. Leads Management</span>
-              {/* <span className="nav-badge">{mockLeadsFull.length}</span> */}
+              <span className="nav-badge">{leadsList.length}</span>
             </button>
           </li>
           <li>
@@ -1097,8 +1112,8 @@ export default function SuperAdminDashboard({ onLogout }) {
                     </div>
                     <div className="card">
                       <div className="card-title">Total Leads</div>
-                      <div className="card-value">{mockSummaryCards.totalLeads}</div>
-                      <p style={{ fontSize: '11px', color: '#555' }}>Total leads received</p>
+                      <div className="card-value">{leadsList.length}</div>
+                      <p style={{ fontSize: '11px', color: '#555' }}>Total pipeline leads</p>
                       <button className="card-action" onClick={() => setActiveTab('leads')}>View All &rarr;</button>
                     </div>
                   </div>
@@ -1127,7 +1142,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                           </tr>
                         </thead>
                         <tbody>
-                          {mockRecentLeads.map(lead => (
+                          {leadsList.slice(0, 5).map(lead => (
                             <tr key={lead.id}>
                               <td><strong>{lead.leadName}</strong></td>
                               <td>{lead.companyName}</td>
@@ -1185,74 +1200,16 @@ export default function SuperAdminDashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* 2. LEADS MANAGEMENT */}
+              {/* 2. LEADS MANAGEMENT - Stage-by-Stage Kanban Pipeline */}
               {activeTab === 'leads' && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Leads Management</div>
-                    <button className="btn btn-primary" onClick={() => setShowAddLeadModal(true)}>+ Add Lead</button>
-                  </div>
-                  <div className="toolbar">
-                    <div className="filter-group">
-                      <label>Lead Type:</label>
-                      <select value={leadFilterType} onChange={e => setLeadFilterType(e.target.value)}>
-                        <option value="All">All Types</option>
-                        <option value="Visa">Visa</option>
-                        <option value="Holiday">Holiday</option>
-                      </select>
-                    </div>
-                    <div className="filter-group">
-                      <label>Status:</label>
-                      <select value={leadFilterStatus} onChange={e => setLeadFilterStatus(e.target.value)}>
-                        <option value="All">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="No Response">No Response</option>
-                        <option value="Converted">Converted</option>
-                        <option value="Rejected/Closed">Rejected/Closed</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Lead Name</th>
-                          <th>Company Name</th>
-                          <th>Email ID</th>
-                          <th>Phone Number</th>
-                          <th>Target Country</th>
-                          <th>Lead Type</th>
-                          <th>Source</th>
-                          <th>Status</th>
-                          <th>Created Date</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredLeads.map(lead => (
-                          <tr key={lead.id}>
-                            <td><strong>{lead.leadName}</strong></td>
-                            <td>{lead.companyName}</td>
-                            <td>{lead.email}</td>
-                            <td>{lead.phone}</td>
-                            <td>{lead.targetCountry || 'N/A'}</td>
-                            <td><span className="status-badge">{lead.leadType}</span></td>
-                            <td>{lead.source}</td>
-                            <td><span className="status-badge">{lead.status}</span></td>
-                            <td>{lead.createdDate}</td>
-                            <td className="action-cell">
-                              <button className="btn btn-sm" onClick={() => setSelectedLead(lead)}>View</button>
-                              <button className="btn btn-sm" onClick={() => setSelectedLead(lead)}>Edit</button>
-                              <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting Lead ${lead.id}`)}>Delete</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <LeadsKanban
+                  leads={leadsList}
+                  onUpdateLead={handleUpdateLead}
+                  onAddLead={handleAddLead}
+                  onDeleteLead={handleDeleteLead}
+                  staffMembers={mockStaffMembers}
+                  onNavigateToTab={(tab) => setActiveTab(tab)}
+                />
               )}
 
               {/* 3. COMPANIES / CLIENTS */}

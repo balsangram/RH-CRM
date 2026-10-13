@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import LeadGraphs from './LeadGraphs';
 import LeadsKanban from './LeadsKanban';
+import VisaKanban from './VisaKanban';
+import HolidayKanban from './HolidayKanban';
 import {
   mockSummaryCards,
   mockRecentLeads,
@@ -17,6 +19,26 @@ import {
   mockStaffMembers,
   mockReviews
 } from '../mockData';
+
+const STANDARD_VISA_DOCUMENTS = [
+  'Passport (Front & Back Copy)',
+  'Passport Size Photographs (35x45mm)',
+  'Bank Account Statements (Past 6 Months)',
+  'Employment NOC & Leave Sanction Letter',
+  'Salary Slips (Last 3 Months)',
+  'Income Tax Returns (ITR / Form 16 - 3 Years)',
+  'Roundtrip Flight Reservation / Itinerary',
+  'Confirmed Hotel Booking / Accommodation Proof',
+  'Travel Medical Insurance Policy (€30,000+)',
+  'Embassy Cover Letter & Travel Purpose',
+  'DS-160 Barcoded Confirmation Page',
+  'Sponsorship Letter & Financial Proof',
+  'National Identity Card / Aadhaar Card / PAN',
+  'Business Invitation Letter / Conference Pass',
+  'Company Registration & GST Certificate',
+  'Marriage Certificate / Family Ties Proof',
+  'Daily Travel Schedule / Detailed Itinerary'
+];
 
 export default function SuperAdminDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -38,6 +60,10 @@ export default function SuperAdminDashboard({ onLogout }) {
 
   const handleDeleteLead = (leadId) => {
     setLeadsList(prev => prev.filter(l => l.id !== leadId));
+  };
+
+  const handleUpdateVisa = (updatedVisa) => {
+    setVisaList(prev => prev.map(v => v.id === updatedVisa.id ? updatedVisa : v));
   };
   const [companyAppFilterStatus, setCompanyAppFilterStatus] = useState('All');
   const [companyAppSearch, setCompanyAppSearch] = useState('');
@@ -232,14 +258,32 @@ export default function SuperAdminDashboard({ onLogout }) {
   ]);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
-  const [newPaymentForm, setNewPaymentForm] = useState({ amount: 5000, type: 'Prepaid', mode: 'Bank Transfer', date: '2026-10-09', ref: 'TXN-998900', status: 'Completed' });
+  const [financeSubTab, setFinanceSubTab] = useState('payments'); // 'payments' | 'prepaid' | 'postpaid' | 'transactions'
+  const [financeServiceFilter, setFinanceServiceFilter] = useState('All');
+  const [financeModeFilter, setFinanceModeFilter] = useState('All');
+  const [financeSearchQuery, setFinanceSearchQuery] = useState('');
+  const [newPaymentForm, setNewPaymentForm] = useState({
+    serviceCategory: 'visa',
+    selectedCaseId: 'VISA-301',
+    amount: 5000,
+    type: 'Prepaid',
+    mode: 'Bank Transfer',
+    date: '2026-10-09',
+    ref: 'TXN-998900',
+    status: 'Completed'
+  });
   const [visaPaymentsList, setVisaPaymentsList] = useState([
-    { id: 'PAY-101', type: 'Prepaid', mode: 'UPI / NetBanking', amount: 10000, date: '2026-10-02', ref: 'TXN-998120', status: 'Completed' },
-    { id: 'PAY-102', type: 'Postpaid', mode: 'Bank Transfer', amount: 8500, date: '2026-10-06', ref: 'TXN-998144', status: 'Completed' }
+    { id: 'PAY-101', caseId: 'VISA-301', clientName: 'Vikramaditya Roy', serviceType: 'Visa', type: 'Prepaid', mode: 'UPI / NetBanking', amount: 10000, date: '2026-10-02', ref: 'TXN-998120', status: 'Completed' },
+    { id: 'PAY-102', caseId: 'VISA-302', clientName: 'Sanya Malhotra', serviceType: 'Visa', type: 'Postpaid', mode: 'Bank Transfer', amount: 8500, date: '2026-10-06', ref: 'TXN-998144', status: 'Completed' },
+    { id: 'PAY-103', caseId: 'VISA-303', clientName: 'Ananya Iyer', serviceType: 'Visa', type: 'Prepaid', mode: 'Credit / Debit Card', amount: 16000, date: '2026-10-08', ref: 'TXN-998170', status: 'Completed' },
+    { id: 'PAY-104', caseId: 'VISA-304', clientName: 'Rahul Mehta', serviceType: 'Visa', type: 'Postpaid', mode: 'Bank Transfer', amount: 12000, date: '2026-10-09', ref: 'TXN-998188', status: 'Completed' }
   ]);
   const [bookingPaymentsList, setBookingPaymentsList] = useState([
-    { id: 'PAY-701', type: 'Prepaid', mode: 'Bank Transfer', amount: 35000, date: '2026-10-01', ref: 'TXN-998200', status: 'Completed' },
-    { id: 'PAY-702', type: 'Installment', mode: 'UPI / NetBanking', amount: 50000, date: '2026-10-05', ref: 'TXN-998205', status: 'Completed' }
+    { id: 'PAY-701', caseId: 'PKG-701', clientName: 'Sanya Malhotra', serviceType: 'Holiday', type: 'Prepaid', mode: 'Bank Transfer', amount: 35000, date: '2026-10-01', ref: 'TXN-998200', status: 'Completed' },
+    { id: 'PAY-702', caseId: 'PKG-701', clientName: 'Sanya Malhotra', serviceType: 'Holiday', type: 'Prepaid', mode: 'UPI / NetBanking', amount: 50000, date: '2026-10-05', ref: 'TXN-998205', status: 'Completed' },
+    { id: 'PAY-703', caseId: 'PKG-702', clientName: 'Deepak Chopra', serviceType: 'Holiday', type: 'Postpaid', mode: 'Bank Transfer', amount: 50000, date: '2026-09-29', ref: 'TXN-998220', status: 'Completed' },
+    { id: 'PAY-704', caseId: 'PKG-703', clientName: 'Ananya Iyer', serviceType: 'Holiday', type: 'Prepaid', mode: 'Credit / Debit Card', amount: 95000, date: '2026-10-04', ref: 'TXN-998235', status: 'Completed' },
+    { id: 'PAY-705', caseId: 'PKG-704', clientName: 'Rohit Sharma', serviceType: 'Holiday', type: 'Prepaid', mode: 'Bank Transfer', amount: 175000, date: '2026-09-22', ref: 'TXN-998250', status: 'Completed' }
   ]);
   const [visaDocsList, setVisaDocsList] = useState([
     { id: 1, name: 'Passport Front Page', mandatory: 'Mandatory', status: 'Verified' },
@@ -274,8 +318,16 @@ export default function SuperAdminDashboard({ onLogout }) {
     applicationDate: '2026-10-10',
     status: 'Under Review',
     paymentType: 'Prepaid',
-    totalAmount: 18500
+    totalAmount: 18500,
+    documents: [
+      { name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory' },
+      { name: 'Flight & Hotel Cover Booking', mandatory: 'Mandatory' },
+      { name: 'Travel Medical Insurance (€30,000 Cover)', mandatory: 'Mandatory' }
+    ]
   });
+  const [docNameToAdd, setDocNameToAdd] = useState('Passport (Front & Back Copy)');
+  const [customDocNameInput, setCustomDocNameInput] = useState('');
+  const [docRequirementToAdd, setDocRequirementToAdd] = useState('Mandatory');
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
   const [showAddTravelerModal, setShowAddTravelerModal] = useState(false);
@@ -358,6 +410,75 @@ export default function SuperAdminDashboard({ onLogout }) {
     setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === updatedPkg.packageId ? updatedPkg : p));
   };
 
+  // Visa Search & Filter States
+  const [visaSearchQuery, setVisaSearchQuery] = useState('');
+  const [visaSearchOption, setVisaSearchOption] = useState('all');
+  const [visaStatusFilter, setVisaStatusFilter] = useState('All');
+  const [visaCountryFilter, setVisaCountryFilter] = useState('All');
+  const [visaOfficerFilter, setVisaOfficerFilter] = useState('All');
+
+  // Filtered Visa Applications
+  const filteredVisaList = visaList.filter(visa => {
+    if (visaStatusFilter !== 'All' && visa.status !== visaStatusFilter) return false;
+    if (visaCountryFilter !== 'All' && visa.country !== visaCountryFilter) return false;
+    if (visaOfficerFilter !== 'All' && visa.caseOfficerName !== visaOfficerFilter) return false;
+
+    if (visaSearchQuery.trim()) {
+      const q = visaSearchQuery.toLowerCase().trim();
+      const applicantName = (visa.applicantName || '').toLowerCase();
+      const id = (visa.id || '').toLowerCase();
+      const country = (visa.country || '').toLowerCase();
+      const visaType = (visa.visaType || '').toLowerCase();
+      const officer = (visa.caseOfficerName || '').toLowerCase();
+      const officerId = (visa.caseOfficerId || '').toLowerCase();
+      const email = (visa.email || '').toLowerCase();
+      const phone = (visa.phone || '').toLowerCase();
+      const passport = (visa.passport || '').toLowerCase();
+      const paymentRef = (visa.paymentRef || '').toLowerCase();
+      const paymentType = (visa.paymentType || '').toLowerCase();
+      const paymentStatus = (visa.paymentStatus || '').toLowerCase();
+      const status = (visa.status || '').toLowerCase();
+      const docStatus = (visa.documentStatus || '').toLowerCase();
+
+      if (visaSearchOption === 'all') {
+        const matches = applicantName.includes(q) ||
+          id.includes(q) ||
+          country.includes(q) ||
+          visaType.includes(q) ||
+          officer.includes(q) ||
+          officerId.includes(q) ||
+          email.includes(q) ||
+          phone.includes(q) ||
+          passport.includes(q) ||
+          paymentRef.includes(q) ||
+          paymentType.includes(q) ||
+          paymentStatus.includes(q) ||
+          status.includes(q) ||
+          docStatus.includes(q);
+        if (!matches) return false;
+      } else if (visaSearchOption === 'applicantName') {
+        if (!applicantName.includes(q)) return false;
+      } else if (visaSearchOption === 'id') {
+        if (!id.includes(q)) return false;
+      } else if (visaSearchOption === 'country') {
+        if (!country.includes(q)) return false;
+      } else if (visaSearchOption === 'visaType') {
+        if (!visaType.includes(q)) return false;
+      } else if (visaSearchOption === 'caseOfficer') {
+        if (!officer.includes(q) && !officerId.includes(q)) return false;
+      } else if (visaSearchOption === 'phone') {
+        if (!phone.includes(q)) return false;
+      } else if (visaSearchOption === 'email') {
+        if (!email.includes(q)) return false;
+      } else if (visaSearchOption === 'passport') {
+        if (!passport.includes(q)) return false;
+      } else if (visaSearchOption === 'paymentRef') {
+        if (!paymentRef.includes(q)) return false;
+      }
+    }
+    return true;
+  });
+
   // Filtered Leads
   const filteredLeads = mockLeadsFull.filter(lead => {
     if (leadFilterType !== 'All' && lead.leadType !== leadFilterType) return false;
@@ -376,71 +497,73 @@ export default function SuperAdminDashboard({ onLogout }) {
         <ul className="sidebar-nav">
           <li>
             <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
-              <span>1. Dashboard Overview</span>
+              <span>Home</span>
             </button>
           </li>
           <li>
             <button className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>
-              <span>2. Leads Management</span>
-              <span className="nav-badge">{leadsList.length}</span>
+              <span>Leads</span>
+          
+            </button>
+          </li>
+             <li>
+            <button className={activeTab === 'visa' ? 'active' : ''} onClick={() => setActiveTab('visa')}>
+              <span>Visa</span>
+            </button>
+          </li>
+            <li>
+            <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
+              <span>Holidays</span>
             </button>
           </li>
           <li>
             <button className={activeTab === 'companies' ? 'active' : ''} onClick={() => setActiveTab('companies')}>
-              <span>3. Companies / Clients</span>
-              {/* <span className="nav-badge">{mockCompanies.length}</span> */}
+              <span>Companies</span>
             </button>
           </li>
           <li>
             <button className={activeTab === 'travelers' ? 'active' : ''} onClick={() => setActiveTab('travelers')}>
-              <span>4. Travelers / Customers</span>
-              {/* <span className="nav-badge">{mockTravelers.length}</span> */}
+              <span>Travelers</span>
             </button>
           </li>
+         <li>
+            <button className={activeTab === 'visa-master' ? 'active' : ''} onClick={() => setActiveTab('visa-master')}>
+              <span>Visa Master</span>
+            </button>
+          </li>
+         <li>
+            <button className={activeTab === 'holiday-master' ? 'active' : ''} onClick={() => setActiveTab('holiday-master')}>
+              <span>Holiday Master</span>
+            </button>
+          </li>
+       
           <li>
-            <button className={activeTab === 'visa' ? 'active' : ''} onClick={() => setActiveTab('visa')}>
-              <span>5. Visa Applications</span>
-              {/* <span className="nav-badge">{mockVisaServices.length}</span> */}
+          <button className={activeTab === 'revenue' ? 'active' : ''} onClick={() => setActiveTab('revenue')}>
+              <span>Finance</span>
             </button>
           </li>
-          <li>
-            <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
-              <span>6. Booking Applications</span>
-              {/* <span className="nav-badge">{bookingList.length}</span> */}
-            </button>
-          </li>
-          <li>
-            <button className={activeTab === 'revenue' ? 'active' : ''} onClick={() => setActiveTab('revenue')}>
-              <span>7. Transactions</span>
-            </button>
-          </li>
+       
+       
           <li>
             <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => setActiveTab('reports')}>
-              <span>8. Reports & Analytics</span>
+              <span>Reports</span>
             </button>
           </li>
           <li>
             <button className={activeTab === 'roles' ? 'active' : ''} onClick={() => setActiveTab('roles')}>
-              <span>9. Roles & Permissions</span>
-              {/* <span className="nav-badge">{mockStaffMembers.length}</span> */}
+              <span>Staff & Roles</span>
+            
             </button>
           </li>
           <li>
             <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
-              <span>10. Reviews & Ratings</span>
-              {/* <span className="nav-badge">{mockReviews.length}</span> */}
+              <span>Reviews & Ratings</span>
+             
             </button>
           </li>
-          <li>
-            <button className={activeTab === 'packages' ? 'active' : ''} onClick={() => setActiveTab('packages')}>
-              <span>11. Packages</span>
-            </button>
-          </li>
+   
         </ul>
-        {/* <div className="sidebar-footer">
-          <div>Logged in: <strong>admin@rhglobal.com</strong></div>
-          <button className="btn btn-sm mt-4" style={{ width: '100%' }} onClick={onLogout}>Logout</button>
-        </div>mockCompanies */}
+   
       </aside>
 
       {/* Main Content */}
@@ -568,12 +691,23 @@ export default function SuperAdminDashboard({ onLogout }) {
                 </div>
               </div>
 
-              {/* Multiple Payment Management (PDF Spec Section 7.1 & 8) */}
+              {/* Payment Summary (Full Payment Management in Finance Section) */}
               <div className="section-box">
                 <div className="section-header">
-                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
-                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
-                    + Add Payment Entry
+                  <div>
+                    <div className="section-title">Payment Overview</div>
+                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                      Detailed multiple payment entries and receipts are managed in the Finance section.
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => {
+                      setViewingVisaDetails(null);
+                      setActiveTab('revenue');
+                    }}
+                  >
+                    Manage in Finance Section &rarr;
                   </button>
                 </div>
 
@@ -597,42 +731,6 @@ export default function SuperAdminDashboard({ onLogout }) {
                       {visaPaymentsList.reduce((acc, p) => acc + p.amount, 0) >= (viewingVisaDetails.totalAmount || 24000) ? 'PAID IN FULL' : 'PARTIALLY PAID'}
                     </div>
                   </div>
-                </div>
-
-                {/* Multiple Payments Table */}
-                <div className="table-container mt-4">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Payment ID</th>
-                        <th>Payment Type</th>
-                        <th>Payment Mode</th>
-                        <th>Amount (₹)</th>
-                        <th>Payment Date</th>
-                        <th>Reference / TXN ID</th>
-
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visaPaymentsList.map(pay => (
-                        <tr key={pay.id}>
-                          <td className="font-mono"><strong>{pay.id}</strong></td>
-                          <td><span className="status-badge">{pay.type}</span></td>
-                          <td>{pay.mode}</td>
-                          <td className="font-mono">₹{pay.amount.toLocaleString()}</td>
-                          <td>{pay.date}</td>
-                          <td className="font-mono">{pay.ref}</td>
-
-                          <td className="action-cell">
-                            <button className="btn btn-sm" onClick={() => alert(`Downloading receipt for ${pay.id}`)}>Download</button>
-                            <button className="btn btn-sm" onClick={() => setEditingPayment({ ...pay })}>Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => setVisaPaymentsList(visaPaymentsList.filter(p => p.id !== pay.id))}>Delete</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
 
@@ -713,12 +811,23 @@ export default function SuperAdminDashboard({ onLogout }) {
                 </div>
               </div>
 
-              {/* Payment Management (Multiple Payment Entries) */}
+              {/* Payment Summary (Full Payment Management in Finance Section) */}
               <div className="section-box">
                 <div className="section-header">
-                  <div className="section-title">Payment Management (Multiple Payment Entries)</div>
-                  <button className="btn btn-sm btn-primary" onClick={() => setShowAddPaymentModal(true)}>
-                    + Add Payment Entry
+                  <div>
+                    <div className="section-title">Payment Overview</div>
+                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                      Detailed multiple payment entries, installments, and receipts are managed in the Finance section.
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => {
+                      setViewingBookingDetails(null);
+                      setActiveTab('revenue');
+                    }}
+                  >
+                    Manage in Finance Section &rarr;
                   </button>
                 </div>
 
@@ -746,40 +855,6 @@ export default function SuperAdminDashboard({ onLogout }) {
                       {bookingPaymentsList.reduce((acc, p) => acc + p.amount, 0) >= (viewingBookingDetails.totalPrice || viewingBookingDetails.price || 85000) ? 'PAID IN FULL' : 'PARTIALLY PAID'}
                     </div>
                   </div>
-                </div>
-
-                {/* Multiple Payments Table */}
-                <div className="table-container mt-4">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Payment ID</th>
-                        <th>Payment Type</th>
-                        <th>Payment Mode</th>
-                        <th>Amount (₹)</th>
-                        <th>Payment Date</th>
-                        <th>Reference / TXN ID</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bookingPaymentsList.map(pay => (
-                        <tr key={pay.id}>
-                          <td className="font-mono"><strong>{pay.id}</strong></td>
-                          <td><span className="status-badge">{pay.type}</span></td>
-                          <td>{pay.mode}</td>
-                          <td className="font-mono">₹{pay.amount.toLocaleString()}</td>
-                          <td>{pay.date}</td>
-                          <td className="font-mono">{pay.ref}</td>
-                          <td className="action-cell">
-                            <button className="btn btn-sm" onClick={() => alert(`Downloading receipt for ${pay.id}`)}>Download</button>
-                            <button className="btn btn-sm" onClick={() => setEditingPayment({ ...pay })}>Edit</button>
-                            <button className="btn btn-sm btn-danger" onClick={() => setBookingPaymentsList(bookingPaymentsList.filter(p => p.id !== pay.id))}>Delete</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
 
@@ -1694,7 +1769,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                                     <td>{visa.caseOfficerName} ({visa.caseOfficerId})</td>
                                     <td><span className="status-badge">{visa.paymentType}</span></td>
                                     <td><span className="status-badge">{visa.status}</span></td>
-                                    <td><button className="btn btn-sm btn-primary" onClick={() => setViewingVisaDetails(visa)}>View Details &rarr;</button></td>
+                                    <td><button className="btn btn-sm btn-primary" onClick={() => { setViewingVisaDetails(visa); if (visa.documents?.length) setVisaDocsList(visa.documents); }}>View Details &rarr;</button></td>
                                   </tr>
                                 ))}
                             </tbody>
@@ -1784,194 +1859,571 @@ export default function SuperAdminDashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* 5. VISA SERVICES */}
+              {/* 5. VISA SERVICES — KANBAN PIPELINE */}
               {activeTab === 'visa' && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Visa Services & Applications Management</div>
-                    <button className="btn btn-primary" onClick={() => setShowAddVisaModal(true)}>
-                      + Add Visa Application
-                    </button>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Application ID</th>
-                          <th>Applicant Name</th>
-                          <th>Country</th>
-                          <th>Visa Type</th>
-                          <th>Case Officer Name</th>
-                          <th>Case Officer ID</th>
-                          <th>Application Date</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visaList.map(visa => (
-                          <tr key={visa.id}>
-                            <td className="font-mono"><strong>{visa.id}</strong></td>
-                            <td>{visa.applicantName}</td>
-                            <td>{visa.country}</td>
-                            <td>{visa.visaType}</td>
-                            <td>{visa.caseOfficerName}</td>
-                            <td className="font-mono">{visa.caseOfficerId}</td>
-                            <td>{visa.applicationDate}</td>
-                            <td><span className="status-badge">{visa.status}</span></td>
-                            <td className="action-cell">
-                              <button className="btn btn-sm btn-primary" onClick={() => setViewingVisaDetails(visa)}>View Full Details &rarr;</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <VisaKanban
+                  visaList={visaList}
+                  onUpdateVisa={handleUpdateVisa}
+                  staffMembers={mockStaffMembers}
+                  onViewDetails={(visa) => {
+                    setViewingVisaDetails(visa);
+                    if (visa.documents?.length) setVisaDocsList(visa.documents);
+                  }}
+                />
               )}
 
-              {/* 6. BOOKING SERVICES */}
+              {/* 6. BOOKING SERVICES / HOLIDAY KANBAN */}
               {activeTab === 'booking' && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Booking Services (Holiday/Tour Management)</div>
-                    <button className="btn btn-primary" onClick={() => {
-                      const firstPkg = holidayPackagesList[0] || {
-                        packageId: 'PKG-701',
-                        packageName: 'Bali Island Beach Getaway',
-                        destination: 'Bali, Indonesia',
-                        duration: '6 Days / 5 Nights',
-                        days: 6,
-                        nights: 5,
-                        price: 85000
-                      };
-                      setNewBookingForm({
-                        packageSelectionType: 'existing',
-                        selectedPackageId: firstPkg.packageId,
-                        packageId: `PKG-${701 + bookingList.length}`,
-                        packageName: firstPkg.packageName,
-                        destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
-                        duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
-                        days: firstPkg.days || 6,
-                        nights: firstPkg.nights || 5,
-                        customerName: '',
-                        contactDetails: '',
-                        email: '',
-                        bookingDate: '2026-10-10',
-                        departureDate: '2026-11-20',
-                        totalPrice: firstPkg.price || 85000,
-                        paidAmount: firstPkg.price || 85000,
-                        status: 'Active',
-                        paymentType: 'Prepaid',
-                        paymentStatus: 'Paid',
-                        caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
-                        caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
-                        notes: ''
-                      });
-                      setShowAddBookingModal(true);
-                    }}>
-                      + Add Booking
-                    </button>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Package ID</th>
-                          <th>Package Name</th>
-                          <th>Destination</th>
-                          <th>Duration</th>
-                          <th>Days / Nights</th>
-                          <th>Booking Date</th>
-                          <th>Total Price</th>
-                          <th>Departure Date</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bookingList.map(bk => (
-                          <tr key={bk.packageId}>
-                            <td className="font-mono"><strong>{bk.packageId}</strong></td>
-                            <td>{bk.packageName}</td>
-                            <td>{bk.destination}</td>
-                            <td>{bk.duration}</td>
-                            <td>{bk.days}D / {bk.nights}N</td>
-                            <td>{bk.bookingDate}</td>
-                            <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
-                            <td>{bk.departureDate}</td>
-                            <td><span className="status-badge">{bk.status}</span></td>
-                            <td className="action-cell">
-                              <button className="btn btn-sm btn-primary" onClick={() => setViewingBookingDetails(bk)}>View Details &rarr;</button>
-                              <button className="btn btn-sm" onClick={() => { setSelectedBooking(bk); setShowExtendBookingModal(true); }}>Extend Duration</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <HolidayKanban
+                  bookingList={bookingList}
+                  onUpdateBooking={(updated) => setBookingList(bookingList.map(b => b.packageId === updated.packageId ? updated : b))}
+                  onAddBooking={() => {
+                    const firstPkg = holidayPackagesList[0] || {
+                      packageId: 'PKG-701',
+                      packageName: 'Bali Island Beach Getaway',
+                      destination: 'Bali, Indonesia',
+                      duration: '6 Days / 5 Nights',
+                      days: 6,
+                      nights: 5,
+                      price: 85000
+                    };
+                    setNewBookingForm({
+                      packageSelectionType: 'existing',
+                      selectedPackageId: firstPkg.packageId,
+                      packageId: `PKG-${701 + bookingList.length}`,
+                      packageName: firstPkg.packageName,
+                      destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
+                      duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
+                      days: firstPkg.days || 6,
+                      nights: firstPkg.nights || 5,
+                      customerName: '',
+                      contactDetails: '',
+                      email: '',
+                      bookingDate: '2026-10-10',
+                      departureDate: '2026-11-20',
+                      totalPrice: firstPkg.price || 85000,
+                      paidAmount: firstPkg.price || 85000,
+                      status: 'Booking Created',
+                      paymentType: 'Prepaid',
+                      paymentStatus: 'Paid',
+                      caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
+                      caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
+                      notes: ''
+                    });
+                    setShowAddBookingModal(true);
+                  }}
+                  onViewDetails={(bk) => setViewingBookingDetails(bk)}
+                  onExtendBooking={(bk) => { setSelectedBooking(bk); setShowExtendBookingModal(true); }}
+                  staffMembers={staffList}
+                />
               )}
 
-              {/* 7. REVENUE & INVOICE */}
+              {/* 7. FINANCE & MULTIPLE PAYMENT MANAGEMENT */}
               {activeTab === 'revenue' && (
-                <div className="section-box">
-                  <div className="section-header">
-                    <div className="section-title">Revenue & Invoice (Transaction History)</div>
-                    <div className="toolbar" style={{ margin: 0 }}>
-                      <button className="btn btn-sm" onClick={() => alert('Exporting to Excel...')}>Export Excel</button>
-                      <button className="btn btn-sm" onClick={() => alert('Exporting to PDF...')}>Export PDF</button>
+                <div>
+                  {/* Finance Header & KPI Strip */}
+                  <div className="section-box" style={{ marginBottom: '16px' }}>
+                    <div className="section-header" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>Finance &amp; Payment Management</span>
+                          <span className="nav-badge" style={{ fontSize: '11px', textTransform: 'none' }}>
+                            {visaPaymentsList.length + bookingPaymentsList.length} Payment Entries
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>
+                          Manage multiple payment entries, prepaid &amp; postpaid orders, and installment collections.
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => {
+                            setNewPaymentForm({
+                              serviceCategory: 'visa',
+                              selectedCaseId: visaList[0]?.id || 'VISA-301',
+                              amount: 10000,
+                              type: 'Prepaid',
+                              mode: 'Bank Transfer',
+                              date: new Date().toISOString().split('T')[0],
+                              ref: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                              status: 'Completed'
+                            });
+                            setShowAddPaymentModal(true);
+                          }}
+                        >
+                          + Add Payment Entry
+                        </button>
+                        <button className="btn btn-sm" onClick={() => alert('Exporting Financial Report to Excel...')}>Export Excel</button>
+                        <button className="btn btn-sm" onClick={() => alert('Exporting Financial Invoices to PDF...')}>Export PDF</button>
+                      </div>
+                    </div>
+
+                    {/* Financial Summary Cards */}
+                    <div className="grid-cards" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '16px' }}>
+                      <div className="card">
+                        <div className="card-title">Total Collected (Paid)</div>
+                        <div className="card-value" style={{ color: '#16a34a' }}>
+                          ₹{(visaPaymentsList.reduce((s, p) => s + (Number(p.amount) || 0), 0) + bookingPaymentsList.reduce((s, p) => s + (Number(p.amount) || 0), 0)).toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                          Across {visaPaymentsList.length + bookingPaymentsList.length} recorded payments
+                        </div>
+                      </div>
+
+                      <div className="card">
+                        <div className="card-title">Pending Balance (Postpaid)</div>
+                        <div className="card-value" style={{ color: '#dc2626' }}>
+                          ₹{(
+                            visaList.reduce((s, v) => s + Math.max(0, (v.totalAmount || 0) - (v.paidAmount || 0)), 0) +
+                            bookingList.reduce((s, b) => s + Math.max(0, (b.totalPrice || 0) - (b.paidAmount || 0)), 0)
+                          ).toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                          Awaiting installment clearances
+                        </div>
+                      </div>
+
+                      <div className="card">
+                        <div className="card-title">Total Invoiced Order Value</div>
+                        <div className="card-value">
+                          ₹{(
+                            visaList.reduce((s, v) => s + (v.totalAmount || 0), 0) +
+                            bookingList.reduce((s, b) => s + (b.totalPrice || 0), 0)
+                          ).toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                          {visaList.length} Visa cases + {bookingList.length} Holiday bookings
+                        </div>
+                      </div>
+
+                      <div className="card">
+                        <div className="card-title">Order Category Split</div>
+                        <div className="card-value" style={{ fontSize: '18px' }}>
+                          {visaList.filter(v => v.paymentType === 'Prepaid').length + bookingList.filter(b => b.paymentType === 'Prepaid').length} Prepaid / {visaList.filter(v => v.paymentType === 'Postpaid').length + bookingList.filter(b => b.paymentType === 'Postpaid').length} Postpaid
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                          Prepaid vs Postpaid payment schemes
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sub-Tabs Selector */}
+                    <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid #000', paddingBottom: '0px' }}>
+                      <button
+                        className={`btn btn-sm ${financeSubTab === 'payments' ? 'btn-primary' : ''}`}
+                        style={{ borderRadius: '0', borderBottom: 'none' }}
+                        onClick={() => setFinanceSubTab('payments')}
+                      >
+                        💳 Multiple Payment Entries ({visaPaymentsList.length + bookingPaymentsList.length})
+                      </button>
+                      <button
+                        className={`btn btn-sm ${financeSubTab === 'prepaid' ? 'btn-primary' : ''}`}
+                        style={{ borderRadius: '0', borderBottom: 'none' }}
+                        onClick={() => setFinanceSubTab('prepaid')}
+                      >
+                        📥 Prepaid Orders ({visaList.filter(v => v.paymentType === 'Prepaid').length + bookingList.filter(b => b.paymentType === 'Prepaid').length})
+                      </button>
+                      <button
+                        className={`btn btn-sm ${financeSubTab === 'postpaid' ? 'btn-primary' : ''}`}
+                        style={{ borderRadius: '0', borderBottom: 'none' }}
+                        onClick={() => setFinanceSubTab('postpaid')}
+                      >
+                        ⏳ Postpaid Orders &amp; Balances ({visaList.filter(v => v.paymentType === 'Postpaid').length + bookingList.filter(b => b.paymentType === 'Postpaid').length})
+                      </button>
+                      <button
+                        className={`btn btn-sm ${financeSubTab === 'transactions' ? 'btn-primary' : ''}`}
+                        style={{ borderRadius: '0', borderBottom: 'none' }}
+                        onClick={() => setFinanceSubTab('transactions')}
+                      >
+                        📄 Invoices &amp; Transaction Log ({mockTransactions.length})
+                      </button>
                     </div>
                   </div>
-                  <div className="toolbar">
-                    <div className="filter-group">
-                      <label>Service Type:</label>
-                      <select><option>All</option><option>Visa</option><option>Holiday</option></select>
+
+                  {/* ── SUB-TAB 1: MULTIPLE PAYMENT ENTRIES ── */}
+                  {financeSubTab === 'payments' && (
+                    <div className="section-box">
+                      <div className="section-header">
+                        <div className="section-title">All Multiple Payment Entries (Receipts Ledger)</div>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => {
+                            setNewPaymentForm({
+                              serviceCategory: 'visa',
+                              selectedCaseId: visaList[0]?.id || 'VISA-301',
+                              amount: 5000,
+                              type: 'Prepaid',
+                              mode: 'Bank Transfer',
+                              date: new Date().toISOString().split('T')[0],
+                              ref: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                              status: 'Completed'
+                            });
+                            setShowAddPaymentModal(true);
+                          }}
+                        >
+                          + Add Payment Entry
+                        </button>
+                      </div>
+
+                      {/* Filters Toolbar */}
+                      <div className="toolbar" style={{ flexWrap: 'wrap', gap: '10px' }}>
+                        <div className="filter-group">
+                          <label>Service Type:</label>
+                          <select value={financeServiceFilter} onChange={e => setFinanceServiceFilter(e.target.value)}>
+                            <option value="All">All Services</option>
+                            <option value="Visa">Visa Services</option>
+                            <option value="Holiday">Holiday Bookings</option>
+                          </select>
+                        </div>
+                        <div className="filter-group">
+                          <label>Payment Mode:</label>
+                          <select value={financeModeFilter} onChange={e => setFinanceModeFilter(e.target.value)}>
+                            <option value="All">All Modes</option>
+                            <option value="UPI / NetBanking">UPI / NetBanking</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Credit / Debit Card">Credit / Debit Card</option>
+                            <option value="Cash">Cash</option>
+                          </select>
+                        </div>
+                        <div className="filter-group">
+                          <label>Search:</label>
+                          <input
+                            type="text"
+                            placeholder="Search payment ID, case#, client, TXN..."
+                            value={financeSearchQuery}
+                            onChange={e => setFinanceSearchQuery(e.target.value)}
+                            style={{ width: '260px' }}
+                          />
+                          {(financeServiceFilter !== 'All' || financeModeFilter !== 'All' || financeSearchQuery) && (
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => {
+                                setFinanceServiceFilter('All');
+                                setFinanceModeFilter('All');
+                                setFinanceSearchQuery('');
+                              }}
+                            >
+                              ✕ Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Payment Entries Table */}
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Payment ID</th>
+                              <th>Case / Order Ref</th>
+                              <th>Client Name</th>
+                              <th>Service</th>
+                              <th>Order Type</th>
+                              <th>Payment Mode</th>
+                              <th>Amount (₹)</th>
+                              <th>Date</th>
+                              <th>TXN Reference</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(() => {
+                              const combined = [
+                                ...visaPaymentsList.map(p => ({ ...p, service: 'Visa' })),
+                                ...bookingPaymentsList.map(p => ({ ...p, service: 'Holiday' }))
+                              ];
+                              const filtered = combined.filter(p => {
+                                if (financeServiceFilter !== 'All' && p.service !== financeServiceFilter) return false;
+                                if (financeModeFilter !== 'All' && p.mode !== financeModeFilter) return false;
+                                if (financeSearchQuery.trim()) {
+                                  const q = financeSearchQuery.toLowerCase();
+                                  const fields = [p.id, p.caseId, p.clientName, p.ref, p.mode, p.type, p.service];
+                                  if (!fields.some(f => (f || '').toLowerCase().includes(q))) return false;
+                                }
+                                return true;
+                              });
+
+                              if (filtered.length === 0) {
+                                return (
+                                  <tr>
+                                    <td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: '#777' }}>
+                                      No payment entries found matching your filter criteria.
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return filtered.map(pay => (
+                                <tr key={pay.id}>
+                                  <td className="font-mono"><strong>{pay.id}</strong></td>
+                                  <td className="font-mono">
+                                    <span style={{ fontWeight: '600', color: pay.service === 'Visa' ? '#2563eb' : '#059669' }}>
+                                      {pay.caseId || '—'}
+                                    </span>
+                                  </td>
+                                  <td><strong>{pay.clientName || 'Direct Client'}</strong></td>
+                                  <td>
+                                    <span className="kanban-type-badge" style={{ fontSize: '9px', padding: '1px 5px' }}>
+                                      {pay.service === 'Visa' ? '🛂 Visa' : '🌴 Holiday'}
+                                    </span>
+                                  </td>
+                                  <td><span className="status-badge" style={{ fontSize: '9px' }}>{pay.type}</span></td>
+                                  <td>{pay.mode}</td>
+                                  <td className="font-mono" style={{ fontWeight: '700' }}>₹{Number(pay.amount).toLocaleString()}</td>
+                                  <td>{pay.date}</td>
+                                  <td className="font-mono" style={{ fontSize: '11px' }}>{pay.ref}</td>
+                                  <td><span className="status-badge" style={{ fontSize: '10px' }}>{pay.status || 'Completed'}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm" onClick={() => alert(`Downloading payment receipt for ${pay.id} (${pay.ref})`)}>Receipt</button>
+                                    <button className="btn btn-sm" onClick={() => setEditingPayment({ ...pay })}>Edit</button>
+                                    <button
+                                      className="btn btn-sm btn-danger"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to delete payment entry ${pay.id}?`)) {
+                                          if (pay.service === 'Visa') {
+                                            setVisaPaymentsList(visaPaymentsList.filter(p => p.id !== pay.id));
+                                          } else {
+                                            setBookingPaymentsList(bookingPaymentsList.filter(p => p.id !== pay.id));
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                              ));
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    <div className="filter-group">
-                      <label>Payment Type:</label>
-                      <select><option>All</option><option>Prepaid</option><option>Postpaid</option></select>
+                  )}
+
+                  {/* ── SUB-TAB 2: PREPAID ORDERS ── */}
+                  {financeSubTab === 'prepaid' && (
+                    <div className="section-box">
+                      <div className="section-header">
+                        <div>
+                          <div className="section-title">Prepaid Orders (100% Upfront Advance)</div>
+                          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                            Orders where the client settled the entire billing amount upfront.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Case ID</th>
+                              <th>Customer Name</th>
+                              <th>Service Type</th>
+                              <th>Package / Visa Category</th>
+                              <th>Total Amount</th>
+                              <th>Paid Amount</th>
+                              <th>Payment Status</th>
+                              <th>Payment Ref</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              ...visaList.filter(v => v.paymentType === 'Prepaid').map(v => ({
+                                caseId: v.id,
+                                customer: v.applicantName,
+                                service: 'Visa',
+                                detail: `${v.country} - ${v.visaType}`,
+                                total: v.totalAmount,
+                                paid: v.paidAmount,
+                                status: v.paymentStatus,
+                                ref: v.paymentRef || 'TXN-PREPAID'
+                              })),
+                              ...bookingList.filter(b => b.paymentType === 'Prepaid').map(b => ({
+                                caseId: b.packageId,
+                                customer: b.customerName,
+                                service: 'Holiday',
+                                detail: `${b.packageName} (${b.destination})`,
+                                total: b.totalPrice,
+                                paid: b.paidAmount,
+                                status: b.paymentStatus,
+                                ref: b.invoiceNo || 'INV-PREPAID'
+                              }))
+                            ].map(item => (
+                              <tr key={item.caseId}>
+                                <td className="font-mono"><strong>{item.caseId}</strong></td>
+                                <td><strong>{item.customer}</strong></td>
+                                <td>
+                                  <span className="kanban-type-badge" style={{ fontSize: '9px' }}>
+                                    {item.service === 'Visa' ? '🛂 Visa' : '🌴 Holiday'}
+                                  </span>
+                                </td>
+                                <td>{item.detail}</td>
+                                <td className="font-mono">₹{Number(item.total).toLocaleString()}</td>
+                                <td className="font-mono" style={{ color: '#16a34a', fontWeight: '700' }}>₹{Number(item.paid).toLocaleString()}</td>
+                                <td><span className="status-badge" style={{ background: '#dcfce7', color: '#166534' }}>Paid in Full</span></td>
+                                <td className="font-mono" style={{ fontSize: '11px' }}>{item.ref}</td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm" onClick={() => alert(`Viewing Prepaid Invoice for ${item.caseId}`)}>View Invoice</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Transaction ID</th>
-                          <th>Application Name</th>
-                          <th>Customer Name</th>
-                          <th>Transaction Type</th>
-                          <th>Amount</th>
-                          {/* <th>Extended Booking Amt</th> */}
-                          <th>Payment Type</th>
-                          {/* <th>Payment Status</th> */}
-                          <th>Transaction Date</th>
-                          <th>Invoice</th>
-                          {/* <th>Actions</th> */}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {mockTransactions.map(txn => (
-                          <tr key={txn.id}>
-                            <td className="font-mono"><strong>{txn.id}</strong></td>
-                            <td>{txn.applicationName}</td>
-                            <td>{txn.customerName}</td>
-                            <td>{txn.transactionType}</td>
-                            <td className="font-mono">₹{txn.amount.toLocaleString()}</td>
-                            {/* <td className="font-mono">₹{txn.extendedBookingAmount.toLocaleString()}</td> */}
-                            <td>{txn.paymentType}</td>
-                            {/* <td><span className="status-badge">{txn.paymentStatus}</span></td> */}
-                            <td>{txn.transactionDate}</td>
-                            <td className="font-mono">{txn.invoice}</td>
-                            {/* <td className="action-cell">
-                              <button className="btn btn-sm" onClick={() => alert(`Generating Invoice for ${txn.invoice}`)}>Generate</button>
-                              <button className="btn btn-sm" onClick={() => alert(`Downloading Invoice ${txn.invoice}`)}>Download</button>
-                            </td> */}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  )}
+
+                  {/* ── SUB-TAB 3: POSTPAID ORDERS & BALANCES ── */}
+                  {financeSubTab === 'postpaid' && (
+                    <div className="section-box">
+                      <div className="section-header">
+                        <div>
+                          <div className="section-title">Postpaid Orders &amp; Installments (Pending Balances)</div>
+                          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                            Orders operating on milestone partial payments. Click "Record Payment" to log an installment.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Case ID</th>
+                              <th>Customer Name</th>
+                              <th>Service</th>
+                              <th>Total Amount</th>
+                              <th>Paid So Far</th>
+                              <th>Pending Balance</th>
+                              <th>Collection Progress</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              ...visaList.filter(v => v.paymentType === 'Postpaid').map(v => ({
+                                caseId: v.id,
+                                customer: v.applicantName,
+                                service: 'Visa',
+                                total: v.totalAmount,
+                                paid: v.paidAmount,
+                                pending: Math.max(0, (v.totalAmount || 0) - (v.paidAmount || 0)),
+                                status: v.paymentStatus
+                              })),
+                              ...bookingList.filter(b => b.paymentType === 'Postpaid').map(b => ({
+                                caseId: b.packageId,
+                                customer: b.customerName,
+                                service: 'Holiday',
+                                total: b.totalPrice,
+                                paid: b.paidAmount,
+                                pending: Math.max(0, (b.totalPrice || 0) - (b.paidAmount || 0)),
+                                status: b.paymentStatus
+                              }))
+                            ].map(item => {
+                              const pct = item.total > 0 ? Math.round((item.paid / item.total) * 100) : 0;
+                              return (
+                                <tr key={item.caseId}>
+                                  <td className="font-mono"><strong>{item.caseId}</strong></td>
+                                  <td><strong>{item.customer}</strong></td>
+                                  <td>
+                                    <span className="kanban-type-badge" style={{ fontSize: '9px' }}>
+                                      {item.service === 'Visa' ? '🛂 Visa' : '🌴 Holiday'}
+                                    </span>
+                                  </td>
+                                  <td className="font-mono">₹{Number(item.total).toLocaleString()}</td>
+                                  <td className="font-mono" style={{ color: '#16a34a', fontWeight: '600' }}>₹{Number(item.paid).toLocaleString()}</td>
+                                  <td className="font-mono" style={{ color: '#dc2626', fontWeight: '700' }}>₹{Number(item.pending).toLocaleString()}</td>
+                                  <td style={{ minWidth: '150px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '2px' }}>
+                                      <span>{pct}%</span>
+                                      <span style={{ color: item.pending > 0 ? '#dc2626' : '#16a34a' }}>
+                                        {item.pending > 0 ? `₹${item.pending.toLocaleString()} due` : 'Cleared'}
+                                      </span>
+                                    </div>
+                                    <div style={{ background: '#e5e7eb', height: '6px', borderRadius: '3px' }}>
+                                      <div style={{ width: `${pct}%`, background: pct >= 100 ? '#16a34a' : '#f59e0b', height: '6px', borderRadius: '3px' }} />
+                                    </div>
+                                  </td>
+                                  <td><span className="status-badge">{item.status || 'Partial'}</span></td>
+                                  <td className="action-cell">
+                                    <button
+                                      className="btn btn-sm btn-primary"
+                                      onClick={() => {
+                                        setNewPaymentForm({
+                                          serviceCategory: item.service.toLowerCase(),
+                                          selectedCaseId: item.caseId,
+                                          amount: item.pending || 5000,
+                                          type: 'Postpaid',
+                                          mode: 'Bank Transfer',
+                                          date: new Date().toISOString().split('T')[0],
+                                          ref: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
+                                          status: 'Completed'
+                                        });
+                                        setShowAddPaymentModal(true);
+                                      }}
+                                    >
+                                      + Record Installment
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── SUB-TAB 4: TRANSACTION LOG & INVOICES ── */}
+                  {financeSubTab === 'transactions' && (
+                    <div className="section-box">
+                      <div className="section-header">
+                        <div className="section-title">Revenue &amp; Invoice Transaction Log</div>
+                        <div className="toolbar" style={{ margin: 0 }}>
+                          <button className="btn btn-sm" onClick={() => alert('Exporting to Excel...')}>Export Excel</button>
+                          <button className="btn btn-sm" onClick={() => alert('Exporting to PDF...')}>Export PDF</button>
+                        </div>
+                      </div>
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Transaction ID</th>
+                              <th>Application Name</th>
+                              <th>Customer Name</th>
+                              <th>Transaction Type</th>
+                              <th>Amount</th>
+                              <th>Payment Type</th>
+                              <th>Transaction Date</th>
+                              <th>Invoice</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mockTransactions.map(txn => (
+                              <tr key={txn.id}>
+                                <td className="font-mono"><strong>{txn.id}</strong></td>
+                                <td>{txn.applicationName}</td>
+                                <td>{txn.customerName}</td>
+                                <td>{txn.transactionType}</td>
+                                <td className="font-mono">₹{txn.amount.toLocaleString()}</td>
+                                <td>{txn.paymentType}</td>
+                                <td>{txn.transactionDate}</td>
+                                <td className="font-mono">{txn.invoice}</td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm" onClick={() => alert(`Downloading Invoice ${txn.invoice}`)}>Download</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2117,137 +2569,122 @@ export default function SuperAdminDashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* 11. PACKAGES & CATALOG MANAGEMENT */}
-              {activeTab === 'packages' && (
+              {/* 11. VISA MASTER - Visa Packages & Countries */}
+              {activeTab === 'visa-master' && (
                 <div>
-                  {/* 2 Sub-Tabs Header */}
-                  <div className="tabs-header" style={{ marginBottom: '16px' }}>
-                    <button
-                      className={`tab-btn ${packagesSubTab === 'visa' ? 'active' : ''}`}
-                      onClick={() => setPackagesSubTab('visa')}
-                    >
-                      11.1 Visa Packages / Countries ({countriesList.length})
-                    </button>
-                    <button
-                      className={`tab-btn ${packagesSubTab === 'holiday' ? 'active' : ''}`}
-                      onClick={() => setPackagesSubTab('holiday')}
-                    >
-                      11.2 Holiday / Tour Packages ({holidayPackagesList.length})
-                    </button>
-                  </div>
-
-                  {/* SUB-TAB 1: VISA PACKAGES / COUNTRIES */}
-                  {packagesSubTab === 'visa' && (
-                    <div>
-                      <div className="section-box">
-                        <div className="section-header">
-                          <div className="section-title">Visa Packages & Countries Offered ({countriesList.length} Countries)</div>
-                          <button className="btn btn-primary btn-sm" onClick={() => setShowAddCountryVisaModal(true)}>
-                            + Add Visa Country
-                          </button>
-                        </div>
-
-                        {/* Country Cards & Table */}
-                        <div className="table-container mt-4">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Country / Image</th>
-                                <th>Country Name</th>
-                                <th>Code</th>
-                                <th>Visa Types Offered</th>
-                                <th>Processing Time</th>
-                                <th>Starting Fee (₹)</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {countriesList.map(c => (
-                                <tr key={c.id || c.countryCode}>
-                                  <td>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <img
-                                        src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
-                                        alt={c.countryName}
-                                        style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
-                                      />
-                                      <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
-                                    </div>
-                                  </td>
-                                  <td><strong>{c.countryName}</strong></td>
-                                  <td className="font-mono">{c.countryCode}</td>
-                                  <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
-                                  <td>{c.processingTime || '10-15 Days'}</td>
-                                  <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
-                                  <td><span className="status-badge">{c.status}</span></td>
-                                  <td className="action-cell">
-                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
-                                    <button className="btn btn-sm" onClick={() => setEditingCountryVisa({ ...c })}>Edit</button>
-                                    <button className="btn btn-sm" onClick={() => {
-                                      setCountriesList(countriesList.map(item => item.countryCode === c.countryCode ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' } : item));
-                                    }}>
-                                      {c.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                  <div className="section-box">
+                    <div className="section-header">
+                      <div>
+                        <div className="section-title">Visa Packages &amp; Countries Offered ({countriesList.length} Countries)</div>
+                        <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Manage visa-eligible countries, processing times, fees, and required documents</div>
                       </div>
+                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddCountryVisaModal(true)}>
+                        + Add Visa Country
+                      </button>
                     </div>
-                  )}
 
-                  {/* SUB-TAB 2: HOLIDAY PACKAGES */}
-                  {packagesSubTab === 'holiday' && (
-                    <div>
-                      <div className="section-box">
-                        <div className="section-header">
-                          <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
-                          <button className="btn btn-primary btn-sm" onClick={() => setShowAddHolidayPackageModal(true)}>
-                            + Add Holiday Package
-                          </button>
-                        </div>
-
-                        {/* Holiday Package Cards Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                          {holidayPackagesList.map(pkg => (
-                            <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
-                              <img
-                                src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
-                                alt={pkg.packageName}
-                                style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                              />
-                              <div style={{ padding: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                                  <div>
-                                    <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
-                                    <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
-                                  </div>
-                                  <span className="status-badge">{pkg.status}</span>
+                    {/* Country Cards & Table */}
+                    <div className="table-container mt-4">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Country / Image</th>
+                            <th>Country Name</th>
+                            <th>Code</th>
+                            <th>Visa Types Offered</th>
+                            <th>Processing Time</th>
+                            <th>Starting Fee (₹)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {countriesList.map(c => (
+                            <tr key={c.id || c.countryCode}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <img
+                                    src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
+                                    alt={c.countryName}
+                                    style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                  />
+                                  <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
                                 </div>
-                                <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
-                                <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
-                                <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
-                                  <strong>Inclusions:</strong> {pkg.inclusions}
-                                </p>
-                                <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
-                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
-                                  <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
-                                  <button className="btn btn-sm" onClick={() => {
-                                    setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
-                                  }}>
-                                    {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
+                              </td>
+                              <td><strong>{c.countryName}</strong></td>
+                              <td className="font-mono">{c.countryCode}</td>
+                              <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
+                              <td>{c.processingTime || '10-15 Days'}</td>
+                              <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
+                              <td><span className="status-badge">{c.status}</span></td>
+                              <td className="action-cell">
+                                <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                <button className="btn btn-sm" onClick={() => setEditingCountryVisa({ ...c })}>Edit</button>
+                                <button className="btn btn-sm" onClick={() => {
+                                  setCountriesList(countriesList.map(item => item.countryCode === c.countryCode ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' } : item));
+                                }}>
+                                  {c.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                </button>
+                              </td>
+                            </tr>
                           ))}
-                        </div>
-                      </div>
+                        </tbody>
+                      </table>
                     </div>
-                  )}
+                  </div>
+                </div>
+              )}
+
+              {/* 12. HOLIDAY MASTER - Holiday & Tour Packages */}
+              {activeTab === 'holiday-master' && (
+                <div>
+                  <div className="section-box">
+                    <div className="section-header">
+                      <div>
+                        <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
+                        <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Manage holiday tour packages, destinations, pricing, inclusions, and itineraries</div>
+                      </div>
+                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddHolidayPackageModal(true)}>
+                        + Add Holiday Package
+                      </button>
+                    </div>
+
+                    {/* Holiday Package Cards Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                      {holidayPackagesList.map(pkg => (
+                        <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                          <img
+                            src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
+                            alt={pkg.packageName}
+                            style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                          />
+                          <div style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                              <div>
+                                <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
+                                <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                              </div>
+                              <span className="status-badge">{pkg.status}</span>
+                            </div>
+                            <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
+                            <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
+                            <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                              <strong>Inclusions:</strong> {pkg.inclusions}
+                            </p>
+                            <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
+                              <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                              <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
+                              <button className="btn btn-sm" onClick={() => {
+                                setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
+                              }}>
+                                {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -2778,7 +3215,7 @@ export default function SuperAdminDashboard({ onLogout }) {
       {/* Add Visa Application Modal */}
       {showAddVisaModal && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '650px' }}>
+          <div className="modal-content" style={{ maxWidth: '700px' }}>
             <div className="modal-header">
               <div className="modal-title">+ Add New Visa Application</div>
               <button className="close-btn" onClick={() => setShowAddVisaModal(false)}>X</button>
@@ -2825,11 +3262,16 @@ export default function SuperAdminDashboard({ onLogout }) {
                     const matchedCountry = countriesList.find(c => c.countryName === country || country.includes(c.countryName));
                     const defaultVisaType = matchedCountry && matchedCountry.visaTypes && matchedCountry.visaTypes[0] ? matchedCountry.visaTypes[0].name : 'Tourist C';
                     const defaultFee = matchedCountry ? matchedCountry.startingPrice : 18500;
+                    const defaultDocs = matchedCountry && matchedCountry.requiredDocs ? matchedCountry.requiredDocs.map(d => ({ name: d.name, mandatory: d.type || 'Mandatory' })) : [
+                      { name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory' },
+                      { name: 'Bank Account Statements (Past 6 Months)', mandatory: 'Mandatory' }
+                    ];
                     setNewVisaForm({
                       ...newVisaForm,
                       country,
                       visaType: defaultVisaType,
-                      totalAmount: defaultFee
+                      totalAmount: defaultFee,
+                      documents: defaultDocs
                     });
                   }}
                 >
@@ -2936,6 +3378,135 @@ export default function SuperAdminDashboard({ onLogout }) {
               </div>
             </div>
 
+            {/* Required Documents Checklist / Selection */}
+            <div style={{ marginTop: '14px', marginBottom: '14px', border: '1px solid #ccc', padding: '12px', background: '#fafafa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ margin: 0, fontWeight: 'bold', fontSize: '13px' }}>
+                  Required Documents Checklist ({newVisaForm.documents?.length || 0} Selected):
+                </label>
+                <span style={{ fontSize: '11px', color: '#555' }}>
+                  Select document from dropdown and click "+ Add Document"
+                </span>
+              </div>
+
+              {/* Document selection row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '8px', alignItems: 'flex-end', marginBottom: '10px' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '11px' }}>Select Document Name: *</label>
+                  <select
+                    value={docNameToAdd}
+                    onChange={e => setDocNameToAdd(e.target.value)}
+                  >
+                    <option value="">-- Choose Document Name --</option>
+                    {STANDARD_VISA_DOCUMENTS.map(doc => (
+                      <option key={doc} value={doc}>{doc}</option>
+                    ))}
+                    <option value="CUSTOM">+ Type Other / Custom Document...</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '11px' }}>Requirement:</label>
+                  <select
+                    value={docRequirementToAdd}
+                    onChange={e => setDocRequirementToAdd(e.target.value)}
+                  >
+                    <option value="Mandatory">Mandatory</option>
+                    <option value="Optional">Optional</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  style={{ height: '34px', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    const finalDocName = docNameToAdd === 'CUSTOM' ? customDocNameInput.trim() : docNameToAdd;
+                    if (!finalDocName) {
+                      alert('Please select or type a document name.');
+                      return;
+                    }
+                    if (newVisaForm.documents?.some(d => d.name.toLowerCase() === finalDocName.toLowerCase())) {
+                      alert(`Document "${finalDocName}" is already in the list.`);
+                      return;
+                    }
+                    setNewVisaForm({
+                      ...newVisaForm,
+                      documents: [...(newVisaForm.documents || []), { name: finalDocName, mandatory: docRequirementToAdd }]
+                    });
+                    if (docNameToAdd === 'CUSTOM') {
+                      setCustomDocNameInput('');
+                      setDocNameToAdd(STANDARD_VISA_DOCUMENTS[0]);
+                    }
+                  }}
+                >
+                  + Add Document
+                </button>
+              </div>
+
+              {/* Custom Document Name input if 'CUSTOM' chosen */}
+              {docNameToAdd === 'CUSTOM' && (
+                <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '11px' }}>Enter Custom Document Name: *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Police Clearance Certificate, Sponsor Affidavit..."
+                    value={customDocNameInput}
+                    onChange={e => setCustomDocNameInput(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Documents List */}
+              <div style={{ maxHeight: '160px', overflowY: 'auto', border: '1px solid #ddd', background: '#fff' }}>
+                {newVisaForm.documents && newVisaForm.documents.length > 0 ? (
+                  <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#f0f0f0', borderBottom: '1px solid #ddd', textAlign: 'left' }}>
+                        <th style={{ padding: '6px 8px', width: '30px' }}>#</th>
+                        <th style={{ padding: '6px 8px' }}>Document Name</th>
+                        <th style={{ padding: '6px 8px', width: '90px' }}>Type</th>
+                        <th style={{ padding: '6px 8px', width: '70px', textAlign: 'center' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {newVisaForm.documents.map((d, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '5px 8px', color: '#666' }}>{idx + 1}.</td>
+                          <td style={{ padding: '5px 8px', fontWeight: '500' }}>{d.name}</td>
+                          <td style={{ padding: '5px 8px' }}>
+                            <span className="status-badge" style={{ fontSize: '10px', padding: '2px 6px' }}>
+                              {d.mandatory}
+                            </span>
+                          </td>
+                          <td style={{ padding: '5px 8px', textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-danger"
+                              style={{ padding: '2px 6px', fontSize: '11px' }}
+                              onClick={() => {
+                                setNewVisaForm({
+                                  ...newVisaForm,
+                                  documents: newVisaForm.documents.filter((_, i) => i !== idx)
+                                });
+                              }}
+                              title="Remove document"
+                            >
+                              ✕ Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ padding: '12px', textAlign: 'center', color: '#777', fontSize: '12px' }}>
+                    No documents selected yet. Choose a document name above and click <strong>+ Add Document</strong>.
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="form-actions mt-4">
               <button className="btn" onClick={() => setShowAddVisaModal(false)}>Cancel</button>
               <button
@@ -2946,6 +3517,17 @@ export default function SuperAdminDashboard({ onLogout }) {
                     return;
                   }
                   const newId = `VISA-${301 + visaList.length}`;
+                  const docItems = (newVisaForm.documents && newVisaForm.documents.length > 0)
+                    ? newVisaForm.documents.map((d, i) => ({
+                        id: i + 1,
+                        name: d.name,
+                        mandatory: d.mandatory || 'Mandatory',
+                        status: 'Pending Verification'
+                      }))
+                    : [
+                        { id: 1, name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory', status: 'Pending Verification' }
+                      ];
+
                   const createdVisa = {
                     id: newId,
                     applicantName: newVisaForm.applicantName.trim(),
@@ -2962,7 +3544,8 @@ export default function SuperAdminDashboard({ onLogout }) {
                     paymentStatus: newVisaForm.paymentType === 'Prepaid' ? 'Completed' : 'Pending',
                     paymentDate: newVisaForm.applicationDate || '2026-10-10',
                     paymentRef: `TXN-${Math.floor(100000 + Math.random() * 900000)}`,
-                    documentStatus: 'Pending Verification'
+                    documentStatus: `${docItems.length} Docs Required`,
+                    documents: docItems
                   };
                   setVisaList([createdVisa, ...visaList]);
                   setShowAddVisaModal(false);
@@ -2978,9 +3561,14 @@ export default function SuperAdminDashboard({ onLogout }) {
                     applicationDate: '2026-10-10',
                     status: 'Under Review',
                     paymentType: 'Prepaid',
-                    totalAmount: 18500
+                    totalAmount: 18500,
+                    documents: [
+                      { name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory' },
+                      { name: 'Flight & Hotel Cover Booking', mandatory: 'Mandatory' },
+                      { name: 'Travel Medical Insurance (€30,000 Cover)', mandatory: 'Mandatory' }
+                    ]
                   });
-                  alert(`Visa Application "${newId}" created successfully for ${createdVisa.applicantName}!`);
+                  alert(`Visa Application "${newId}" created successfully for ${createdVisa.applicantName} with ${docItems.length} required documents!`);
                 }}
               >
                 Create Application
@@ -3350,11 +3938,52 @@ export default function SuperAdminDashboard({ onLogout }) {
       {/* Add Payment Entry Modal */}
       {showAddPaymentModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <div className="modal-title">Add Multiple Payment Entry</div>
               <button className="close-btn" onClick={() => setShowAddPaymentModal(false)}>X</button>
             </div>
+
+            <div className="form-group">
+              <label>Service Category:</label>
+              <select
+                value={newPaymentForm.serviceCategory || 'visa'}
+                onChange={e => {
+                  const cat = e.target.value;
+                  const firstCase = cat === 'visa' ? (visaList[0]?.id || 'VISA-301') : (bookingList[0]?.packageId || 'PKG-701');
+                  setNewPaymentForm({
+                    ...newPaymentForm,
+                    serviceCategory: cat,
+                    selectedCaseId: firstCase,
+                  });
+                }}
+              >
+                <option value="visa">🛂 Visa Application Case</option>
+                <option value="holiday">🌴 Holiday / Tour Booking Case</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Select Case / Booking:</label>
+              <select
+                value={newPaymentForm.selectedCaseId || ''}
+                onChange={e => setNewPaymentForm({ ...newPaymentForm, selectedCaseId: e.target.value })}
+              >
+                {(newPaymentForm.serviceCategory === 'holiday' ? bookingList : visaList).map(item => {
+                  const id = item.packageId || item.id;
+                  const name = item.customerName || item.applicantName;
+                  const total = item.totalPrice || item.totalAmount || 0;
+                  const paid = item.paidAmount || 0;
+                  const pending = Math.max(0, total - paid);
+                  return (
+                    <option key={id} value={id}>
+                      {id} — {name} (Due: ₹{pending.toLocaleString()})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
             <div className="form-group">
               <label>Payment Entry Amount (₹):</label>
               <input
@@ -3364,13 +3993,14 @@ export default function SuperAdminDashboard({ onLogout }) {
               />
             </div>
             <div className="form-group">
-              <label>Payment Type:</label>
+              <label>Payment Scheme:</label>
               <select
                 value={newPaymentForm.type}
                 onChange={e => setNewPaymentForm({ ...newPaymentForm, type: e.target.value })}
               >
-                <option value="Prepaid">Prepaid</option>
-                <option value="Postpaid">Postpaid</option>
+                <option value="Prepaid">Prepaid (Full Advance)</option>
+                <option value="Postpaid">Postpaid Installment</option>
+                <option value="Milestone">Milestone Settlement</option>
               </select>
             </div>
             <div className="form-group">
@@ -3379,7 +4009,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                 value={newPaymentForm.mode}
                 onChange={e => setNewPaymentForm({ ...newPaymentForm, mode: e.target.value })}
               >
-                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Bank Transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
                 <option value="UPI / NetBanking">UPI / NetBanking</option>
                 <option value="Credit / Debit Card">Credit / Debit Card</option>
                 <option value="Cash">Cash</option>
@@ -3407,39 +4037,85 @@ export default function SuperAdminDashboard({ onLogout }) {
                 value={newPaymentForm.status}
                 onChange={e => setNewPaymentForm({ ...newPaymentForm, status: e.target.value })}
               >
-                <option value="Completed">Completed</option>
-                <option value="Pending">Pending</option>
+                <option value="Completed">Completed (Verified)</option>
+                <option value="Pending">Pending Clearance</option>
               </select>
             </div>
             <div className="form-actions">
               <button className="btn" onClick={() => setShowAddPaymentModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={() => {
-                if (viewingBookingDetails) {
+                const isHoliday = newPaymentForm.serviceCategory === 'holiday' || (viewingBookingDetails && !viewingVisaDetails);
+                const targetId = newPaymentForm.selectedCaseId || (isHoliday ? (viewingBookingDetails?.packageId || bookingList[0]?.packageId) : (viewingVisaDetails?.id || visaList[0]?.id));
+                const amt = Number(newPaymentForm.amount) || 0;
+
+                if (isHoliday) {
+                  const targetBooking = bookingList.find(b => b.packageId === targetId) || viewingBookingDetails;
+                  const clientName = targetBooking?.customerName || 'Direct Client';
                   const entry = {
                     id: `PAY-BKG-${701 + bookingPaymentsList.length}`,
+                    caseId: targetId,
+                    clientName,
+                    serviceType: 'Holiday',
                     type: newPaymentForm.type,
                     mode: newPaymentForm.mode,
-                    amount: Number(newPaymentForm.amount),
+                    amount: amt,
                     date: newPaymentForm.date,
                     ref: newPaymentForm.ref,
                     status: newPaymentForm.status
                   };
-                  setBookingPaymentsList([...bookingPaymentsList, entry]);
+                  setBookingPaymentsList([entry, ...bookingPaymentsList]);
+
+                  // Update booking paid amount & status
+                  setBookingList(bookingList.map(b => {
+                    if (b.packageId === targetId) {
+                      const newPaid = (b.paidAmount || 0) + amt;
+                      const newPending = Math.max(0, (b.totalPrice || 0) - newPaid);
+                      return {
+                        ...b,
+                        paidAmount: newPaid,
+                        pendingAmount: newPending,
+                        paymentStatus: newPending === 0 ? 'Paid' : 'Partial'
+                      };
+                    }
+                    return b;
+                  }));
+
                   setShowAddPaymentModal(false);
-                  alert(`Added booking payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+                  alert(`Payment entry ${entry.id} of ₹${entry.amount.toLocaleString()} recorded for Booking ${targetId}!`);
                 } else {
+                  const targetVisa = visaList.find(v => v.id === targetId) || viewingVisaDetails;
+                  const clientName = targetVisa?.applicantName || 'Direct Client';
                   const entry = {
                     id: `PAY-${101 + visaPaymentsList.length}`,
+                    caseId: targetId,
+                    clientName,
+                    serviceType: 'Visa',
                     type: newPaymentForm.type,
                     mode: newPaymentForm.mode,
-                    amount: Number(newPaymentForm.amount),
+                    amount: amt,
                     date: newPaymentForm.date,
                     ref: newPaymentForm.ref,
                     status: newPaymentForm.status
                   };
-                  setVisaPaymentsList([...visaPaymentsList, entry]);
+                  setVisaPaymentsList([entry, ...visaPaymentsList]);
+
+                  // Update visa paid amount & status
+                  setVisaList(visaList.map(v => {
+                    if (v.id === targetId) {
+                      const newPaid = (v.paidAmount || 0) + amt;
+                      const newPending = Math.max(0, (v.totalAmount || 0) - newPaid);
+                      return {
+                        ...v,
+                        paidAmount: newPaid,
+                        pendingAmount: newPending,
+                        paymentStatus: newPending === 0 ? 'Paid' : 'Partially Paid'
+                      };
+                    }
+                    return v;
+                  }));
+
                   setShowAddPaymentModal(false);
-                  alert(`Added payment entry ${entry.id} of ₹${entry.amount.toLocaleString()}!`);
+                  alert(`Payment entry ${entry.id} of ₹${entry.amount.toLocaleString()} recorded for Visa Case ${targetId}!`);
                 }
               }}>Save Payment Entry</button>
             </div>

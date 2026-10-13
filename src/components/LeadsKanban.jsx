@@ -15,6 +15,8 @@ export default function LeadsKanban({
   // Filters
   const [typeFilter, setTypeFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
+  const [staffFilter, setStaffFilter] = useState('All');
+  const [searchOption, setSearchOption] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals & Drawers state
@@ -76,14 +78,51 @@ export default function LeadsKanban({
   const filteredLeads = leads.filter(lead => {
     if (typeFilter !== 'All' && lead.leadType !== typeFilter) return false;
     if (sourceFilter !== 'All' && lead.source !== sourceFilter) return false;
+    if (staffFilter !== 'All' && lead.assignedStaff !== staffFilter) return false;
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = (lead.leadName || '').toLowerCase().includes(q);
-      const matchEmail = (lead.email || '').toLowerCase().includes(q);
-      const matchCompany = (lead.companyName || '').toLowerCase().includes(q);
-      const matchCountry = (lead.targetCountry || '').toLowerCase().includes(q);
-      const matchId = (lead.id || '').toLowerCase().includes(q);
-      if (!matchName && !matchEmail && !matchCompany && !matchCountry && !matchId) return false;
+      const q = searchQuery.toLowerCase().trim();
+      const name = (lead.leadName || '').toLowerCase();
+      const email = (lead.email || '').toLowerCase();
+      const phone = (lead.phone || '').toLowerCase();
+      const company = (lead.companyName || '').toLowerCase();
+      const country = (lead.targetCountry || '').toLowerCase();
+      const id = (lead.id || '').toLowerCase();
+      const staff = (lead.assignedStaff || '').toLowerCase();
+      const service = (lead.serviceRequired || '').toLowerCase();
+      const quotation = (lead.proposalData?.quotationNo || '').toLowerCase();
+      const caseId = (lead.caseId || '').toLowerCase();
+      const remarks = (lead.remarks || '').toLowerCase();
+
+      if (searchOption === 'all') {
+        const matched = name.includes(q) ||
+          email.includes(q) ||
+          phone.includes(q) ||
+          company.includes(q) ||
+          country.includes(q) ||
+          id.includes(q) ||
+          staff.includes(q) ||
+          service.includes(q) ||
+          quotation.includes(q) ||
+          caseId.includes(q) ||
+          remarks.includes(q);
+        if (!matched) return false;
+      } else if (searchOption === 'leadName') {
+        if (!name.includes(q)) return false;
+      } else if (searchOption === 'phone') {
+        if (!phone.includes(q)) return false;
+      } else if (searchOption === 'email') {
+        if (!email.includes(q)) return false;
+      } else if (searchOption === 'assignedStaff') {
+        if (!staff.includes(q)) return false;
+      } else if (searchOption === 'companyName') {
+        if (!company.includes(q)) return false;
+      } else if (searchOption === 'targetCountry') {
+        if (!country.includes(q)) return false;
+      } else if (searchOption === 'serviceRequired') {
+        if (!service.includes(q)) return false;
+      } else if (searchOption === 'quotationNo') {
+        if (!quotation.includes(q) && !caseId.includes(q)) return false;
+      }
     }
     return true;
   });
@@ -483,16 +522,61 @@ export default function LeadsKanban({
             </div>
 
             <div className="filter-group">
+              <label>Staff:</label>
+              <select value={staffFilter} onChange={e => setStaffFilter(e.target.value)}>
+                <option value="All">All Staff</option>
+                {Array.from(new Set(leads.map(l => l.assignedStaff).filter(Boolean))).map(stf => (
+                  <option key={stf} value={stf}>{stf}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Search Option:</label>
+              <select value={searchOption} onChange={e => setSearchOption(e.target.value)}>
+                <option value="all">All Fields</option>
+                <option value="leadName">Name</option>
+                <option value="phone">Phone</option>
+                <option value="email">Email</option>
+                <option value="assignedStaff">Assigned Staff</option>
+                <option value="companyName">Company</option>
+                <option value="targetCountry">Country</option>
+                <option value="serviceRequired">Service / Package</option>
+                <option value="quotationNo">Quotation / Case ID</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
               <label>Search:</label>
               <input
                 type="text"
-                placeholder="Name, company, email, country..."
+                placeholder={
+                  searchOption === 'phone' ? 'Search phone number...' :
+                  searchOption === 'assignedStaff' ? 'Search staff (Amit, Priya)...' :
+                  searchOption === 'serviceRequired' ? 'Search service / package...' :
+                  searchOption === 'quotationNo' ? 'Search QUO# or CASE#...' :
+                  searchOption === 'companyName' ? 'Search company name...' :
+                  searchOption === 'targetCountry' ? 'Search country / destination...' :
+                  'Name, phone, staff, package, QUO#...'
+                }
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ width: '220px' }}
+                style={{ width: '230px' }}
               />
-              {searchQuery && (
-                <button className="btn btn-sm" onClick={() => setSearchQuery('')}>✕ Clear</button>
+              {(searchQuery || typeFilter !== 'All' || sourceFilter !== 'All' || staffFilter !== 'All' || searchOption !== 'all') && (
+                <button
+                  className="btn btn-sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setTypeFilter('All');
+                    setSourceFilter('All');
+                    setStaffFilter('All');
+                    setSearchOption('all');
+                  }}
+                  title="Clear all filters"
+                >
+                  ✕ Clear
+                </button>
               )}
             </div>
           </div>

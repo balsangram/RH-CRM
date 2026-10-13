@@ -48,10 +48,26 @@ export default function SuperAdminDashboard({ onLogout }) {
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySubTab, setCompanySubTab] = useState('applications');
   const [companyAppFilterType, setCompanyAppFilterType] = useState('All');
+  const [companyAppViewMode, setCompanyAppViewMode] = useState('kanban'); // 'table' | 'card' | 'kanban'
+  const [companyApplicationsList, setCompanyApplicationsList] = useState(mockCompanyApplications);
+  const [draggedCompAppId, setDraggedCompAppId] = useState(null);
+  const [dragOverCompAppCol, setDragOverCompAppCol] = useState(null);
+
+  // Travelers management states
+  const [travelersList, setTravelersList] = useState(mockTravelers);
+  const [travelerViewMode, setTravelerViewMode] = useState('card'); // 'table' | 'card'
+
+  // Traveler Profile History view modes
+  const [travelerVisaViewMode, setTravelerVisaViewMode] = useState('table'); // 'table' | 'card' | 'kanban'
+  const [draggedTrvVisaId, setDraggedTrvVisaId] = useState(null);
+  const [dragOverTrvVisaCol, setDragOverTrvVisaCol] = useState(null);
+  const [travelerHolidayViewMode, setTravelerHolidayViewMode] = useState('kanban'); // 'table' | 'card' | 'kanban'
+  const [draggedTrvBookingId, setDraggedTrvBookingId] = useState(null);
+  const [dragOverTrvBookingCol, setDragOverTrvBookingCol] = useState(null);
 
   // Company management states (table & card formats, search, filters & pagination)
   const [companiesList, setCompaniesList] = useState(mockCompanies);
-  const [companyViewMode, setCompanyViewMode] = useState('table'); // 'table' | 'card'
+  const [companyViewMode, setCompanyViewMode] = useState('card'); // 'table' | 'card'
   const [companySearchQuery, setCompanySearchQuery] = useState('');
   const [companySearchOption, setCompanySearchOption] = useState('all');
   const [companyStatusFilter, setCompanyStatusFilter] = useState('All');
@@ -1480,12 +1496,12 @@ export default function SuperAdminDashboard({ onLogout }) {
                                 type="text"
                                 placeholder={
                                   companySearchOption === 'companyName' ? 'Search company name...' :
-                                  companySearchOption === 'contactPerson' ? 'Search contact person...' :
-                                  companySearchOption === 'email' ? 'Search email...' :
-                                  companySearchOption === 'phone' ? 'Search phone number...' :
-                                  companySearchOption === 'registrationDetails' ? 'Search registration...' :
-                                  companySearchOption === 'country' ? 'Search country...' :
-                                  'Search companies, persons, emails...'
+                                    companySearchOption === 'contactPerson' ? 'Search contact person...' :
+                                      companySearchOption === 'email' ? 'Search email...' :
+                                        companySearchOption === 'phone' ? 'Search phone number...' :
+                                          companySearchOption === 'registrationDetails' ? 'Search registration...' :
+                                            companySearchOption === 'country' ? 'Search country...' :
+                                              'Search companies, persons, emails...'
                                 }
                                 value={companySearchQuery}
                                 onChange={e => { setCompanySearchQuery(e.target.value); setCompanyCurrentPage(1); }}
@@ -1906,130 +1922,278 @@ export default function SuperAdminDashboard({ onLogout }) {
                       </div>
 
                       {/* TAB 5.1 APPLICATIONS WITH FILTERS */}
-                      {companySubTab === 'applications' && (
-                        <div className="section-box">
-                          <div className="section-header">
-                            <div className="section-title">Company Applications</div>
-                          </div>
+                      {companySubTab === 'applications' && (() => {
+                        const filteredCompApps = companyApplicationsList.filter(app => {
+                          if (companyAppFilterType !== 'All' && app.applicationType !== companyAppFilterType) return false;
+                          if (companyAppFilterStatus !== 'All' && app.status !== companyAppFilterStatus) return false;
+                          if (companyAppSearch && !app.applicantName.toLowerCase().includes(companyAppSearch.toLowerCase()) && !app.id.toLowerCase().includes(companyAppSearch.toLowerCase())) return false;
+                          return true;
+                        });
 
-                          {/* FILTER TOOLBAR */}
-                          <div className="toolbar" style={{ backgroundColor: '#f5f5f5', padding: '10px', border: '1px solid #ccc', marginBottom: '16px' }}>
-                            <div className="filter-group">
-                              <label>Search Applicant / ID:</label>
-                              <input
-                                type="text"
-                                placeholder="Type to filter..."
-                                value={companyAppSearch}
-                                onChange={e => setCompanyAppSearch(e.target.value)}
-                                style={{ width: '180px' }}
-                              />
+                        const handleOpenCompanyApp = (app) => {
+                          if (app.applicationType === 'HOLIDAY' || (app.service && (app.service.includes('Europe') || app.service.includes('Bali')))) {
+                            setViewingBookingDetails({
+                              packageId: app.id || 'PKG-701',
+                              packageName: app.service || 'Grand Europe 10D',
+                              destination: app.country || 'France & Switzerland',
+                              duration: '8 Days / 7 Nights',
+                              bookingDate: app.applicationDate || '2026-09-25',
+                              departureDate: '2026-11-15',
+                              totalPrice: 210000,
+                              price: 210000,
+                              status: app.status || 'APPROVED',
+                              customerName: app.applicantName || 'Deepak Chopra'
+                            });
+                            setViewingVisaDetails(null);
+                            setSelectedCompany(null);
+                          } else {
+                            setViewingVisaDetails({
+                              id: app.id || 'VISA-301',
+                              applicantName: app.applicantName || 'Rohan Joshi',
+                              email: 'contact@rhglobal.com',
+                              phone: '+91 98200 11111',
+                              country: app.country || 'United States',
+                              service: app.service || 'Business Visa (B1)',
+                              passport: 'P1092834 (Exp: 2031-05-12)',
+                              assignedEmployee: app.assignedEmployee || 'Amit Verma (CO-101)',
+                              applicationDate: app.applicationDate || '2026-10-01',
+                              status: app.status || 'IN PROGRESS'
+                            });
+                            setViewingBookingDetails(null);
+                            setSelectedCompany(null);
+                          }
+                        };
+
+                        const compAppStages = [
+                          { id: 'Under Review', name: 'Under Review', color: '#f59e0b', desc: 'Initial review & docs verification' },
+                          { id: 'In Progress', name: 'In Progress', color: '#3b82f6', desc: 'Dossier active in processing' },
+                          { id: 'Approved', name: 'Approved', color: '#22c55e', desc: 'Visa/Booking confirmed' },
+                          { id: 'Pending', name: 'Pending Action', color: '#8b5cf6', desc: 'Awaiting client documents' },
+                          { id: 'Completed', name: 'Completed', color: '#10b981', desc: 'Travel successfully completed' },
+                          { id: 'Rejected', name: 'Rejected', color: '#ef4444', desc: 'Declined by embassy / cancelled' }
+                        ];
+
+                        return (
+                          <div className="section-box">
+                            <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                              <div className="section-title">
+                                Company Applications — {companyAppViewMode === 'table' ? 'Table Format' : companyAppViewMode === 'card' ? 'Card Format' : 'Kanban Pipeline'} ({filteredCompApps.length})
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                                <div style={{ display: 'flex', border: '1px solid #000' }}>
+                                  <button
+                                    className={`btn btn-sm ${companyAppViewMode === 'table' ? 'btn-primary' : ''}`}
+                                    style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                                    onClick={() => setCompanyAppViewMode('table')}
+                                  >☰ Table</button>
+                                  <button
+                                    className={`btn btn-sm ${companyAppViewMode === 'kanban' ? 'btn-primary' : ''}`}
+                                    style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                                    onClick={() => setCompanyAppViewMode('kanban')}
+                                  >☷ Kanban</button>
+                                </div>
+                              </div>
                             </div>
-                            <div className="filter-group">
-                              <label>Application Type:</label>
-                              <select value={companyAppFilterType} onChange={e => setCompanyAppFilterType(e.target.value)}>
-                                <option value="All">All Types</option>
-                                <option value="Visa">Visa</option>
-                                <option value="Holiday">Holiday</option>
-                              </select>
+
+                            {/* FILTER TOOLBAR */}
+                            <div className="toolbar" style={{ backgroundColor: '#f5f5f5', padding: '10px', border: '1px solid #ccc', marginBottom: '16px' }}>
+                              <div className="filter-group">
+                                <label>Search Applicant / ID:</label>
+                                <input
+                                  type="text"
+                                  placeholder="Type to filter..."
+                                  value={companyAppSearch}
+                                  onChange={e => setCompanyAppSearch(e.target.value)}
+                                  style={{ width: '180px' }}
+                                />
+                              </div>
+                              <div className="filter-group">
+                                <label>Application Type:</label>
+                                <select value={companyAppFilterType} onChange={e => setCompanyAppFilterType(e.target.value)}>
+                                  <option value="All">All Types</option>
+                                  <option value="Visa">Visa</option>
+                                  <option value="Holiday">Holiday</option>
+                                </select>
+                              </div>
+                              <div className="filter-group">
+                                <label>Status:</label>
+                                <select value={companyAppFilterStatus} onChange={e => setCompanyAppFilterStatus(e.target.value)}>
+                                  <option value="All">All Statuses</option>
+                                  <option value="In Progress">In Progress</option>
+                                  <option value="Approved">Approved</option>
+                                  <option value="Under Review">Under Review</option>
+                                  <option value="Pending">Pending</option>
+                                  <option value="Rejected">Rejected</option>
+                                  <option value="Completed">Completed</option>
+                                </select>
+                              </div>
+                              {(companyAppSearch || companyAppFilterType !== 'All' || companyAppFilterStatus !== 'All') && (
+                                <button
+                                  className="btn btn-sm"
+                                  onClick={() => { setCompanyAppSearch(''); setCompanyAppFilterType('All'); setCompanyAppFilterStatus('All'); }}
+                                >
+                                  Reset Filters
+                                </button>
+                              )}
                             </div>
-                            <div className="filter-group">
-                              <label>Status:</label>
-                              <select value={companyAppFilterStatus} onChange={e => setCompanyAppFilterStatus(e.target.value)}>
-                                <option value="All">All Statuses</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Under Review">Under Review</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Rejected">Rejected</option>
-                                <option value="Completed">Completed</option>
-                              </select>
-                            </div>
-                            {(companyAppSearch || companyAppFilterType !== 'All' || companyAppFilterStatus !== 'All') && (
-                              <button
-                                className="btn btn-sm"
-                                onClick={() => { setCompanyAppSearch(''); setCompanyAppFilterType('All'); setCompanyAppFilterStatus('All'); }}
-                              >
-                                Reset Filters
-                              </button>
+
+                            {/* 1. TABLE VIEW */}
+                            {companyAppViewMode === 'table' && (
+                              <div className="table-container">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Application ID</th>
+                                      <th>Applicant Name</th>
+                                      <th>Application Type</th>
+                                      <th>Country</th>
+                                      <th>Service Required</th>
+                                      <th>Assigned Employee / Case Officer</th>
+                                      <th>Status</th>
+                                      <th>Application Date</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {filteredCompApps.map(app => (
+                                      <tr key={app.id}>
+                                        <td className="font-mono"><strong>{app.id}</strong></td>
+                                        <td>{app.applicantName}</td>
+                                        <td><span className="status-badge">{app.applicationType}</span></td>
+                                        <td>{app.country}</td>
+                                        <td>{app.service}</td>
+                                        <td>{app.assignedEmployee}</td>
+                                        <td><span className="status-badge">{app.status}</span></td>
+                                        <td>{app.applicationDate}</td>
+                                        <td className="action-cell">
+                                          <button className="btn btn-sm btn-primary" onClick={() => handleOpenCompanyApp(app)}>View</button>
+                                          <button className="btn btn-sm" onClick={() => alert(`Editing application ${app.id}`)}>Edit</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+
+                            {/* 2. CARD VIEW */}
+                            {companyAppViewMode === 'card' && (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px', marginTop: '12px' }}>
+                                {filteredCompApps.map(app => (
+                                  <div key={app.id} className="company-card" style={{ padding: '14px', border: '1px solid #000', backgroundColor: '#fff' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                      <span className="font-mono" style={{ fontSize: '13px' }}><strong>{app.id}</strong></span>
+                                      <div style={{ display: 'flex', gap: '4px' }}>
+                                        <span className="status-badge" style={{ fontSize: '10px' }}>{app.applicationType}</span>
+                                        <span className="status-badge" style={{ fontSize: '10px' }}>{app.status}</span>
+                                      </div>
+                                    </div>
+                                    <h3 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: 'bold' }}>{app.applicantName}</h3>
+                                    <div style={{ fontSize: '12px', color: '#444', marginBottom: '4px' }}>
+                                      <strong>Service:</strong> {app.service} ({app.country})
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                                      <strong>Case Officer:</strong> {app.assignedEmployee}
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#888', marginBottom: '12px' }}>
+                                      Applied: {app.applicationDate}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #eee', paddingTop: '8px' }}>
+                                      <button className="btn btn-sm btn-primary" style={{ flex: 1 }} onClick={() => handleOpenCompanyApp(app)}>
+                                        View Details &rarr;
+                                      </button>
+                                      <button className="btn btn-sm" onClick={() => alert(`Editing application ${app.id}`)}>Edit</button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* 3. KANBAN VIEW */}
+                            {companyAppViewMode === 'kanban' && (
+                              <div className="kanban-board-container" style={{ marginTop: '12px', overflowX: 'auto' }}>
+                                <div className="kanban-columns-grid" style={{ gridTemplateColumns: `repeat(${compAppStages.length}, minmax(240px, 1fr))` }}>
+                                  {compAppStages.map(st => {
+                                    const stageApps = filteredCompApps.filter(a => a.status.toLowerCase() === st.id.toLowerCase() || (st.id === 'In Progress' && a.status.toLowerCase().includes('progress')));
+                                    const isOver = dragOverCompAppCol === st.id;
+                                    return (
+                                      <div
+                                        key={st.id}
+                                        className={`kanban-column ${isOver ? 'kanban-column-drop-active' : ''}`}
+                                        onDragOver={e => { e.preventDefault(); setDragOverCompAppCol(st.id); }}
+                                        onDragLeave={() => setDragOverCompAppCol(null)}
+                                        onDrop={e => {
+                                          e.preventDefault();
+                                          setDragOverCompAppCol(null);
+                                          if (draggedCompAppId) {
+                                            setCompanyApplicationsList(prev => prev.map(a => a.id === draggedCompAppId ? { ...a, status: st.id } : a));
+                                            setDraggedCompAppId(null);
+                                          }
+                                        }}
+                                      >
+                                        <div className="kanban-column-header" style={{ borderTop: `3px solid ${st.color}` }}>
+                                          <div className="kanban-column-title">
+                                            <span>{st.name}</span>
+                                            <span className="kanban-count-pill">{stageApps.length}</span>
+                                          </div>
+                                          <div className="kanban-column-desc">{st.desc}</div>
+                                        </div>
+                                        <div className="kanban-cards-list">
+                                          {stageApps.length === 0 ? (
+                                            <div className="kanban-empty-column">No applications in {st.name}</div>
+                                          ) : (
+                                            stageApps.map(app => (
+                                              <div
+                                                key={app.id}
+                                                className="kanban-card"
+                                                draggable
+                                                onDragStart={e => {
+                                                  setDraggedCompAppId(app.id);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                              >
+                                                <div className="kanban-card-header">
+                                                  <span className="kanban-lead-id">{app.id}</span>
+                                                  <span className="status-badge" style={{ fontSize: '9px' }}>{app.applicationType}</span>
+                                                </div>
+                                                <div className="kanban-card-body" onClick={() => handleOpenCompanyApp(app)} style={{ cursor: 'pointer' }}>
+                                                  <div className="kanban-lead-name">{app.applicantName}</div>
+                                                  <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
+                                                    {app.service}
+                                                  </div>
+                                                  <div style={{ fontSize: '11px', color: '#777', marginTop: '1px' }}>
+                                                    📍 {app.country}
+                                                  </div>
+                                                  <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>
+                                                    👤 {app.assignedEmployee}
+                                                  </div>
+                                                  <div style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>
+                                                    📅 {app.applicationDate}
+                                                  </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '4px', borderTop: '1px solid #f0f0f0', paddingTop: '6px', marginTop: '6px' }}>
+                                                  <button
+                                                    className="btn btn-sm btn-primary"
+                                                    style={{ flex: 1, fontSize: '10px', padding: '3px 6px' }}
+                                                    onClick={() => handleOpenCompanyApp(app)}
+                                                  >
+                                                    View Details &rarr;
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             )}
                           </div>
-
-                          <div className="table-container">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>Application ID</th>
-                                  <th>Applicant Name</th>
-                                  <th>Application Type</th>
-                                  <th>Country</th>
-                                  <th>Service Required</th>
-                                  <th>Assigned Employee / Case Officer</th>
-                                  <th>Status</th>
-                                  <th>Application Date</th>
-                                  <th>Actions</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {mockCompanyApplications
-                                  .filter(app => {
-                                    if (companyAppFilterType !== 'All' && app.applicationType !== companyAppFilterType) return false;
-                                    if (companyAppFilterStatus !== 'All' && app.status !== companyAppFilterStatus) return false;
-                                    if (companyAppSearch && !app.applicantName.toLowerCase().includes(companyAppSearch.toLowerCase()) && !app.id.toLowerCase().includes(companyAppSearch.toLowerCase())) return false;
-                                    return true;
-                                  })
-                                  .map(app => (
-                                    <tr key={app.id}>
-                                      <td className="font-mono"><strong>{app.id}</strong></td>
-                                      <td>{app.applicantName}</td>
-                                      <td><span className="status-badge">{app.applicationType}</span></td>
-                                      <td>{app.country}</td>
-                                      <td>{app.service}</td>
-                                      <td>{app.assignedEmployee}</td>
-                                      <td><span className="status-badge">{app.status}</span></td>
-                                      <td>{app.applicationDate}</td>
-                                      <td className="action-cell">
-                                        <button className="btn btn-sm" onClick={() => {
-                                          if (app.applicationType === 'HOLIDAY' || (app.service && (app.service.includes('Europe') || app.service.includes('Bali')))) {
-                                            setViewingBookingDetails({
-                                              packageId: app.id || 'PKG-701',
-                                              packageName: app.service || 'Grand Europe 10D',
-                                              destination: app.country || 'France & Switzerland',
-                                              duration: '8 Days / 7 Nights',
-                                              bookingDate: app.applicationDate || '2026-09-25',
-                                              departureDate: '2026-11-15',
-                                              totalPrice: 210000,
-                                              price: 210000,
-                                              status: app.status || 'APPROVED',
-                                              customerName: app.applicantName || 'Deepak Chopra'
-                                            });
-                                            setViewingVisaDetails(null);
-                                            setSelectedCompany(null);
-                                          } else {
-                                            setViewingVisaDetails({
-                                              id: app.id || 'VISA-301',
-                                              applicantName: app.applicantName || 'Rohan Joshi',
-                                              email: 'contact@rhglobal.com',
-                                              phone: '+91 98200 11111',
-                                              country: app.country || 'United States',
-                                              service: app.service || 'Business Visa (B1)',
-                                              passport: 'P1092834 (Exp: 2031-05-12)',
-                                              assignedEmployee: app.assignedEmployee || 'Amit Verma (CO-101)',
-                                              applicationDate: app.applicationDate || '2026-10-01',
-                                              status: app.status || 'IN PROGRESS'
-                                            });
-                                            setViewingBookingDetails(null);
-                                            setSelectedCompany(null);
-                                          }
-                                        }}>View</button>
-                                        <button className="btn btn-sm" onClick={() => alert(`Editing application ${app.id}`)}>Edit</button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* TAB 5.2 EMPLOYEES WITH FILTERS */}
                       {companySubTab === 'employees' && (
@@ -2181,45 +2345,124 @@ export default function SuperAdminDashboard({ onLogout }) {
                 <div>
                   {!viewingTraveler ? (
                     <div className="section-box">
-                      <div className="section-header">
-                        <div className="section-title">Travelers / Customers Listing</div>
-                        <button className="btn btn-primary" onClick={() => setShowAddTravelerModal(true)}>+ Add Traveler</button>
+                      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div className="section-title">
+                          Travelers / Customers Listing — {travelerViewMode === 'table' ? 'Table Format' : 'Card Format'} ({travelersList.length})
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                          <div style={{ display: 'flex', border: '1px solid #000' }}>
+                            <button
+                              className={`btn btn-sm ${travelerViewMode === 'table' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setTravelerViewMode('table')}
+                            >☰ Table</button>
+                            <button
+                              className={`btn btn-sm ${travelerViewMode === 'card' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setTravelerViewMode('card')}
+                            >▦ Cards</button>
+                          </div>
+                          <button className="btn btn-primary" onClick={() => setShowAddTravelerModal(true)}>+ Add Traveler</button>
+                        </div>
                       </div>
-                      <div className="table-container">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Unique Traveler ID</th>
-                              <th>Applicant Name</th>
-                              <th>Mobile Number</th>
-                              <th>Email</th>
-                              <th>Country</th>
-                              <th>Registration Date</th>
-                              <th>Status</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {mockTravelers.map(trv => (
-                              <tr key={trv.travelerId}>
-                                <td className="font-mono"><strong>{trv.travelerId}</strong></td>
-                                <td>{trv.applicantName}</td>
-                                <td>{trv.mobileNumber}</td>
-                                <td>{trv.email}</td>
-                                <td>{trv.country}</td>
-                                <td>{trv.registrationDate}</td>
-                                <td><span className="status-badge">{trv.status}</span></td>
-                                <td className="action-cell">
-                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingTraveler(trv)}>View</button>
-                                  <button className="btn btn-sm" onClick={() => setEditingTraveler({ ...trv })}>Edit</button>
-                                  <button className="btn btn-sm" onClick={() => alert(`Toggled Block/Unblock for ${trv.applicantName}`)}>Block/Unblock</button>
-                                  <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting traveler ${trv.travelerId}`)}>Delete</button>
-                                </td>
+
+                      {/* 1. TABLE VIEW */}
+                      {travelerViewMode === 'table' && (
+                        <div className="table-container">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Unique Traveler ID</th>
+                                <th>Applicant Name</th>
+                                <th>Mobile Number</th>
+                                <th>Email</th>
+                                <th>Country</th>
+                                <th>Registration Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {travelersList.map(trv => (
+                                <tr key={trv.travelerId}>
+                                  <td className="font-mono"><strong>{trv.travelerId}</strong></td>
+                                  <td>{trv.applicantName}</td>
+                                  <td>{trv.mobileNumber}</td>
+                                  <td>{trv.email}</td>
+                                  <td>{trv.country}</td>
+                                  <td>{trv.registrationDate}</td>
+                                  <td><span className="status-badge">{trv.status}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingTraveler(trv)}>View</button>
+                                    <button className="btn btn-sm" onClick={() => setEditingTraveler({ ...trv })}>Edit</button>
+                                    <button className="btn btn-sm" onClick={() => {
+                                      setTravelersList(prev => prev.map(t => t.travelerId === trv.travelerId ? { ...t, status: t.status === 'Active' ? 'Blocked' : 'Active' } : t));
+                                    }}>
+                                      {trv.status === 'Active' ? 'Block' : 'Unblock'}
+                                    </button>
+                                    <button className="btn btn-sm btn-danger" onClick={() => {
+                                      if (window.confirm(`Delete traveler ${trv.applicantName}?`)) {
+                                        setTravelersList(prev => prev.filter(t => t.travelerId !== trv.travelerId));
+                                      }
+                                    }}>Delete</button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* 2. CARD VIEW */}
+                      {travelerViewMode === 'card' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '14px' }}>
+                          {travelersList.map(trv => {
+                            const initials = trv.applicantName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+                            return (
+                              <div key={trv.travelerId} className="company-card" style={{ padding: '16px', border: '1px solid #000', backgroundColor: '#fff' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    <div className="company-card-avatar" style={{ width: '38px', height: '38px', fontSize: '13px' }}>
+                                      {initials}
+                                    </div>
+                                    <div>
+                                      <h3 style={{ fontSize: '15px', margin: 0, fontWeight: 'bold' }}>{trv.applicantName}</h3>
+                                      <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{trv.travelerId}</span>
+                                    </div>
+                                  </div>
+                                  <span className="status-badge" style={{ fontSize: '10px' }}>{trv.status}</span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#444', display: 'grid', gap: '4px', marginBottom: '10px' }}>
+                                  <div>📞 {trv.mobileNumber}</div>
+                                  <div>✉️ {trv.email}</div>
+                                  <div>📍 {trv.country} &bull; 🛂 {trv.passport || 'Valid Passport'}</div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', background: '#f8fafc', padding: '8px', border: '1px solid #e2e8f0', marginBottom: '12px', fontSize: '11px' }}>
+                                  <div style={{ flex: 1 }}><strong>Visa Apps:</strong> {trv.visaApplications || 0}</div>
+                                  <div style={{ flex: 1 }}><strong>Bookings:</strong> {trv.bookingHistory || 0}</div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '6px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+                                  <button className="btn btn-sm btn-primary" style={{ flex: 1 }} onClick={() => setViewingTraveler(trv)}>
+                                    View Profile &rarr;
+                                  </button>
+                                  <button className="btn btn-sm" onClick={() => setEditingTraveler({ ...trv })}>Edit</button>
+                                  <button className="btn btn-sm" onClick={() => {
+                                    setTravelersList(prev => prev.map(t => t.travelerId === trv.travelerId ? { ...t, status: t.status === 'Active' ? 'Blocked' : 'Active' } : t));
+                                  }}>
+                                    {trv.status === 'Active' ? 'Block' : 'Unblock'}
+                                  </button>
+                                  <button className="btn btn-sm btn-danger" onClick={() => {
+                                    if (window.confirm(`Delete traveler ${trv.applicantName}?`)) {
+                                      setTravelersList(prev => prev.filter(t => t.travelerId !== trv.travelerId));
+                                    }
+                                  }}>🗑️</button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* DEDICATED FULL-PAGE TRAVELER DETAILS VIEW */
@@ -2252,122 +2495,466 @@ export default function SuperAdminDashboard({ onLogout }) {
                       </div>
 
                       {/* PDF Section 6: Visa Applications History */}
-                      <div className="section-box">
-                        <div className="section-header">
-                          <div className="section-title">Visa Applications History ({viewingTraveler.visaApplications || 4} Total)</div>
-                        </div>
-                        <div className="table-container">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Application ID</th>
-                                <th>Target Country</th>
-                                <th>Visa Type</th>
-                                <th>Application Date</th>
-                                <th>Case Officer</th>
-                                <th>Payment Type</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {visaList
-                                .filter(v => v.applicantName.toLowerCase() === viewingTraveler.applicantName.toLowerCase() || true)
-                                .slice(0, 3)
-                                .map(visa => (
-                                  <tr key={visa.id}>
-                                    <td className="font-mono"><strong>{visa.id}</strong></td>
-                                    <td>{visa.country}</td>
-                                    <td>{visa.visaType}</td>
-                                    <td>{visa.applicationDate}</td>
-                                    <td>{visa.caseOfficerName} ({visa.caseOfficerId})</td>
-                                    <td><span className="status-badge">{visa.paymentType}</span></td>
-                                    <td><span className="status-badge">{visa.status}</span></td>
-                                    <td><button className="btn btn-sm btn-primary" onClick={() => { setViewingVisaDetails(visa); if (visa.documents?.length) setVisaDocsList(visa.documents); }}>View Details &rarr;</button></td>
-                                  </tr>
+                      {(() => {
+                        const trvVisas = visaList.filter(v => v.applicantName.toLowerCase() === viewingTraveler.applicantName.toLowerCase()).length > 0
+                          ? visaList.filter(v => v.applicantName.toLowerCase() === viewingTraveler.applicantName.toLowerCase())
+                          : visaList.slice(0, 4);
+
+                        const visaStages = [
+                          { id: 'under-review', name: 'Under Review', color: '#f59e0b', desc: 'Initial review of documents & eligibility' },
+                          { id: 'docs-verified', name: 'Docs Verified', color: '#3b82f6', desc: 'Documents authenticated and verified' },
+                          { id: 'processing', name: 'Processing', color: '#8b5cf6', desc: 'Application in embassy / processing pipeline' },
+                          { id: 'approved', name: 'Approved', color: '#10b981', desc: 'Visa issued and granted' },
+                          { id: 'rejected', name: 'Rejected', color: '#ef4444', desc: 'Application declined by consulate' }
+                        ];
+
+                        return (
+                          <div className="section-box">
+                            <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                              <div className="section-title">Visa Applications History ({trvVisas.length} Total)</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '12px', color: '#666' }}>Format:</span>
+                                <button
+                                  className={`btn btn-sm ${travelerVisaViewMode === 'table' ? 'btn-primary' : ''}`}
+                                  onClick={() => setTravelerVisaViewMode('table')}
+                                >
+                                  ☰ Table
+                                </button>
+                                <button
+                                  className={`btn btn-sm ${travelerVisaViewMode === 'card' ? 'btn-primary' : ''}`}
+                                  onClick={() => setTravelerVisaViewMode('card')}
+                                >
+                                  ▦ Cards
+                                </button>
+                                <button
+                                  className={`btn btn-sm ${travelerVisaViewMode === 'kanban' ? 'btn-primary' : ''}`}
+                                  onClick={() => setTravelerVisaViewMode('kanban')}
+                                >
+                                  ☷ Kanban
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 1. TABLE VIEW */}
+                            {travelerVisaViewMode === 'table' && (
+                              <div className="table-container">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Application ID</th>
+                                      <th>Target Country</th>
+                                      <th>Visa Type</th>
+                                      <th>Application Date</th>
+                                      <th>Case Officer</th>
+                                      <th>Payment Type</th>
+                                      <th>Status</th>
+                                      <th>Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {trvVisas.map(visa => (
+                                      <tr key={visa.id}>
+                                        <td className="font-mono"><strong>{visa.id}</strong></td>
+                                        <td>{visa.country}</td>
+                                        <td>{visa.visaType}</td>
+                                        <td>{visa.applicationDate}</td>
+                                        <td>{visa.caseOfficerName} ({visa.caseOfficerId})</td>
+                                        <td><span className="status-badge">{visa.paymentType}</span></td>
+                                        <td><span className="status-badge">{visa.status}</span></td>
+                                        <td>
+                                          <button
+                                            className="btn btn-sm btn-primary"
+                                            onClick={() => {
+                                              setViewingVisaDetails(visa);
+                                              if (visa.documents?.length) setVisaDocsList(visa.documents);
+                                            }}
+                                          >
+                                            View Details &rarr;
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+
+                            {/* 2. CARD VIEW */}
+                            {travelerVisaViewMode === 'card' && (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px', marginTop: '12px' }}>
+                                {trvVisas.map(visa => (
+                                  <div key={visa.id} className="company-card" style={{ padding: '14px', border: '1px solid #000', backgroundColor: '#fff' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                      <div>
+                                        <span className="font-mono" style={{ fontWeight: 'bold', fontSize: '13px' }}>{visa.id}</span>
+                                        <div style={{ fontSize: '11px', color: '#666' }}>{visa.visaType}</div>
+                                      </div>
+                                      <span className="status-badge" style={{ fontSize: '10px' }}>{visa.status}</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#333', display: 'grid', gap: '4px', marginBottom: '10px' }}>
+                                      <div><strong>Destination:</strong> {visa.country}</div>
+                                      <div><strong>Case Officer:</strong> {visa.caseOfficerName} ({visa.caseOfficerId})</div>
+                                      <div><strong>Applied Date:</strong> {visa.applicationDate}</div>
+                                      <div><strong>Payment:</strong> <span className="status-badge" style={{ fontSize: '10px' }}>{visa.paymentType}</span> {visa.totalAmount ? `(₹${visa.totalAmount.toLocaleString()})` : ''}</div>
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #eee', paddingTop: '8px' }}>
+                                      <button
+                                        className="btn btn-sm btn-primary"
+                                        style={{ width: '100%' }}
+                                        onClick={() => {
+                                          setViewingVisaDetails(visa);
+                                          if (visa.documents?.length) setVisaDocsList(visa.documents);
+                                        }}
+                                      >
+                                        View Details &rarr;
+                                      </button>
+                                    </div>
+                                  </div>
                                 ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                              </div>
+                            )}
+
+                            {/* 3. KANBAN VIEW */}
+                            {travelerVisaViewMode === 'kanban' && (
+                              <div className="kanban-board-container" style={{ marginTop: '12px', overflowX: 'auto' }}>
+                                <div className="kanban-columns-grid" style={{ gridTemplateColumns: 'repeat(5, minmax(220px, 1fr))' }}>
+                                  {visaStages.map(col => {
+                                    const colVisas = trvVisas.filter(v => {
+                                      const st = (v.stage || v.status || '').toLowerCase().replace(/\s+/g, '-');
+                                      if (col.id === 'under-review') return st.includes('review');
+                                      if (col.id === 'docs-verified') return st.includes('verified') || st.includes('docs');
+                                      if (col.id === 'processing') return st.includes('process') || st.includes('submit');
+                                      if (col.id === 'approved') return st.includes('approv');
+                                      if (col.id === 'rejected') return st.includes('reject');
+                                      return false;
+                                    });
+                                    const isOver = dragOverTrvVisaCol === col.id;
+                                    return (
+                                      <div
+                                        key={col.id}
+                                        className={`kanban-column ${isOver ? 'kanban-column-drop-active' : ''}`}
+                                        onDragOver={e => { e.preventDefault(); setDragOverTrvVisaCol(col.id); }}
+                                        onDragLeave={() => setDragOverTrvVisaCol(null)}
+                                        onDrop={e => {
+                                          e.preventDefault();
+                                          setDragOverTrvVisaCol(null);
+                                          if (draggedTrvVisaId) {
+                                            setVisaList(prev => prev.map(v => v.id === draggedTrvVisaId ? {
+                                              ...v,
+                                              stage: col.id,
+                                              status: col.name
+                                            } : v));
+                                            setDraggedTrvVisaId(null);
+                                          }
+                                        }}
+                                      >
+                                        <div className="kanban-column-header" style={{ borderTop: `3px solid ${col.color}` }}>
+                                          <div className="kanban-column-title">
+                                            <span>{col.name}</span>
+                                            <span className="kanban-count-pill">{colVisas.length}</span>
+                                          </div>
+                                          <div className="kanban-column-desc">{col.desc}</div>
+                                        </div>
+                                        <div className="kanban-cards-list">
+                                          {colVisas.length === 0 ? (
+                                            <div className="kanban-empty-column">No applications</div>
+                                          ) : (
+                                            colVisas.map(visa => (
+                                              <div
+                                                key={visa.id}
+                                                className="kanban-card"
+                                                draggable
+                                                onDragStart={e => {
+                                                  setDraggedTrvVisaId(visa.id);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                              >
+                                                <div className="kanban-card-header">
+                                                  <span className="kanban-lead-id">{visa.id}</span>
+                                                  <span className="status-badge" style={{ fontSize: '9px', padding: '1px 5px' }}>{visa.country}</span>
+                                                </div>
+                                                <div className="kanban-card-body" onClick={() => { setViewingVisaDetails(visa); if (visa.documents?.length) setVisaDocsList(visa.documents); }} style={{ cursor: 'pointer' }}>
+                                                  <div className="kanban-lead-name">{visa.visaType}</div>
+                                                  <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
+                                                    👤 {visa.caseOfficerName}
+                                                  </div>
+                                                  <div style={{ fontSize: '10px', color: '#777', marginTop: '2px' }}>
+                                                    📅 {visa.applicationDate}
+                                                  </div>
+                                                  <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                                                    <span className="nav-badge" style={{ fontSize: '9px' }}>{visa.paymentType}</span>
+                                                    {visa.totalAmount && (
+                                                      <span className="nav-badge" style={{ fontSize: '9px' }}>₹{visa.totalAmount.toLocaleString()}</span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '6px', marginTop: '6px' }}>
+                                                  <button
+                                                    className="btn btn-sm btn-primary"
+                                                    style={{ width: '100%', fontSize: '10px', padding: '3px 6px' }}
+                                                    onClick={() => {
+                                                      setViewingVisaDetails(visa);
+                                                      if (visa.documents?.length) setVisaDocsList(visa.documents);
+                                                    }}
+                                                  >
+                                                    View Details &rarr;
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* PDF Section 6: Booking History */}
-                      <div className="section-box">
-                        <div className="section-header">
-                          <div className="section-title">Holiday / Tour Booking History</div>
-                          <button className="btn btn-sm btn-primary" onClick={() => {
-                            const firstPkg = holidayPackagesList[0] || {
-                              packageId: 'PKG-701',
-                              packageName: 'Bali Island Beach Getaway',
-                              destination: 'Bali, Indonesia',
-                              duration: '6 Days / 5 Nights',
-                              days: 6,
-                              nights: 5,
-                              price: 85000
-                            };
-                            setNewBookingForm({
-                              packageSelectionType: 'existing',
-                              selectedPackageId: firstPkg.packageId,
-                              packageId: `PKG-${701 + bookingList.length}`,
-                              packageName: firstPkg.packageName,
-                              destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
-                              duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
-                              days: firstPkg.days || 6,
-                              nights: firstPkg.nights || 5,
-                              customerName: viewingTraveler.applicantName,
-                              contactDetails: viewingTraveler.mobileNumber || '',
-                              email: viewingTraveler.email || '',
-                              bookingDate: '2026-10-10',
-                              departureDate: '2026-11-20',
-                              totalPrice: firstPkg.price || 85000,
-                              paidAmount: firstPkg.price || 85000,
-                              status: 'Active',
-                              paymentType: 'Prepaid',
-                              paymentStatus: 'Paid',
-                              caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
-                              caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
-                              notes: ''
-                            });
-                            setShowAddBookingModal(true);
-                          }}>
-                            + Add Booking
-                          </button>
-                        </div>
-                        <div className="table-container">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Package ID</th>
-                                <th>Package Name</th>
-                                <th>Destination</th>
-                                <th>Duration</th>
-                                <th>Booking Date</th>
-                                <th>Departure Date</th>
-                                <th>Total Price</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {bookingList.map(bk => (
-                                <tr key={bk.packageId}>
-                                  <td className="font-mono"><strong>{bk.packageId}</strong></td>
-                                  <td>{bk.packageName}</td>
-                                  <td>{bk.destination}</td>
-                                  <td>{bk.duration}</td>
-                                  <td>{bk.bookingDate}</td>
-                                  <td>{bk.departureDate}</td>
-                                  <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
-                                  <td><span className="status-badge">{bk.status}</span></td>
-                                  <td className="action-cell">
-                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingBookingDetails(bk)}>View Details &rarr;</button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                      {(() => {
+                        const trvBookings = bookingList.filter(b => b.customerName && b.customerName.toLowerCase() === viewingTraveler.applicantName.toLowerCase()).length > 0
+                          ? bookingList.filter(b => b.customerName && b.customerName.toLowerCase() === viewingTraveler.applicantName.toLowerCase())
+                          : bookingList;
+
+                        const holidayStages = [
+                          { id: 'stage-1', name: 'Booking Created', color: '#f59e0b', desc: 'Reservation entered, awaiting itinerary' },
+                          { id: 'stage-2', name: 'Docs & Itinerary', color: '#3b82f6', desc: 'Itinerary and flights arranged' },
+                          { id: 'stage-3', name: 'Vouchers & Confirm', color: '#8b5cf6', desc: 'Confirmed booking & hotel vouchers' },
+                          { id: 'stage-4', name: 'Tour In-Progress', color: '#06b6d4', desc: 'Traveler currently on tour' },
+                          { id: 'completed', name: 'Completed', color: '#10b981', desc: 'Tour successfully concluded' },
+                          { id: 'cancelled', name: 'Cancelled', color: '#ef4444', desc: 'Cancelled or refunded booking' }
+                        ];
+
+                        const openAddBookingModal = () => {
+                          const firstPkg = holidayPackagesList[0] || {
+                            packageId: 'PKG-701',
+                            packageName: 'Bali Island Beach Getaway',
+                            destination: 'Bali, Indonesia',
+                            duration: '6 Days / 5 Nights',
+                            days: 6,
+                            nights: 5,
+                            price: 85000
+                          };
+                          setNewBookingForm({
+                            packageSelectionType: 'existing',
+                            selectedPackageId: firstPkg.packageId,
+                            packageId: `PKG-${701 + bookingList.length}`,
+                            packageName: firstPkg.packageName,
+                            destination: firstPkg.destination || firstPkg.country || 'Bali, Indonesia',
+                            duration: firstPkg.duration || `${firstPkg.days} Days / ${firstPkg.nights} Nights`,
+                            days: firstPkg.days || 6,
+                            nights: firstPkg.nights || 5,
+                            customerName: viewingTraveler.applicantName,
+                            contactDetails: viewingTraveler.mobileNumber || '',
+                            email: viewingTraveler.email || '',
+                            bookingDate: '2026-10-10',
+                            departureDate: '2026-11-20',
+                            totalPrice: firstPkg.price || 85000,
+                            paidAmount: firstPkg.price || 85000,
+                            status: 'Active',
+                            paymentType: 'Prepaid',
+                            paymentStatus: 'Paid',
+                            caseOfficerName: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.name || staffList[0]?.name || 'Priya Singh',
+                            caseOfficerId: staffList.find(s => s.role.toLowerCase().includes('holiday'))?.employeeId || staffList[0]?.employeeId || 'CO-102',
+                            notes: ''
+                          });
+                          setShowAddBookingModal(true);
+                        };
+
+                        return (
+                          <div className="section-box">
+                            <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                              <div className="section-title">Holiday / Tour Booking History ({trvBookings.length} Total)</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '12px', color: '#666' }}>Format:</span>
+                                <button
+                                  className={`btn btn-sm ${travelerHolidayViewMode === 'table' ? 'btn-primary' : ''}`}
+                                  onClick={() => setTravelerHolidayViewMode('table')}
+                                >
+                                  ☰ Table
+                                </button>
+
+                                <button
+                                  className={`btn btn-sm ${travelerHolidayViewMode === 'kanban' ? 'btn-primary' : ''}`}
+                                  onClick={() => setTravelerHolidayViewMode('kanban')}
+                                >
+                                  ☷ Kanban
+                                </button>
+                                <button className="btn btn-sm btn-primary" onClick={openAddBookingModal}>
+                                  + Add Booking
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 1. TABLE VIEW */}
+                            {travelerHolidayViewMode === 'table' && (
+                              <div className="table-container">
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Package ID</th>
+                                      <th>Package Name</th>
+                                      <th>Destination</th>
+                                      <th>Duration</th>
+                                      <th>Booking Date</th>
+                                      <th>Departure Date</th>
+                                      <th>Total Price</th>
+                                      <th>Status</th>
+                                      <th>Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {trvBookings.map(bk => (
+                                      <tr key={bk.packageId}>
+                                        <td className="font-mono"><strong>{bk.packageId}</strong></td>
+                                        <td>{bk.packageName}</td>
+                                        <td>{bk.destination}</td>
+                                        <td>{bk.duration}</td>
+                                        <td>{bk.bookingDate}</td>
+                                        <td>{bk.departureDate}</td>
+                                        <td className="font-mono">₹{bk.totalPrice?.toLocaleString()}</td>
+                                        <td><span className="status-badge">{bk.status}</span></td>
+                                        <td className="action-cell">
+                                          <button className="btn btn-sm btn-primary" onClick={() => setViewingBookingDetails(bk)}>View Details &rarr;</button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+
+                            {/* 2. CARD VIEW */}
+                            {travelerHolidayViewMode === 'card' && (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px', marginTop: '12px' }}>
+                                {trvBookings.map(bk => (
+                                  <div key={bk.packageId} className="company-card" style={{ padding: '14px', border: '1px solid #000', backgroundColor: '#fff' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                      <div>
+                                        <span className="font-mono" style={{ fontWeight: 'bold', fontSize: '13px' }}>{bk.packageId}</span>
+                                        <div style={{ fontWeight: 600, fontSize: '13px', marginTop: '2px' }}>{bk.packageName}</div>
+                                      </div>
+                                      <span className="status-badge" style={{ fontSize: '10px' }}>{bk.status}</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#333', display: 'grid', gap: '4px', marginBottom: '10px' }}>
+                                      <div><strong>Destination:</strong> {bk.destination}</div>
+                                      <div><strong>Duration:</strong> {bk.duration}</div>
+                                      <div><strong>Departure:</strong> {bk.departureDate} (Booked: {bk.bookingDate})</div>
+                                      <div><strong>Total Price:</strong> <span className="font-mono" style={{ fontWeight: 'bold' }}>₹{bk.totalPrice?.toLocaleString()}</span></div>
+                                    </div>
+                                    <div style={{ borderTop: '1px solid #eee', paddingTop: '8px' }}>
+                                      <button
+                                        className="btn btn-sm btn-primary"
+                                        style={{ width: '100%' }}
+                                        onClick={() => setViewingBookingDetails(bk)}
+                                      >
+                                        View Details &rarr;
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* 3. KANBAN VIEW */}
+                            {travelerHolidayViewMode === 'kanban' && (
+                              <div className="kanban-board-container" style={{ marginTop: '12px', overflowX: 'auto' }}>
+                                <div className="kanban-columns-grid" style={{ gridTemplateColumns: 'repeat(6, minmax(220px, 1fr))' }}>
+                                  {holidayStages.map(col => {
+                                    const colBookings = trvBookings.filter(b => {
+                                      const st = (b.stage || b.status || '').toLowerCase().replace(/\s+/g, '-');
+                                      if (col.id === 'stage-1') return st.includes('created') || st.includes('stage-1');
+                                      if (col.id === 'stage-2') return st.includes('itinerary') || st.includes('stage-2');
+                                      if (col.id === 'stage-3') return st.includes('voucher') || st.includes('confirm') || st.includes('stage-3');
+                                      if (col.id === 'stage-4') return st.includes('progress') || st.includes('stage-4');
+                                      if (col.id === 'completed') return st.includes('complete');
+                                      if (col.id === 'cancelled') return st.includes('cancel');
+                                      return false;
+                                    });
+                                    const isOver = dragOverTrvBookingCol === col.id;
+                                    return (
+                                      <div
+                                        key={col.id}
+                                        className={`kanban-column ${isOver ? 'kanban-column-drop-active' : ''}`}
+                                        onDragOver={e => { e.preventDefault(); setDragOverTrvBookingCol(col.id); }}
+                                        onDragLeave={() => setDragOverTrvBookingCol(null)}
+                                        onDrop={e => {
+                                          e.preventDefault();
+                                          setDragOverTrvBookingCol(null);
+                                          if (draggedTrvBookingId) {
+                                            setBookingList(prev => prev.map(b => b.packageId === draggedTrvBookingId ? {
+                                              ...b,
+                                              stage: col.id,
+                                              status: col.name
+                                            } : b));
+                                            setDraggedTrvBookingId(null);
+                                          }
+                                        }}
+                                      >
+                                        <div className="kanban-column-header" style={{ borderTop: `3px solid ${col.color}` }}>
+                                          <div className="kanban-column-title">
+                                            <span>{col.name}</span>
+                                            <span className="kanban-count-pill">{colBookings.length}</span>
+                                          </div>
+                                          <div className="kanban-column-desc">{col.desc}</div>
+                                        </div>
+                                        <div className="kanban-cards-list">
+                                          {colBookings.length === 0 ? (
+                                            <div className="kanban-empty-column">No bookings</div>
+                                          ) : (
+                                            colBookings.map(bk => (
+                                              <div
+                                                key={bk.packageId}
+                                                className="kanban-card"
+                                                draggable
+                                                onDragStart={e => {
+                                                  setDraggedTrvBookingId(bk.packageId);
+                                                  e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                              >
+                                                <div className="kanban-card-header">
+                                                  <span className="kanban-lead-id">{bk.packageId}</span>
+                                                  <span className="status-badge" style={{ fontSize: '9px', padding: '1px 5px' }}>{bk.destination}</span>
+                                                </div>
+                                                <div className="kanban-card-body" onClick={() => setViewingBookingDetails(bk)} style={{ cursor: 'pointer' }}>
+                                                  <div className="kanban-lead-name">{bk.packageName}</div>
+                                                  <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
+                                                    ⏳ {bk.duration}
+                                                  </div>
+                                                  <div style={{ fontSize: '10px', color: '#777', marginTop: '2px' }}>
+                                                    🛫 Dept: {bk.departureDate}
+                                                  </div>
+                                                  <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                                                    <span className="nav-badge" style={{ fontSize: '9px' }}>₹{bk.totalPrice?.toLocaleString()}</span>
+                                                    <span className="nav-badge" style={{ fontSize: '9px' }}>{bk.status}</span>
+                                                  </div>
+                                                </div>
+                                                <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '6px', marginTop: '6px' }}>
+                                                  <button
+                                                    className="btn btn-sm btn-primary"
+                                                    style={{ width: '100%', fontSize: '10px', padding: '3px 6px' }}
+                                                    onClick={() => setViewingBookingDetails(bk)}
+                                                  >
+                                                    View Details &rarr;
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

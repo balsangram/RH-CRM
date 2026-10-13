@@ -245,6 +245,10 @@ export default function SuperAdminDashboard({ onLogout }) {
   const [showAddItineraryDayModal, setShowAddItineraryDayModal] = useState(false);
   const [newItineraryDayForm, setNewItineraryDayForm] = useState({ day: '', title: '', detail: '' });
 
+  // View modes for Visa Master & Holiday Master (card or table)
+  const [visaMasterViewMode, setVisaMasterViewMode] = useState('card'); // 'card' | 'table'
+  const [holidayMasterViewMode, setHolidayMasterViewMode] = useState('card'); // 'card' | 'table'
+
   const [countriesList, setCountriesList] = useState([
     {
       id: 'CNTY-US',
@@ -3674,51 +3678,64 @@ export default function SuperAdminDashboard({ onLogout }) {
               {activeTab === 'visa-master' && (
                 <div>
                   <div className="section-box">
-                    <div className="section-header">
+                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
                         <div className="section-title">Visa Packages &amp; Countries Offered ({countriesList.length} Countries)</div>
                         <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Manage visa-eligible countries, processing times, fees, and required documents</div>
                       </div>
-                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddCountryVisaModal(true)}>
-                        + Add Visa Country
-                      </button>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                        <div style={{ display: 'flex', border: '1px solid #000' }}>
+                          <button
+                            className={`btn btn-sm ${visaMasterViewMode === 'table' ? 'btn-primary' : ''}`}
+                            style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                            onClick={() => setVisaMasterViewMode('table')}
+                          >☰ Table</button>
+                          <button
+                            className={`btn btn-sm ${visaMasterViewMode === 'card' ? 'btn-primary' : ''}`}
+                            style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                            onClick={() => setVisaMasterViewMode('card')}
+                          >▦ Cards</button>
+                        </div>
+                        <button className="btn btn-primary btn-sm" onClick={() => setShowAddCountryVisaModal(true)}>
+                          + Add Visa Country
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Country Cards & Table */}
-                    <div className="table-container mt-4">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Country / Image</th>
-                            <th>Country Name</th>
-                            <th>Code</th>
-                            <th>Visa Types Offered</th>
-                            <th>Processing Time</th>
-                            <th>Starting Fee (₹)</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {countriesList.map(c => (
-                            <tr key={c.id || c.countryCode}>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <img
-                                    src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
-                                    alt={c.countryName}
-                                    style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
-                                  />
-                                  <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
+                    {/* 1. CARD VIEW (Matching Holiday Master Card Design) */}
+                    {visaMasterViewMode === 'card' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                        {countriesList.map(c => (
+                          <div key={c.id || c.countryCode} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                            <div style={{ position: 'relative', width: '100%', height: '160px' }}>
+                              <img
+                                src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=600'}
+                                alt={c.countryName}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(255,255,255,0.92)', padding: '2px 8px', borderRadius: '3px', fontSize: '18px', border: '1px solid #ddd' }}>
+                                {c.flag || '🌐'}
+                              </div>
+                            </div>
+                            <div style={{ padding: '12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                <div>
+                                  <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{c.id || c.countryCode} &bull; {c.countryCode}</span>
+                                  <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{c.countryName}</h3>
                                 </div>
-                              </td>
-                              <td><strong>{c.countryName}</strong></td>
-                              <td className="font-mono">{c.countryCode}</td>
-                              <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
-                              <td>{c.processingTime || '10-15 Days'}</td>
-                              <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
-                              <td><span className="status-badge">{c.status}</span></td>
-                              <td className="action-cell">
+                                <span className="status-badge">{c.status}</span>
+                              </div>
+                              <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>
+                                📄 {c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Visa Types &bull; ⏱️ {c.processingTime || '10-15 Days'}
+                              </p>
+                              <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>
+                                ₹{(c.startingPrice || 18500).toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>starting fee</span>
+                              </p>
+                              <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                <strong>Required Docs:</strong> {c.requiredDocs && c.requiredDocs.length > 0 ? c.requiredDocs.map(d => d.name).join(', ') : 'Valid Passport, Photographs, Financial Proofs'}
+                              </p>
+                              <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
                                 <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
                                 <button className="btn btn-sm" onClick={() => setEditingCountryVisa({ ...c })}>Edit</button>
                                 <button className="btn btn-sm" onClick={() => {
@@ -3726,12 +3743,63 @@ export default function SuperAdminDashboard({ onLogout }) {
                                 }}>
                                   {c.status === 'Active' ? 'Deactivate' : 'Activate'}
                                 </button>
-                              </td>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 2. TABLE VIEW */}
+                    {visaMasterViewMode === 'table' && (
+                      <div className="table-container mt-4">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Country / Image</th>
+                              <th>Country Name</th>
+                              <th>Code</th>
+                              <th>Visa Types Offered</th>
+                              <th>Processing Time</th>
+                              <th>Starting Fee (₹)</th>
+                              <th>Status</th>
+                              <th>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {countriesList.map(c => (
+                              <tr key={c.id || c.countryCode}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <img
+                                      src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
+                                      alt={c.countryName}
+                                      style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                    />
+                                    <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
+                                  </div>
+                                </td>
+                                <td><strong>{c.countryName}</strong></td>
+                                <td className="font-mono">{c.countryCode}</td>
+                                <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
+                                <td>{c.processingTime || '10-15 Days'}</td>
+                                <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
+                                <td><span className="status-badge">{c.status}</span></td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                  <button className="btn btn-sm" onClick={() => setEditingCountryVisa({ ...c })}>Edit</button>
+                                  <button className="btn btn-sm" onClick={() => {
+                                    setCountriesList(countriesList.map(item => item.countryCode === c.countryCode ? { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' } : item));
+                                  }}>
+                                    {c.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -3740,51 +3808,117 @@ export default function SuperAdminDashboard({ onLogout }) {
               {activeTab === 'holiday-master' && (
                 <div>
                   <div className="section-box">
-                    <div className="section-header">
+                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
                         <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
                         <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Manage holiday tour packages, destinations, pricing, inclusions, and itineraries</div>
                       </div>
-                      <button className="btn btn-primary btn-sm" onClick={() => setShowAddHolidayPackageModal(true)}>
-                        + Add Holiday Package
-                      </button>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                        <div style={{ display: 'flex', border: '1px solid #000' }}>
+                          <button
+                            className={`btn btn-sm ${holidayMasterViewMode === 'table' ? 'btn-primary' : ''}`}
+                            style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                            onClick={() => setHolidayMasterViewMode('table')}
+                          >☰ Table</button>
+                          <button
+                            className={`btn btn-sm ${holidayMasterViewMode === 'card' ? 'btn-primary' : ''}`}
+                            style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                            onClick={() => setHolidayMasterViewMode('card')}
+                          >▦ Cards</button>
+                        </div>
+                        <button className="btn btn-primary btn-sm" onClick={() => setShowAddHolidayPackageModal(true)}>
+                          + Add Holiday Package
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Holiday Package Cards Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                      {holidayPackagesList.map(pkg => (
-                        <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
-                          <img
-                            src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
-                            alt={pkg.packageName}
-                            style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                          />
-                          <div style={{ padding: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                              <div>
-                                <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
-                                <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                    {/* 1. Holiday Package Cards Grid */}
+                    {holidayMasterViewMode === 'card' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                        {holidayPackagesList.map(pkg => (
+                          <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                            <img
+                              src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
+                              alt={pkg.packageName}
+                              style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                            />
+                            <div style={{ padding: '12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                <div>
+                                  <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
+                                  <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                                </div>
+                                <span className="status-badge">{pkg.status}</span>
                               </div>
-                              <span className="status-badge">{pkg.status}</span>
-                            </div>
-                            <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
-                            <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
-                            <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
-                              <strong>Inclusions:</strong> {pkg.inclusions}
-                            </p>
-                            <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
-                              <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
-                              <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
-                              <button className="btn btn-sm" onClick={() => {
-                                setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
-                              }}>
-                                {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
-                              </button>
+                              <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
+                              <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
+                              <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                <strong>Inclusions:</strong> {pkg.inclusions}
+                              </p>
+                              <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
+                                <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                                <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
+                                <button className="btn btn-sm" onClick={() => {
+                                  setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
+                                }}>
+                                  {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 2. Holiday Package Table View */}
+                    {holidayMasterViewMode === 'table' && (
+                      <div className="table-container mt-4">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Package ID &amp; Image</th>
+                              <th>Package Name</th>
+                              <th>Country / Destination</th>
+                              <th>Duration</th>
+                              <th>Price (₹)</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {holidayPackagesList.map(pkg => (
+                              <tr key={pkg.packageId}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <img
+                                      src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=100'}
+                                      alt={pkg.packageName}
+                                      style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                    />
+                                    <span className="font-mono" style={{ fontSize: '11px' }}>{pkg.packageId}</span>
+                                  </div>
+                                </td>
+                                <td><strong>{pkg.packageName}</strong></td>
+                                <td>{pkg.destination} ({pkg.country})</td>
+                                <td>{pkg.duration}</td>
+                                <td className="font-mono">₹{pkg.price.toLocaleString()}</td>
+                                <td><span className="status-badge">{pkg.status}</span></td>
+                                <td className="action-cell">
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                                  <button className="btn btn-sm" onClick={() => setEditingHolidayPackage({ ...pkg })}>Edit</button>
+                                  <button className="btn btn-sm" onClick={() => {
+                                    setHolidayPackagesList(holidayPackagesList.map(p => p.packageId === pkg.packageId ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' } : p));
+                                  }}>
+                                    {pkg.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

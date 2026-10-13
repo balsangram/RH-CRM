@@ -14,6 +14,8 @@ export default function StaffDashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [appSubTab, setAppSubTab] = useState('visa'); // 'visa' (default) or 'holiday'
   const [packagesSubTab, setPackagesSubTab] = useState('visa'); // 'visa' or 'holiday'
+  const [visaPackagesViewMode, setVisaPackagesViewMode] = useState('card'); // 'card' or 'table'
+  const [holidayPackagesViewMode, setHolidayPackagesViewMode] = useState('card'); // 'card' or 'table'
   const [viewingCountryVisaDetails, setViewingCountryVisaDetails] = useState(null);
   const [viewingHolidayPackageDetails, setViewingHolidayPackageDetails] = useState(null);
   const [selectedVisaApp, setSelectedVisaApp] = useState(null);
@@ -301,9 +303,7 @@ export default function StaffDashboard({ onLogout }) {
                 setSelectedHolidayApp(null);
               }}
             >
-              <span>Visa</span>
-              <span className="nav-badge">{assignedVisaApps.length}</span>
-            </button>
+              <span>Visa</span>   </button>
           </li>
           <li>
             <button
@@ -314,20 +314,34 @@ export default function StaffDashboard({ onLogout }) {
                 setSelectedHolidayApp(null);
               }}
             >
-              <span>Holiday</span>
-              <span className="nav-badge">{assignedHolidayApps.length}</span>
+              <span>Holiday</span>      </button>
+          </li>
+          <li>
+            <button
+              className={activeTab === 'visa-packages' ? 'active' : ''}
+              onClick={() => {
+                setActiveTab('visa-packages');
+                setSelectedVisaApp(null);
+                setSelectedHolidayApp(null);
+                setViewingCountryVisaDetails(null);
+                setViewingHolidayPackageDetails(null);
+              }}
+            >
+              <span>Visa Packages</span>
             </button>
           </li>
           <li>
             <button
-              className={activeTab === 'packages' ? 'active' : ''}
+              className={activeTab === 'holiday-packages' ? 'active' : ''}
               onClick={() => {
-                setActiveTab('packages');
+                setActiveTab('holiday-packages');
                 setSelectedVisaApp(null);
                 setSelectedHolidayApp(null);
+                setViewingCountryVisaDetails(null);
+                setViewingHolidayPackageDetails(null);
               }}
             >
-              <span>Packages</span>
+              <span>Holiday Packages</span>
             </button>
           </li>
         </ul>
@@ -349,7 +363,11 @@ export default function StaffDashboard({ onLogout }) {
                       ? 'Assigned Visa Applications'
                       : activeTab === 'holiday'
                         ? 'Assigned Holiday Applications'
-                        : 'Packages & Catalog'}
+                        : activeTab === 'visa-packages'
+                          ? 'Visa Packages & Countries'
+                          : activeTab === 'holiday-packages'
+                            ? 'Holiday / Tour Packages'
+                            : 'Staff Dashboard'}
             </h1>
             <p>Officer: Amit Verma (Senior Case Officer - Visa Operations)</p>
           </div>
@@ -830,15 +848,15 @@ export default function StaffDashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* 3. PACKAGES */}
-              {activeTab === 'packages' && (
+              {/* 3. VISA PACKAGES (DEDICATED PAGE) */}
+              {(activeTab === 'visa-packages' || activeTab === 'packages') && (
                 <div>
                   {viewingCountryVisaDetails ? (
                     /* DEDICATED FULL-PAGE COUNTRY VISA DETAILS VIEW (STAFF READ-ONLY) */
                     <div>
                       <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
                         <button className="btn" onClick={() => setViewingCountryVisaDetails(null)}>
-                          &larr; Back to Packages & Catalog
+                          &larr; Back to Visa Packages
                         </button>
                       </div>
 
@@ -959,12 +977,130 @@ export default function StaffDashboard({ onLogout }) {
                         )}
                       </div>
                     </div>
-                  ) : viewingHolidayPackageDetails ? (
+                  ) : (
+                    /* VISA PACKAGES CATALOG (CARDS & TABLE) */
+                    <div className="section-box">
+                      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div>
+                          <div className="section-title">Visa Packages &amp; Countries Offered ({countriesList.length} Countries)</div>
+                          <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Browse visa-eligible countries, processing times, fees, and required documents</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                          <div style={{ display: 'flex', border: '1px solid #000' }}>
+                            <button
+                              className={`btn btn-sm ${visaPackagesViewMode === 'table' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setVisaPackagesViewMode('table')}
+                            >☰ Table</button>
+                            <button
+                              className={`btn btn-sm ${visaPackagesViewMode === 'card' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setVisaPackagesViewMode('card')}
+                            >▦ Cards</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 1. CARD VIEW (Matching Holiday Master Card Design) */}
+                      {visaPackagesViewMode === 'card' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                          {countriesList.map(c => (
+                            <div key={c.id || c.countryCode} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                              <div style={{ position: 'relative', width: '100%', height: '160px' }}>
+                                <img
+                                  src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=600'}
+                                  alt={c.countryName}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(255,255,255,0.92)', padding: '2px 8px', borderRadius: '3px', fontSize: '18px', border: '1px solid #ddd' }}>
+                                  {c.flag || '🌐'}
+                                </div>
+                              </div>
+                              <div style={{ padding: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                  <div>
+                                    <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{c.id || c.countryCode} &bull; {c.countryCode}</span>
+                                    <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{c.countryName}</h3>
+                                  </div>
+                                  <span className="status-badge">{c.status}</span>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>
+                                  📄 {c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Visa Types &bull; ⏱️ {c.processingTime || '10-15 Days'}
+                                </p>
+                                <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>
+                                  ₹{(c.startingPrice || 18500).toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>starting fee</span>
+                                </p>
+                                <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                  <strong>Required Docs:</strong> {c.requiredDocs && c.requiredDocs.length > 0 ? c.requiredDocs.map(d => d.name).join(', ') : 'Valid Passport, Photographs, Financial Proofs'}
+                                </p>
+                                <div className="action-cell" style={{ justifyContent: 'flex-start', gap: '6px' }}>
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 2. TABLE VIEW */}
+                      {visaPackagesViewMode === 'table' && (
+                        <div className="table-container mt-4">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Country / Image</th>
+                                <th>Country Name</th>
+                                <th>Code</th>
+                                <th>Visa Types Offered</th>
+                                <th>Processing Time</th>
+                                <th>Starting Fee (₹)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {countriesList.map(c => (
+                                <tr key={c.id || c.countryCode}>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <img
+                                        src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
+                                        alt={c.countryName}
+                                        style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                      />
+                                      <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
+                                    </div>
+                                  </td>
+                                  <td><strong>{c.countryName}</strong></td>
+                                  <td className="font-mono">{c.countryCode}</td>
+                                  <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
+                                  <td>{c.processingTime || '10-15 Days'}</td>
+                                  <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
+                                  <td><span className="status-badge">{c.status}</span></td>
+                                  <td className="action-cell">
+                                    <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. HOLIDAY PACKAGES (DEDICATED PAGE) */}
+              {activeTab === 'holiday-packages' && (
+                <div>
+                  {viewingHolidayPackageDetails ? (
                     /* DEDICATED FULL-PAGE HOLIDAY PACKAGE DETAILS VIEW (STAFF READ-ONLY) */
                     <div>
                       <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: '16px' }}>
                         <button className="btn" onClick={() => setViewingHolidayPackageDetails(null)}>
-                          &larr; Back to Packages & Catalog
+                          &larr; Back to Holiday Packages
                         </button>
                       </div>
 
@@ -1041,110 +1177,101 @@ export default function StaffDashboard({ onLogout }) {
                       </div>
                     </div>
                   ) : (
-                    /* MAIN PACKAGES CATALOG VIEW WITH 2 SUB-TABS (MATCHING SUPER ADMIN) */
-                    <div>
-                      {/* 2 Sub-Tabs Header */}
-                      <div className="tabs-header" style={{ marginBottom: '16px' }}>
-                        <button
-                          className={`tab-btn ${packagesSubTab === 'visa' ? 'active' : ''}`}
-                          onClick={() => setPackagesSubTab('visa')}
-                        >
-                          Visa Packages / Countries ({countriesList.length})
-                        </button>
-                        <button
-                          className={`tab-btn ${packagesSubTab === 'holiday' ? 'active' : ''}`}
-                          onClick={() => setPackagesSubTab('holiday')}
-                        >
-                          Holiday / Tour Packages ({holidayPackagesList.length})
-                        </button>
+                    /* HOLIDAY PACKAGES CATALOG (CARDS & TABLE) */
+                    <div className="section-box">
+                      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div>
+                          <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
+                          <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>Browse holiday tour packages, destinations, pricing, inclusions, and itineraries</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                          <div style={{ display: 'flex', border: '1px solid #000' }}>
+                            <button
+                              className={`btn btn-sm ${holidayPackagesViewMode === 'table' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setHolidayPackagesViewMode('table')}
+                            >☰ Table</button>
+                            <button
+                              className={`btn btn-sm ${holidayPackagesViewMode === 'card' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                              onClick={() => setHolidayPackagesViewMode('card')}
+                            >▦ Cards</button>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* SUB-TAB 1: VISA PACKAGES / COUNTRIES */}
-                      {packagesSubTab === 'visa' && (
-                        <div className="section-box">
-                          <div className="section-header">
-                            <div className="section-title">Visa Packages & Countries Offered ({countriesList.length} Countries)</div>
-                          </div>
-
-                          <div className="table-container mt-4">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>Country / Image</th>
-                                  <th>Country Name</th>
-                                  <th>Code</th>
-                                  <th>Visa Types Offered</th>
-                                  <th>Processing Time</th>
-                                  <th>Starting Fee (₹)</th>
-                                  <th>Status</th>
-                                  <th>Actions</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {countriesList.map(c => (
-                                  <tr key={c.id || c.countryCode}>
-                                    <td>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <img
-                                          src={c.imageUrl || 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=100'}
-                                          alt={c.countryName}
-                                          style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
-                                        />
-                                        <span style={{ fontSize: '18px' }}>{c.flag || '🌐'}</span>
-                                      </div>
-                                    </td>
-                                    <td><strong>{c.countryName}</strong></td>
-                                    <td className="font-mono">{c.countryCode}</td>
-                                    <td><span className="status-badge">{c.visaTypesCount || (c.visaTypes ? c.visaTypes.length : 2)} Types</span></td>
-                                    <td>{c.processingTime || '10-15 Days'}</td>
-                                    <td className="font-mono">₹{(c.startingPrice || 18500).toLocaleString()}</td>
-                                    <td><span className="status-badge">{c.status}</span></td>
-                                    <td className="action-cell">
-                                      <button className="btn btn-sm btn-primary" onClick={() => setViewingCountryVisaDetails(c)}>View Details &rarr;</button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                      {/* 1. CARD VIEW (Matching Holiday Master Card Design) */}
+                      {holidayPackagesViewMode === 'card' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                          {holidayPackagesList.map(pkg => (
+                            <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
+                              <img
+                                src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
+                                alt={pkg.packageName}
+                                style={{ width: '100%', height: '160px', objectFit: 'cover' }}
+                              />
+                              <div style={{ padding: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                  <div>
+                                    <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
+                                    <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
+                                  </div>
+                                  <span className="status-badge">{pkg.status}</span>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
+                                <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
+                                <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
+                                  <strong>Inclusions:</strong> {pkg.inclusions}
+                                </p>
+                                <div className="action-cell" style={{ justifyContent: 'flex-start' }}>
+                                  <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {/* SUB-TAB 2: HOLIDAY PACKAGES */}
-                      {packagesSubTab === 'holiday' && (
-                        <div className="section-box">
-                          <div className="section-header">
-                            <div className="section-title">Holiday / Tour Packages ({holidayPackagesList.length} Packages)</div>
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                            {holidayPackagesList.map(pkg => (
-                              <div key={pkg.packageId} className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #ccc' }}>
-                                <img
-                                  src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600'}
-                                  alt={pkg.packageName}
-                                  style={{ width: '100%', height: '160px', objectFit: 'cover' }}
-                                />
-                                <div style={{ padding: '12px' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                                    <div>
-                                      <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{pkg.packageId} &bull; {pkg.country}</span>
-                                      <h3 style={{ fontSize: '14px', margin: '4px 0 2px 0' }}>{pkg.packageName}</h3>
-                                    </div>
-                                    <span className="status-badge">{pkg.status}</span>
-                                  </div>
-                                  <p style={{ fontSize: '12px', color: '#555', margin: '4px 0' }}>📍 {pkg.destination} &bull; ⏱️ {pkg.duration}</p>
-                                  <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '8px 0' }}>₹{pkg.price.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 'normal', color: '#666' }}>per person</span></p>
-                                  <p style={{ fontSize: '11px', color: '#666', background: '#f5f5f5', padding: '6px', border: '1px solid #eee', margin: '6px 0 12px 0' }}>
-                                    <strong>Inclusions:</strong> {pkg.inclusions}
-                                  </p>
-                                  <div className="action-cell" style={{ justifyContent: 'flex-start' }}>
+                      {/* 2. TABLE VIEW */}
+                      {holidayPackagesViewMode === 'table' && (
+                        <div className="table-container mt-4">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Package Image</th>
+                                <th>Package ID</th>
+                                <th>Package Name</th>
+                                <th>Country & Destination</th>
+                                <th>Duration</th>
+                                <th>Price per Person</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {holidayPackagesList.map(pkg => (
+                                <tr key={pkg.packageId}>
+                                  <td>
+                                    <img
+                                      src={pkg.imageUrl || 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=100'}
+                                      alt={pkg.packageName}
+                                      style={{ width: '45px', height: '32px', objectFit: 'cover', border: '1px solid #ccc' }}
+                                    />
+                                  </td>
+                                  <td className="font-mono">{pkg.packageId}</td>
+                                  <td><strong>{pkg.packageName}</strong></td>
+                                  <td>{pkg.country} - {pkg.destination}</td>
+                                  <td>{pkg.duration}</td>
+                                  <td className="font-mono">₹{pkg.price.toLocaleString()}</td>
+                                  <td><span className="status-badge">{pkg.status}</span></td>
+                                  <td className="action-cell">
                                     <button className="btn btn-sm btn-primary" onClick={() => setViewingHolidayPackageDetails(pkg)}>View Details &rarr;</button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       )}
                     </div>

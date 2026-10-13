@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import VisaKanban from './VisaKanban';
+import HolidayKanban from './HolidayKanban';
 import {
   mockVisaServices,
   mockBookingServices,
   mockCountries,
   mockVisaDocumentsMatrix,
-  mockHolidayPackages
+  mockHolidayPackages,
+  mockStaffMembers
 } from '../mockData';
 
 export default function StaffDashboard({ onLogout }) {
@@ -207,7 +210,27 @@ export default function StaffDashboard({ onLogout }) {
     mockVisaServices.filter(v => v.caseOfficerId === 'CO-101')
   );
   const assignedVisaApps = assignedVisaAppsState;
-  const assignedHolidayApps = mockBookingServices; // Mock assigned holiday bookings
+
+  const [assignedHolidayAppsState, setAssignedHolidayAppsState] = useState(mockBookingServices);
+  const assignedHolidayApps = assignedHolidayAppsState;
+
+  const handleUpdateVisa = (updatedVisa) => {
+    setAssignedVisaAppsState(prev =>
+      prev.map(v => (v.id === updatedVisa.id ? { ...v, ...updatedVisa } : v))
+    );
+    if (selectedVisaApp && selectedVisaApp.id === updatedVisa.id) {
+      setSelectedVisaApp(prev => ({ ...prev, ...updatedVisa }));
+    }
+  };
+
+  const handleUpdateHoliday = (updatedBooking) => {
+    setAssignedHolidayAppsState(prev =>
+      prev.map(b => (b.packageId === updatedBooking.packageId ? { ...b, ...updatedBooking } : b))
+    );
+    if (selectedHolidayApp && selectedHolidayApp.packageId === updatedBooking.packageId) {
+      setSelectedHolidayApp(prev => ({ ...prev, ...updatedBooking }));
+    }
+  };
 
   // Merged Applications List (Visa + Holiday)
   const allAssignedApps = [
@@ -258,22 +281,55 @@ export default function StaffDashboard({ onLogout }) {
         </div>
         <ul className="sidebar-nav">
           <li>
-            <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
-              <span>1. Dashboard Overview</span>
+            <button
+              className={activeTab === 'overview' ? 'active' : ''}
+              onClick={() => {
+                setActiveTab('overview');
+                setSelectedVisaApp(null);
+                setSelectedHolidayApp(null);
+              }}
+            >
+              <span>Home</span>
             </button>
           </li>
           <li>
-            <button className={activeTab === 'all' ? 'active' : ''} onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>
-              <span>2. Applications</span>
-              {/* <span className="nav-badge">{staffSummary.totalAssigned}</span> */}
+            <button
+              className={activeTab === 'visa' ? 'active' : ''}
+              onClick={() => {
+                setActiveTab('visa');
+                setSelectedVisaApp(null);
+                setSelectedHolidayApp(null);
+              }}
+            >
+              <span>Visa</span>
+              <span className="nav-badge">{assignedVisaApps.length}</span>
             </button>
           </li>
           <li>
-            <button className={activeTab === 'packages' ? 'active' : ''} onClick={() => setActiveTab('packages')}>
-              <span>3. Packages</span>
+            <button
+              className={activeTab === 'holiday' ? 'active' : ''}
+              onClick={() => {
+                setActiveTab('holiday');
+                setSelectedVisaApp(null);
+                setSelectedHolidayApp(null);
+              }}
+            >
+              <span>Holiday</span>
+              <span className="nav-badge">{assignedHolidayApps.length}</span>
             </button>
           </li>
-
+          <li>
+            <button
+              className={activeTab === 'packages' ? 'active' : ''}
+              onClick={() => {
+                setActiveTab('packages');
+                setSelectedVisaApp(null);
+                setSelectedHolidayApp(null);
+              }}
+            >
+              <span>Packages</span>
+            </button>
+          </li>
         </ul>
 
       </aside>
@@ -282,7 +338,19 @@ export default function StaffDashboard({ onLogout }) {
       <div className="main-layout">
         <header className="top-header">
           <div className="top-header-left">
-            <h1>Staff Dashboard Overview</h1>
+            <h1>
+              {selectedVisaApp
+                ? `Visa Application Details: ${selectedVisaApp.id}`
+                : selectedHolidayApp
+                  ? `Holiday Booking Details: ${selectedHolidayApp.packageId}`
+                  : activeTab === 'overview'
+                    ? 'Staff Dashboard Overview'
+                    : activeTab === 'visa'
+                      ? 'Assigned Visa Applications'
+                      : activeTab === 'holiday'
+                        ? 'Assigned Holiday Applications'
+                        : 'Packages & Catalog'}
+            </h1>
             <p>Officer: Amit Verma (Senior Case Officer - Visa Operations)</p>
           </div>
           <div className="user-profile-badge">
@@ -649,25 +717,28 @@ export default function StaffDashboard({ onLogout }) {
                       <div className="card-title">Total Assigned Applications</div>
                       <div className="card-value">{staffSummary.totalAssigned}</div>
                       <p style={{ fontSize: '11px', color: '#555' }}>Assigned to logged-in staff</p>
-                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View All &rarr;</button>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                        <button className="card-action" style={{ flex: 1, padding: 0 }} onClick={() => { setActiveTab('visa'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>Visa ({assignedVisaApps.length}) &rarr;</button>
+                        <button className="card-action" style={{ flex: 1, padding: 0 }} onClick={() => { setActiveTab('holiday'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>Holiday ({assignedHolidayApps.length}) &rarr;</button>
+                      </div>
                     </div>
                     <div className="card">
                       <div className="card-title">Active Applications</div>
                       <div className="card-value">{staffSummary.active}</div>
                       <p style={{ fontSize: '11px', color: '#555' }}>Currently being processed</p>
-                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Active &rarr;</button>
+                      <button className="card-action" onClick={() => { setActiveTab('visa'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>View Visa Pipeline &rarr;</button>
                     </div>
                     <div className="card">
                       <div className="card-title">Pending Applications</div>
                       <div className="card-value">{staffSummary.pending}</div>
                       <p style={{ fontSize: '11px', color: '#555' }}>Waiting for review/action</p>
-                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Pending &rarr;</button>
+                      <button className="card-action" onClick={() => { setActiveTab('holiday'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>View Holiday Pipeline &rarr;</button>
                     </div>
                     <div className="card">
                       <div className="card-title">Completed Applications</div>
                       <div className="card-value">{staffSummary.completed}</div>
                       <p style={{ fontSize: '11px', color: '#555' }}>Successfully completed</p>
-                      <button className="card-action" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>View Completed &rarr;</button>
+                      <button className="card-action" onClick={() => { setActiveTab('visa'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>View Completed &rarr;</button>
                     </div>
                   </div>
 
@@ -675,9 +746,14 @@ export default function StaffDashboard({ onLogout }) {
                   <div className="section-box">
                     <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div className="section-title">Assigned Applications ({allAssignedApps.length})</div>
-                      <button className="btn btn-sm btn-primary" onClick={() => { setActiveTab('all'); setAppSubTab('visa'); }}>
-                        Go to Applications Page &rarr;
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-sm btn-primary" onClick={() => { setActiveTab('visa'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>
+                          Visa Applications ({assignedVisaApps.length}) &rarr;
+                        </button>
+                        <button className="btn btn-sm btn-secondary" onClick={() => { setActiveTab('holiday'); setSelectedVisaApp(null); setSelectedHolidayApp(null); }}>
+                          Holiday Applications ({assignedHolidayApps.length}) &rarr;
+                        </button>
+                      </div>
                     </div>
                     <div className="table-container">
                       <table>
@@ -705,11 +781,10 @@ export default function StaffDashboard({ onLogout }) {
                                 <button
                                   className="btn btn-sm"
                                   onClick={() => {
-                                    setActiveTab('all');
                                     if (app.category === 'visa') {
-                                      setAppSubTab('visa');
+                                      setSelectedVisaApp(app.raw);
                                     } else {
-                                      setAppSubTab('holiday');
+                                      setSelectedHolidayApp(app.raw);
                                     }
                                   }}
                                 >
@@ -725,112 +800,33 @@ export default function StaffDashboard({ onLogout }) {
                 </div>
               )}
 
-              {/* 2. APPLICATIONS PAGE WITH 2 TOP BUTTONS (VISA / HOLIDAY) */}
-              {activeTab === 'all' && (
+              {/* 2. ASSIGNED VISA APPLICATIONS PAGE WITH KANBAN PIPELINE */}
+              {(activeTab === 'visa' || (activeTab === 'all' && appSubTab === 'visa')) && (
                 <div>
-                  {/* 2 TOP BUTTONS (VISA APPLICATIONS / HOLIDAY APPLICATIONS) */}
-                  <div className="tabs-header" style={{ marginBottom: '16px' }}>
-                    <button
-                      className={`tab-btn ${appSubTab === 'visa' || appSubTab === 'all' ? 'active' : ''}`}
-                      onClick={() => setAppSubTab('visa')}
-                    >
-                      Visa Applications ({assignedVisaApps.length})
-                    </button>
-                    <button
-                      className={`tab-btn ${appSubTab === 'holiday' ? 'active' : ''}`}
-                      onClick={() => setAppSubTab('holiday')}
-                    >
-                      Holiday Applications ({assignedHolidayApps.length})
-                    </button>
-                  </div>
+                  <VisaKanban
+                    title="Assigned Visa Applications — Kanban Pipeline"
+                    visaList={assignedVisaApps}
+                    onUpdateVisa={handleUpdateVisa}
+                    staffMembers={mockStaffMembers}
+                    onViewDetails={(visa) => {
+                      setSelectedVisaApp(visa);
+                    }}
+                  />
+                </div>
+              )}
 
-                  {/* DISPLAY ASSIGNED VISA APPLICATIONS (2) WHEN VISA BUTTON IS CLICKED */}
-                  {(appSubTab === 'visa' || appSubTab === 'all') && (
-                    <div className="section-box">
-                      <div className="section-header">
-                        <div className="section-title">Assigned Visa Applications ({assignedVisaApps.length})</div>
-                      </div>
-                      <div className="table-container">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Application ID</th>
-                              <th>Applicant Name</th>
-                              <th>Country</th>
-                              <th>Visa Type</th>
-                              <th>Case Officer Name</th>
-                              <th>Case Officer ID</th>
-                              <th>Application Date</th>
-                              <th>Status</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {assignedVisaApps.map(visa => (
-                              <tr key={visa.id}>
-                                <td className="font-mono"><strong>{visa.id}</strong></td>
-                                <td>{visa.applicantName}</td>
-                                <td>{visa.country}</td>
-                                <td>{visa.visaType}</td>
-                                <td>{visa.caseOfficerName}</td>
-                                <td className="font-mono">{visa.caseOfficerId}</td>
-                                <td>{visa.applicationDate}</td>
-                                <td><span className="status-badge">{visa.status}</span></td>
-                                <td className="action-cell">
-                                  <button className="btn btn-sm" onClick={() => setSelectedVisaApp(visa)}>View</button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DISPLAY ASSIGNED HOLIDAY APPLICATIONS (2) WHEN HOLIDAY BUTTON IS CLICKED */}
-                  {appSubTab === 'holiday' && (
-                    <div className="section-box">
-                      <div className="section-header">
-                        <div className="section-title">Assigned Holiday Applications ({assignedHolidayApps.length})</div>
-                      </div>
-                      <div className="table-container">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>App / Booking ID</th>
-                              <th>Package ID</th>
-                              <th>Package Name</th>
-                              <th>Customer Name</th>
-                              <th>Destination</th>
-                              <th>Duration</th>
-                              <th>Total Price</th>
-                              <th>Payment Status</th>
-                              <th>Booking Status</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {assignedHolidayApps.map(bk => (
-                              <tr key={bk.packageId}>
-                                <td className="font-mono"><strong>{bk.packageId}</strong></td>
-                                <td className="font-mono">{bk.packageId}</td>
-                                <td>{bk.packageName}</td>
-                                <td>{bk.customerName}</td>
-                                <td>{bk.destination}</td>
-                                <td>{bk.duration}</td>
-                                <td className="font-mono">₹{bk.totalPrice.toLocaleString()}</td>
-                                <td><span className="status-badge">{bk.paymentStatus}</span></td>
-                                <td><span className="status-badge">{bk.status}</span></td>
-                                <td className="action-cell">
-                                  <button className="btn btn-sm" onClick={() => setSelectedHolidayApp(bk)}>View</button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
+              {/* 3. ASSIGNED HOLIDAY APPLICATIONS PAGE WITH KANBAN PIPELINE */}
+              {(activeTab === 'holiday' || (activeTab === 'all' && appSubTab === 'holiday')) && (
+                <div>
+                  <HolidayKanban
+                    title="Assigned Holiday Applications — Kanban Pipeline"
+                    bookingList={assignedHolidayApps}
+                    onUpdateBooking={handleUpdateHoliday}
+                    staffMembers={mockStaffMembers}
+                    onViewDetails={(bk) => {
+                      setSelectedHolidayApp(bk);
+                    }}
+                  />
                 </div>
               )}
 

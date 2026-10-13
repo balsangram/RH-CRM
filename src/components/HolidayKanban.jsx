@@ -65,6 +65,7 @@ export default function HolidayKanban({
   onViewDetails,
   onExtendBooking,
   staffMembers = [],
+  title = 'Holiday & Tour Booking Cases — Processing Pipeline',
 }) {
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
 
@@ -262,7 +263,7 @@ export default function HolidayKanban({
         <div className="section-header" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
           <div>
             <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>Holiday &amp; Tour Booking Cases — Processing Pipeline</span>
+              <span>{title}</span>
               <span className="nav-badge" style={{ fontSize: '11px', textTransform: 'none' }}>
                 {filtered.length} of {bookingList.length} Bookings
               </span>
@@ -540,6 +541,16 @@ export default function HolidayKanban({
                               >
                                 Side Sheet
                               </button>
+                              {onViewDetails && (
+                                <button
+                                  className="btn btn-sm"
+                                  style={{ flex: 1, fontSize: '10px', padding: '3px 6px' }}
+                                  onClick={() => onViewDetails(bk)}
+                                  title="Open full booking details view"
+                                >
+                                  Details &rarr;
+                                </button>
+                              )}
                               {nextStage && (
                                 <button
                                   className="btn btn-sm btn-primary"

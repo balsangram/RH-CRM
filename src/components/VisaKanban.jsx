@@ -65,6 +65,7 @@ export default function VisaKanban({
   onAddVisa,
   onViewDetails,
   staffMembers = [],
+  title = 'Visa Services & Applications — Processing Pipeline',
 }) {
   // View mode
   const [viewMode, setViewMode] = useState('kanban');
@@ -243,7 +244,7 @@ export default function VisaKanban({
         <div className="section-header" style={{ marginBottom: '12px' }}>
           <div>
             <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>Visa Services &amp; Applications — Processing Pipeline</span>
+              <span>{title}</span>
               <span className="nav-badge" style={{ fontSize: '11px', textTransform: 'none' }}>
                 {filtered.length} of {visaList.length} Applications
               </span>
@@ -468,6 +469,16 @@ export default function VisaKanban({
                               >
                                 Details
                               </button>
+                              {onViewDetails && (
+                                <button
+                                  className="btn btn-sm"
+                                  style={{ flex: 1, fontSize: '10px', padding: '3px 6px' }}
+                                  onClick={() => onViewDetails(visa)}
+                                  title="View full application details"
+                                >
+                                  Profile &rarr;
+                                </button>
+                              )}
                               {nextStage && (
                                 <button
                                   className="btn btn-sm btn-primary"
@@ -548,8 +559,11 @@ export default function VisaKanban({
                           {visa.paymentRef && <div style={{ fontSize: '9px', color: '#888', fontFamily: 'monospace' }}>{visa.paymentRef}</div>}
                         </td>
                         <td>{visa.applicationDate}</td>
-                        <td className="action-cell">
-                          <button className="btn btn-sm btn-primary" onClick={() => setActiveSheet(visa)}>View Details →</button>
+                        <td className="action-cell" style={{ whiteSpace: 'nowrap' }}>
+                          <button className="btn btn-sm" onClick={() => setActiveSheet(visa)}>Quick View</button>
+                          {onViewDetails && (
+                            <button className="btn btn-sm btn-primary" style={{ marginLeft: '4px' }} onClick={() => onViewDetails(visa)}>View Profile &rarr;</button>
+                          )}
                         </td>
                       </tr>
                     );

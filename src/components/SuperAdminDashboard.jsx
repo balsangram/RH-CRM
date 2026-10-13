@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import LeadGraphs from './LeadGraphs';
 import LeadsKanban from './LeadsKanban';
 import VisaKanban from './VisaKanban';
@@ -48,6 +48,137 @@ export default function SuperAdminDashboard({ onLogout }) {
   const [editingCompany, setEditingCompany] = useState(null);
   const [companySubTab, setCompanySubTab] = useState('applications');
   const [companyAppFilterType, setCompanyAppFilterType] = useState('All');
+
+  // Company management states (table & card formats, search, filters & pagination)
+  const [companiesList, setCompaniesList] = useState(mockCompanies);
+  const [companyViewMode, setCompanyViewMode] = useState('table'); // 'table' | 'card'
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [companySearchOption, setCompanySearchOption] = useState('all');
+  const [companyStatusFilter, setCompanyStatusFilter] = useState('All');
+  const [companySortBy, setCompanySortBy] = useState('name-asc');
+  const [companyCurrentPage, setCompanyCurrentPage] = useState(1);
+  const [companyItemsPerPage, setCompanyItemsPerPage] = useState(5);
+  const [newCompanyForm, setNewCompanyForm] = useState({
+    companyName: '',
+    registrationDetails: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    country: 'India',
+    address: ''
+  });
+
+  const handleToggleCompanyStatus = (companyId) => {
+    setCompaniesList(prev => prev.map(c => {
+      if (c.id === companyId) {
+        const nextStatus = c.status === 'Active' ? 'Inactive' : 'Active';
+        if (selectedCompany && selectedCompany.id === companyId) {
+          setSelectedCompany(prevSel => ({ ...prevSel, status: nextStatus }));
+        }
+        return { ...c, status: nextStatus };
+      }
+      return c;
+    }));
+  };
+
+  const handleDeleteCompany = (companyId, companyName) => {
+    if (window.confirm(`Are you sure you want to delete company "${companyName}"? This action cannot be undone.`)) {
+      setCompaniesList(prev => prev.filter(c => c.id !== companyId));
+      if (selectedCompany && selectedCompany.id === companyId) {
+        setSelectedCompany(null);
+      }
+    }
+  };
+
+  const handleSaveAddCompany = (e) => {
+    if (e) e.preventDefault();
+    if (!newCompanyForm.companyName.trim()) {
+      alert('Please enter a company name.');
+      return;
+    }
+    const newId = `CMP-${String(companiesList.length + 1).padStart(2, '0')}`;
+    const created = {
+      id: newId,
+      companyName: newCompanyForm.companyName.trim(),
+      registrationDetails: newCompanyForm.registrationDetails.trim() || `REG-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+      contactPerson: newCompanyForm.contactPerson.trim() || 'General Admin',
+      email: newCompanyForm.email.trim() || `info@${newCompanyForm.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+      phone: newCompanyForm.phone.trim() || '+91 11 0000 0000',
+      address: newCompanyForm.address.trim() || 'Corporate Towers, Business Bay',
+      country: newCompanyForm.country.trim() || 'India',
+      status: 'Active',
+      totalCustomers: 0,
+      totalApplications: 0
+    };
+    setCompaniesList(prev => [created, ...prev]);
+    setShowAddCompanyModal(false);
+    setNewCompanyForm({
+      companyName: '',
+      registrationDetails: '',
+      contactPerson: '',
+      email: '',
+      phone: '',
+      country: 'India',
+      address: ''
+    });
+    alert(`Company "${created.companyName}" (${newId}) added successfully!`);
+  };
+
+  const handleSaveEditCompany = () => {
+    if (!editingCompany) return;
+    setCompaniesList(prev => prev.map(c => c.id === editingCompany.id ? { ...editingCompany } : c));
+    if (selectedCompany && selectedCompany.id === editingCompany.id) {
+      setSelectedCompany({ ...editingCompany });
+    }
+    alert(`Company "${editingCompany.companyName}" updated successfully!`);
+    setEditingCompany(null);
+  };
+
+  // Filtered & Sorted Companies
+  const filteredCompanies = useMemo(() => {
+    return companiesList.filter(comp => {
+      if (companyStatusFilter !== 'All' && comp.status !== companyStatusFilter) return false;
+      if (!companySearchQuery.trim()) return true;
+
+      const q = companySearchQuery.toLowerCase().trim();
+      const name = (comp.companyName || '').toLowerCase();
+      const person = (comp.contactPerson || '').toLowerCase();
+      const email = (comp.email || '').toLowerCase();
+      const phone = (comp.phone || '').toLowerCase();
+      const reg = (comp.registrationDetails || '').toLowerCase();
+      const country = (comp.country || '').toLowerCase();
+      const address = (comp.address || '').toLowerCase();
+
+      if (companySearchOption === 'companyName') return name.includes(q);
+      if (companySearchOption === 'contactPerson') return person.includes(q);
+      if (companySearchOption === 'email') return email.includes(q);
+      if (companySearchOption === 'phone') return phone.includes(q);
+      if (companySearchOption === 'registrationDetails') return reg.includes(q);
+      if (companySearchOption === 'country') return country.includes(q);
+
+      return name.includes(q) ||
+        person.includes(q) ||
+        email.includes(q) ||
+        phone.includes(q) ||
+        reg.includes(q) ||
+        country.includes(q) ||
+        address.includes(q);
+    }).sort((a, b) => {
+      if (companySortBy === 'name-asc') return (a.companyName || '').localeCompare(b.companyName || '');
+      if (companySortBy === 'name-desc') return (b.companyName || '').localeCompare(a.companyName || '');
+      if (companySortBy === 'apps-desc') return (Number(b.totalApplications) || 0) - (Number(a.totalApplications) || 0);
+      if (companySortBy === 'travelers-desc') return (Number(b.totalCustomers) || 0) - (Number(a.totalCustomers) || 0);
+      if (companySortBy === 'id-asc') return (a.id || '').localeCompare(b.id || '');
+      return 0;
+    });
+  }, [companiesList, companyStatusFilter, companySearchQuery, companySearchOption, companySortBy]);
+
+  const totalCompanyPages = Math.max(1, Math.ceil(filteredCompanies.length / companyItemsPerPage));
+  const safeCompanyPage = Math.min(companyCurrentPage, totalCompanyPages);
+  const paginatedCompanies = filteredCompanies.slice(
+    (safeCompanyPage - 1) * companyItemsPerPage,
+    safeCompanyPage * companyItemsPerPage
+  );
 
   // Leads pipeline state handlers
   const handleUpdateLead = (updatedLead) => {
@@ -503,15 +634,15 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>
               <span>Leads</span>
-          
+
             </button>
           </li>
-             <li>
+          <li>
             <button className={activeTab === 'visa' ? 'active' : ''} onClick={() => setActiveTab('visa')}>
               <span>Visa</span>
             </button>
           </li>
-            <li>
+          <li>
             <button className={activeTab === 'booking' ? 'active' : ''} onClick={() => setActiveTab('booking')}>
               <span>Holidays</span>
             </button>
@@ -526,24 +657,24 @@ export default function SuperAdminDashboard({ onLogout }) {
               <span>Travelers</span>
             </button>
           </li>
-         <li>
+          <li>
             <button className={activeTab === 'visa-master' ? 'active' : ''} onClick={() => setActiveTab('visa-master')}>
               <span>Visa Master</span>
             </button>
           </li>
-         <li>
+          <li>
             <button className={activeTab === 'holiday-master' ? 'active' : ''} onClick={() => setActiveTab('holiday-master')}>
               <span>Holiday Master</span>
             </button>
           </li>
-       
+
           <li>
-          <button className={activeTab === 'revenue' ? 'active' : ''} onClick={() => setActiveTab('revenue')}>
+            <button className={activeTab === 'revenue' ? 'active' : ''} onClick={() => setActiveTab('revenue')}>
               <span>Finance</span>
             </button>
           </li>
-       
-       
+
+
           <li>
             <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => setActiveTab('reports')}>
               <span>Reports</span>
@@ -552,18 +683,18 @@ export default function SuperAdminDashboard({ onLogout }) {
           <li>
             <button className={activeTab === 'roles' ? 'active' : ''} onClick={() => setActiveTab('roles')}>
               <span>Staff & Roles</span>
-            
+
             </button>
           </li>
           <li>
             <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
               <span>Reviews & Ratings</span>
-             
+
             </button>
           </li>
-   
+
         </ul>
-   
+
       </aside>
 
       {/* Main Content */}
@@ -1169,7 +1300,7 @@ export default function SuperAdminDashboard({ onLogout }) {
                   <div className="grid-cards">
                     <div className="card">
                       <div className="card-title">Total Companies</div>
-                      <div className="card-value">{mockSummaryCards.totalCompanies}</div>
+                      <div className="card-value">{companiesList.length}</div>
                       <p style={{ fontSize: '11px', color: '#555' }}>Total registered companies</p>
                       <button className="card-action" onClick={() => setActiveTab('companies')}>View All &rarr;</button>
                     </div>
@@ -1292,51 +1423,434 @@ export default function SuperAdminDashboard({ onLogout }) {
                 <div>
                   {!selectedCompany ? (
                     <div>
-                      <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-                        <h2>Companies / Clients Management</h2>
-                        <button className="btn btn-primary" onClick={() => setShowAddCompanyModal(true)}>+ Add Company</button>
+                      {/* Companies Header Toolbar */}
+                      <div className="toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                        <div>
+                          <h2>Companies / Clients Management</h2>
+                          <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>
+                            Manage corporate client accounts, company travelers, and corporate visa/tour processing
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {/* Format Toggle (Table View / Card View) */}
+                          <div style={{ display: 'flex', border: '1px solid #000' }}>
+                            <button
+                              className={`btn btn-sm ${companyViewMode === 'table' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, padding: '5px 12px' }}
+                              onClick={() => setCompanyViewMode('table')}
+                              title="Switch to Compact Table View"
+                            >
+                              ☰ Table View
+                            </button>
+                            <button
+                              className={`btn btn-sm ${companyViewMode === 'card' ? 'btn-primary' : ''}`}
+                              style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '5px 12px' }}
+                              onClick={() => setCompanyViewMode('card')}
+                              title="Switch to Grid Card View"
+                            >
+                              ▦ Card View
+                            </button>
+                          </div>
+                          <button className="btn btn-primary" onClick={() => setShowAddCompanyModal(true)}>+ Add Company</button>
+                        </div>
                       </div>
 
-                      {/* Company Listing Table */}
+                      {/* Search & Filters Toolbar */}
+                      <div className="toolbar" style={{ backgroundColor: '#f8f9fa', padding: '12px', border: '1px solid #000000', marginBottom: '16px', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <div className="filter-group">
+                            <label>Search By:</label>
+                            <select
+                              value={companySearchOption}
+                              onChange={e => { setCompanySearchOption(e.target.value); setCompanyCurrentPage(1); }}
+                            >
+                              <option value="all">All Fields</option>
+                              <option value="companyName">Company Name</option>
+                              <option value="contactPerson">Contact Person</option>
+                              <option value="email">Email</option>
+                              <option value="phone">Phone</option>
+                              <option value="registrationDetails">Registration Details</option>
+                              <option value="country">Country</option>
+                            </select>
+                          </div>
+                          <div className="filter-group">
+                            <label>Search:</label>
+                            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                placeholder={
+                                  companySearchOption === 'companyName' ? 'Search company name...' :
+                                  companySearchOption === 'contactPerson' ? 'Search contact person...' :
+                                  companySearchOption === 'email' ? 'Search email...' :
+                                  companySearchOption === 'phone' ? 'Search phone number...' :
+                                  companySearchOption === 'registrationDetails' ? 'Search registration...' :
+                                  companySearchOption === 'country' ? 'Search country...' :
+                                  'Search companies, persons, emails...'
+                                }
+                                value={companySearchQuery}
+                                onChange={e => { setCompanySearchQuery(e.target.value); setCompanyCurrentPage(1); }}
+                                style={{ width: '230px', paddingRight: companySearchQuery ? '24px' : '8px' }}
+                              />
+                              {companySearchQuery && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setCompanySearchQuery(''); setCompanyCurrentPage(1); }}
+                                  style={{
+                                    position: 'absolute',
+                                    right: '6px',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    color: '#555'
+                                  }}
+                                  title="Clear search"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="filter-group">
+                            <label>Status:</label>
+                            <select
+                              value={companyStatusFilter}
+                              onChange={e => { setCompanyStatusFilter(e.target.value); setCompanyCurrentPage(1); }}
+                            >
+                              <option value="All">All Statuses ({companiesList.length})</option>
+                              <option value="Active">Active ({companiesList.filter(c => c.status === 'Active').length})</option>
+                              <option value="Inactive">Inactive ({companiesList.filter(c => c.status === 'Inactive').length})</option>
+                            </select>
+                          </div>
+                          <div className="filter-group">
+                            <label>Sort By:</label>
+                            <select
+                              value={companySortBy}
+                              onChange={e => setCompanySortBy(e.target.value)}
+                            >
+                              <option value="name-asc">Name (A &rarr; Z)</option>
+                              <option value="name-desc">Name (Z &rarr; A)</option>
+                              <option value="apps-desc">Most Applications</option>
+                              <option value="travelers-desc">Most Travelers</option>
+                              <option value="id-asc">Company ID</option>
+                            </select>
+                          </div>
+                          {(companySearchQuery || companyStatusFilter !== 'All') && (
+                            <button
+                              className="btn btn-sm"
+                              onClick={() => {
+                                setCompanySearchQuery('');
+                                setCompanyStatusFilter('All');
+                                setCompanyCurrentPage(1);
+                              }}
+                              title="Reset all filters"
+                            >
+                              ✕ Reset Filters
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Summary / Result Stats */}
+                        <div style={{ fontSize: '12px', color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>Showing <strong>{filteredCompanies.length === 0 ? 0 : (safeCompanyPage - 1) * companyItemsPerPage + 1}–{Math.min(safeCompanyPage * companyItemsPerPage, filteredCompanies.length)}</strong> of <strong>{filteredCompanies.length}</strong> companies</span>
+                          {filteredCompanies.length !== companiesList.length && (
+                            <span style={{ color: '#777', fontSize: '11px' }}>({companiesList.length - filteredCompanies.length} filtered out)</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Company Listing Display (Table or Card format) */}
                       <div className="section-box">
-                        <div className="section-header">
-                          <div className="section-title">Company Listing</div>
+                        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <div className="section-title">
+                            Company Listing — {companyViewMode === 'table' ? 'Table Format' : 'Card Format'} ({filteredCompanies.length} Companies)
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', color: '#666' }}>Format:</span>
+                            <div style={{ display: 'flex', border: '1px solid #000' }}>
+                              <button
+                                className={`btn btn-sm ${companyViewMode === 'table' ? 'btn-primary' : ''}`}
+                                style={{ border: 'none', borderRadius: 0, padding: '3px 8px', fontSize: '11px' }}
+                                onClick={() => setCompanyViewMode('table')}
+                              >☰ Table</button>
+                              <button
+                                className={`btn btn-sm ${companyViewMode === 'card' ? 'btn-primary' : ''}`}
+                                style={{ border: 'none', borderRadius: 0, borderLeft: '1px solid #000', padding: '3px 8px', fontSize: '11px' }}
+                                onClick={() => setCompanyViewMode('card')}
+                              >▦ Cards</button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="table-container">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Company Name</th>
-                                <th>Contact Person</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Total Travelers</th>
-                                <th>Total Applications</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {mockCompanies.map(comp => (
-                                <tr key={comp.id}>
-                                  <td><strong>{comp.companyName}</strong></td>
-                                  <td>{comp.contactPerson}</td>
-                                  <td>{comp.email}</td>
-                                  <td>{comp.phone}</td>
-                                  <td className="text-center font-mono">{comp.totalCustomers}</td>
-                                  <td className="text-center font-mono">{comp.totalApplications}</td>
-                                  <td><span className="status-badge">{comp.status}</span></td>
-                                  <td className="action-cell">
-                                    <button className="btn btn-sm btn-primary" onClick={() => { setSelectedCompany(comp); setCompanySubTab('applications'); }}>View</button>
-                                    <button className="btn btn-sm" onClick={() => setEditingCompany({ ...comp })}>Edit</button>
-                                    <button className="btn btn-sm" onClick={() => alert(`Toggled activation status for ${comp.companyName}`)}>Activate/Deactivate</button>
-                                    <button className="btn btn-sm btn-danger" onClick={() => alert(`Deleting company ${comp.companyName}`)}>Delete</button>
-                                  </td>
+
+                        {/* EMPTY STATE */}
+                        {filteredCompanies.length === 0 ? (
+                          <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed #000', margin: '16px 0', backgroundColor: '#fafafa' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏢</div>
+                            <h3 style={{ margin: '0 0 6px 0', fontSize: '15px' }}>No Companies Found</h3>
+                            <p style={{ margin: '0 0 14px 0', color: '#666', fontSize: '13px' }}>
+                              No corporate clients match your search criteria ({companySearchQuery ? `"${companySearchQuery}"` : 'selected filters'}).
+                            </p>
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => {
+                                setCompanySearchQuery('');
+                                setCompanyStatusFilter('All');
+                                setCompanyCurrentPage(1);
+                              }}
+                            >
+                              Reset All Filters
+                            </button>
+                          </div>
+                        ) : companyViewMode === 'table' ? (
+                          /* TABLE VIEW FORMAT */
+                          <div className="table-container">
+                            <table>
+                              <thead>
+                                <tr>
+                                  <th>Company ID &amp; Name</th>
+                                  <th>Contact Person</th>
+                                  <th>Email</th>
+                                  <th>Phone</th>
+                                  <th>Address / Country</th>
+                                  <th className="text-center">Total Travelers</th>
+                                  <th className="text-center">Total Applications</th>
+                                  <th>Status</th>
+                                  <th>Actions</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                              </thead>
+                              <tbody>
+                                {paginatedCompanies.map(comp => (
+                                  <tr key={comp.id}>
+                                    <td>
+                                      <div><strong>{comp.companyName}</strong></div>
+                                      <div style={{ fontSize: '11px', color: '#666' }} className="font-mono">
+                                        {comp.id} &bull; {comp.registrationDetails}
+                                      </div>
+                                    </td>
+                                    <td>{comp.contactPerson}</td>
+                                    <td><a href={`mailto:${comp.email}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{comp.email}</a></td>
+                                    <td><a href={`tel:${comp.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{comp.phone}</a></td>
+                                    <td style={{ fontSize: '12px' }}>{comp.address || comp.country}</td>
+                                    <td className="text-center font-mono" style={{ fontWeight: 'bold' }}>{comp.totalCustomers}</td>
+                                    <td className="text-center font-mono" style={{ fontWeight: 'bold' }}>{comp.totalApplications}</td>
+                                    <td><span className="status-badge">{comp.status}</span></td>
+                                    <td className="action-cell">
+                                      <button className="btn btn-sm btn-primary" onClick={() => { setSelectedCompany(comp); setCompanySubTab('applications'); }}>View</button>
+                                      <button className="btn btn-sm" onClick={() => setEditingCompany({ ...comp })}>Edit</button>
+                                      <button
+                                        className="btn btn-sm"
+                                        onClick={() => handleToggleCompanyStatus(comp.id)}
+                                        title={`Switch status to ${comp.status === 'Active' ? 'Inactive' : 'Active'}`}
+                                      >
+                                        {comp.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                      </button>
+                                      <button
+                                        className="btn btn-sm btn-danger"
+                                        onClick={() => handleDeleteCompany(comp.id, comp.companyName)}
+                                      >
+                                        Delete
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          /* CARD VIEW FORMAT */
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px', marginTop: '14px' }}>
+                            {paginatedCompanies.map(comp => {
+                              const initials = comp.companyName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+                              return (
+                                <div key={comp.id} className="company-card">
+                                  <div>
+                                    {/* Card Header */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <div className="company-card-avatar">
+                                          {initials}
+                                        </div>
+                                        <div>
+                                          <h3 style={{ fontSize: '15px', margin: 0, fontWeight: 'bold', lineHeight: 1.2 }}>{comp.companyName}</h3>
+                                          <span className="font-mono" style={{ fontSize: '11px', color: '#666' }}>{comp.id}</span>
+                                        </div>
+                                      </div>
+                                      <span className="status-badge">{comp.status}</span>
+                                    </div>
+
+                                    {/* Registration Details Strip */}
+                                    <div style={{
+                                      fontSize: '11px',
+                                      backgroundColor: '#f5f5f5',
+                                      border: '1px solid #e0e0e0',
+                                      padding: '5px 8px',
+                                      marginBottom: '12px',
+                                      display: 'flex',
+                                      justifyContent: 'space-between'
+                                    }}>
+                                      <span><strong>Reg Details:</strong> {comp.registrationDetails}</span>
+                                      <span><strong>Country:</strong> {comp.country}</span>
+                                    </div>
+
+                                    {/* Contact & Address Details */}
+                                    <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ color: '#666', width: '20px' }}>👤</span>
+                                        <span><strong>Contact:</strong> {comp.contactPerson}</span>
+                                      </div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ color: '#666', width: '20px' }}>✉️</span>
+                                        <a href={`mailto:${comp.email}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{comp.email}</a>
+                                      </div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ color: '#666', width: '20px' }}>📞</span>
+                                        <a href={`tel:${comp.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{comp.phone}</a>
+                                      </div>
+                                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                                        <span style={{ color: '#666', width: '20px' }}>📍</span>
+                                        <span style={{ color: '#444' }}>{comp.address}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Metrics Strip */}
+                                    <div className="company-stats-strip">
+                                      <div>
+                                        <div className="company-stat-lbl">Travelers</div>
+                                        <div className="company-stat-val">{comp.totalCustomers}</div>
+                                      </div>
+                                      <div style={{ borderLeft: '1px solid #e0e0e0' }}>
+                                        <div className="company-stat-lbl">Applications</div>
+                                        <div className="company-stat-val">{comp.totalApplications}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Card Actions */}
+                                  <div style={{ display: 'flex', gap: '6px', borderTop: '1px solid #eee', paddingTop: '10px', flexWrap: 'wrap' }}>
+                                    <button
+                                      className="btn btn-sm btn-primary"
+                                      style={{ flex: 1 }}
+                                      onClick={() => { setSelectedCompany(comp); setCompanySubTab('applications'); }}
+                                    >
+                                      👁️ View Details
+                                    </button>
+                                    <button
+                                      className="btn btn-sm"
+                                      onClick={() => setEditingCompany({ ...comp })}
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button
+                                      className="btn btn-sm"
+                                      onClick={() => handleToggleCompanyStatus(comp.id)}
+                                      title={comp.status === 'Active' ? 'Deactivate Company' : 'Activate Company'}
+                                    >
+                                      {comp.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-danger"
+                                      onClick={() => handleDeleteCompany(comp.id, comp.companyName)}
+                                      title="Delete Company"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* PAGINATION CONTROLS BAR */}
+                        {filteredCompanies.length > 0 && (
+                          <div className="pagination-bar">
+                            {/* Rows per page selector & Info */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <label style={{ color: '#555' }}>Rows per page:</label>
+                                <select
+                                  value={companyItemsPerPage}
+                                  onChange={e => {
+                                    setCompanyItemsPerPage(Number(e.target.value));
+                                    setCompanyCurrentPage(1);
+                                  }}
+                                  style={{ padding: '3px 6px', fontSize: '12px' }}
+                                >
+                                  <option value={3}>3</option>
+                                  <option value={5}>5</option>
+                                  <option value={10}>10</option>
+                                  <option value={20}>20</option>
+                                </select>
+                              </div>
+                              <span style={{ color: '#555' }}>
+                                Showing <strong>{(safeCompanyPage - 1) * companyItemsPerPage + 1}</strong> to <strong>{Math.min(safeCompanyPage * companyItemsPerPage, filteredCompanies.length)}</strong> of <strong>{filteredCompanies.length}</strong> items
+                              </span>
+                            </div>
+
+                            {/* Page navigation controls */}
+                            <div className="pagination-controls">
+                              <button
+                                className="pagination-btn"
+                                disabled={safeCompanyPage <= 1}
+                                onClick={() => setCompanyCurrentPage(1)}
+                                title="First Page"
+                              >
+                                &laquo; First
+                              </button>
+                              <button
+                                className="pagination-btn"
+                                disabled={safeCompanyPage <= 1}
+                                onClick={() => setCompanyCurrentPage(p => Math.max(1, p - 1))}
+                                title="Previous Page"
+                              >
+                                &lsaquo; Prev
+                              </button>
+
+                              {/* Numbered Page Buttons */}
+                              <div style={{ display: 'flex', gap: '3px', margin: '0 4px' }}>
+                                {Array.from({ length: totalCompanyPages }, (_, i) => i + 1)
+                                  .filter(p => {
+                                    if (p === 1 || p === totalCompanyPages) return true;
+                                    if (Math.abs(p - safeCompanyPage) <= 1) return true;
+                                    return false;
+                                  })
+                                  .map((p, idx, arr) => {
+                                    const prevP = arr[idx - 1];
+                                    const showEllipsis = prevP && p - prevP > 1;
+                                    return (
+                                      <React.Fragment key={p}>
+                                        {showEllipsis && <span style={{ padding: '0 4px', alignSelf: 'center', color: '#888' }}>...</span>}
+                                        <button
+                                          className={`pagination-btn ${safeCompanyPage === p ? 'active' : ''}`}
+                                          onClick={() => setCompanyCurrentPage(p)}
+                                          style={{ minWidth: '30px' }}
+                                        >
+                                          {p}
+                                        </button>
+                                      </React.Fragment>
+                                    );
+                                  })}
+                              </div>
+
+                              <button
+                                className="pagination-btn"
+                                disabled={safeCompanyPage >= totalCompanyPages}
+                                onClick={() => setCompanyCurrentPage(p => Math.min(totalCompanyPages, p + 1))}
+                                title="Next Page"
+                              >
+                                Next &rsaquo;
+                              </button>
+                              <button
+                                className="pagination-btn"
+                                disabled={safeCompanyPage >= totalCompanyPages}
+                                onClick={() => setCompanyCurrentPage(totalCompanyPages)}
+                                title="Last Page"
+                              >
+                                Last &raquo;
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -2940,7 +3454,7 @@ export default function SuperAdminDashboard({ onLogout }) {
             </div>
             <p style={{ fontSize: '12px', marginBottom: '16px' }}>Flow: Select Application &rarr; Select Case Officer &rarr; Assign Task & Responsibilities</p>
             <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label>1. Select Application:</label>
+              <label>1. Select Case:</label>
               <select value={assignForm.appId} onChange={e => setAssignForm({ ...assignForm, appId: e.target.value })}>
                 {visaList.map(v => <option key={v.id} value={v.id}>{v.id} - {v.applicantName} ({v.country} - {v.visaType})</option>)}
               </select>
@@ -3085,7 +3599,7 @@ export default function SuperAdminDashboard({ onLogout }) {
             </div>
             <div className="form-actions">
               <button className="btn" onClick={() => setEditingCompany(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { alert(`Company "${editingCompany.companyName}" updated successfully!`); setEditingCompany(null); }}>Save Changes</button>
+              <button className="btn btn-primary" onClick={handleSaveEditCompany}>Save Changes</button>
             </div>
           </div>
         </div>
@@ -3094,21 +3608,80 @@ export default function SuperAdminDashboard({ onLogout }) {
       {/* Add Company Modal */}
       {showAddCompanyModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <div className="modal-title">Add New Company</div>
               <button className="close-btn" onClick={() => setShowAddCompanyModal(false)}>X</button>
             </div>
-            <div className="form-group"><label>Company Name:</label><input type="text" placeholder="e.g. Apex Global Ltd" /></div>
-            <div className="form-group"><label>Registration Details:</label><input type="text" placeholder="REG-2026-XXXX" /></div>
-            <div className="form-group"><label>Contact Person:</label><input type="text" placeholder="Name" /></div>
-            <div className="form-group"><label>Email:</label><input type="email" placeholder="company@domain.com" /></div>
-            <div className="form-group"><label>Phone Number:</label><input type="text" placeholder="+91..." /></div>
-            <div className="form-group"><label>Country:</label><input type="text" defaultValue="India" /></div>
-            <div className="form-actions">
-              <button className="btn" onClick={() => setShowAddCompanyModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => { alert('New Company Added!'); setShowAddCompanyModal(false); }}>Save Company</button>
-            </div>
+            <form onSubmit={handleSaveAddCompany}>
+              <div className="form-group">
+                <label>Company Name: *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Apex Global Ltd"
+                  value={newCompanyForm.companyName}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, companyName: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Registration Details:</label>
+                <input
+                  type="text"
+                  placeholder="REG-2026-XXXX"
+                  value={newCompanyForm.registrationDetails}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, registrationDetails: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Contact Person:</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rajesh Kumar"
+                  value={newCompanyForm.contactPerson}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, contactPerson: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Email ID:</label>
+                <input
+                  type="email"
+                  placeholder="company@domain.com"
+                  value={newCompanyForm.email}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, email: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number:</label>
+                <input
+                  type="text"
+                  placeholder="+91..."
+                  value={newCompanyForm.phone}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Address:</label>
+                <input
+                  type="text"
+                  placeholder="Commercial District / City"
+                  value={newCompanyForm.address}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, address: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Country:</label>
+                <input
+                  type="text"
+                  value={newCompanyForm.country}
+                  onChange={e => setNewCompanyForm({ ...newCompanyForm, country: e.target.value })}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn" onClick={() => setShowAddCompanyModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Company</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -3519,14 +4092,14 @@ export default function SuperAdminDashboard({ onLogout }) {
                   const newId = `VISA-${301 + visaList.length}`;
                   const docItems = (newVisaForm.documents && newVisaForm.documents.length > 0)
                     ? newVisaForm.documents.map((d, i) => ({
-                        id: i + 1,
-                        name: d.name,
-                        mandatory: d.mandatory || 'Mandatory',
-                        status: 'Pending Verification'
-                      }))
+                      id: i + 1,
+                      name: d.name,
+                      mandatory: d.mandatory || 'Mandatory',
+                      status: 'Pending Verification'
+                    }))
                     : [
-                        { id: 1, name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory', status: 'Pending Verification' }
-                      ];
+                      { id: 1, name: 'Passport (Front & Back Copy)', mandatory: 'Mandatory', status: 'Pending Verification' }
+                    ];
 
                   const createdVisa = {
                     id: newId,
